@@ -214,6 +214,57 @@ export const ReviewerSearch = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
+            <Search className="w-5 h-5 text-primary" />
+            <span>Keyword String</span>
+          </CardTitle>
+          <CardDescription>
+            Combined search string for database queries
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="p-4 bg-muted/30 rounded-lg border-l-4 border-primary/30">
+              <div className="flex items-center justify-between">
+                <code className="text-sm text-foreground/90 font-mono break-all">
+                  {(() => {
+                    const primaryStr = primaryKeywords.length > 0 ? `(${primaryKeywords.join(' OR ')})` : '';
+                    const secondaryStr = secondaryKeywords.length > 0 ? `(${secondaryKeywords.join(' OR ')})` : '';
+                    
+                    if (primaryStr && secondaryStr) {
+                      return `${primaryStr} AND ${secondaryStr}`;
+                    }
+                    return primaryStr || secondaryStr || 'No keywords selected';
+                  })()}
+                </code>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const primaryStr = primaryKeywords.length > 0 ? `(${primaryKeywords.join(' OR ')})` : '';
+                    const secondaryStr = secondaryKeywords.length > 0 ? `(${secondaryKeywords.join(' OR ')})` : '';
+                    const keywordString = primaryStr && secondaryStr ? `${primaryStr} AND ${secondaryStr}` : (primaryStr || secondaryStr);
+                    
+                    if (keywordString && keywordString !== 'No keywords selected') {
+                      navigator.clipboard.writeText(keywordString);
+                      toast({
+                        title: "Copied to clipboard",
+                        description: "Keyword string has been copied to your clipboard.",
+                      });
+                    }
+                  }}
+                  className="ml-2 flex-shrink-0"
+                >
+                  Copy
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
             <Database className="w-5 h-5 text-primary" />
             <span>Search Databases</span>
           </CardTitle>
