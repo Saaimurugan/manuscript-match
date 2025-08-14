@@ -93,21 +93,6 @@ export const DataExtraction = ({ data, fileName }: DataExtractionProps) => {
             )}
           </div>
 
-          {data.headings && data.headings.length > 0 && (
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-3 flex items-center">
-                <BookOpen className="w-4 h-4 mr-1" />
-                DOCUMENT STRUCTURE
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {data.headings.map((heading, index) => (
-                  <div key={index} className="text-xs p-2 bg-muted/50 rounded border-l-2 border-primary/30">
-                    {heading}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
