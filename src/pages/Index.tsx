@@ -172,7 +172,6 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold">ScholarFinder</h1>
-                <p className="text-xs text-muted-foreground">Academic Peer Reviewer Discovery</p>
               </div>
             </div>
             
