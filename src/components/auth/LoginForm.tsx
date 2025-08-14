@@ -59,9 +59,6 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             ScholarFinder
           </h1>
-          <p className="text-muted-foreground mt-2">
-            Academic Peer Reviewer Discovery Platform
-          </p>
         </div>
 
         <Card className="shadow-card border-0">
