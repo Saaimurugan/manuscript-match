@@ -153,7 +153,7 @@ const Index = () => {
   };
 
   const getStepProgress = () => {
-    return ((currentStep - 1) / 2) * 100;
+    return ((currentStep - 1) / 4) * 100;
   };
 
   if (!user) {
@@ -193,7 +193,7 @@ const Index = () => {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Research Workflow Progress</CardTitle>
-              <span className="text-sm text-muted-foreground">Step {currentStep} of 3</span>
+              <span className="text-sm text-muted-foreground">Step {currentStep} of 5</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -205,11 +205,19 @@ const Index = () => {
               </div>
               <div className={`flex items-center space-x-2 ${currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
                 <Search className="w-4 h-4" />
-                <span>Search Reviewers</span>
+                <span>Keyword Curator</span>
               </div>
               <div className={`flex items-center space-x-2 ${currentStep >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
+                <CheckCircle className="w-4 h-4" />
+                <span>String Generator</span>
+              </div>
+              <div className={`flex items-center space-x-2 ${currentStep >= 4 ? 'text-primary' : 'text-muted-foreground'}`}>
                 <Users className="w-4 h-4" />
-                <span>Review Results</span>
+                <span>Expert Curator</span>
+              </div>
+              <div className={`flex items-center space-x-2 ${currentStep >= 5 ? 'text-primary' : 'text-muted-foreground'}`}>
+                <CheckCircle className="w-4 h-4" />
+                <span>Expert Validator</span>
               </div>
             </div>
           </CardContent>
