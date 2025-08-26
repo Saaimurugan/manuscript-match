@@ -14,7 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      research_papers: {
+        Row: {
+          abstract: string | null
+          authors: string[] | null
+          created_at: string
+          id: string
+          keywords: string[] | null
+          metadata: Json | null
+          title: string
+          updated_at: string
+          upload_date: string
+        }
+        Insert: {
+          abstract?: string | null
+          authors?: string[] | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          metadata?: Json | null
+          title: string
+          updated_at?: string
+          upload_date?: string
+        }
+        Update: {
+          abstract?: string | null
+          authors?: string[] | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          metadata?: Json | null
+          title?: string
+          updated_at?: string
+          upload_date?: string
+        }
+        Relationships: []
+      }
+      reviewers: {
+        Row: {
+          created_at: string
+          email: string | null
+          expertise: string[] | null
+          h_index: number | null
+          id: string
+          institution: string | null
+          metadata: Json | null
+          name: string
+          publications_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          expertise?: string[] | null
+          h_index?: number | null
+          id?: string
+          institution?: string | null
+          metadata?: Json | null
+          name: string
+          publications_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          expertise?: string[] | null
+          h_index?: number | null
+          id?: string
+          institution?: string | null
+          metadata?: Json | null
+          name?: string
+          publications_count?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
