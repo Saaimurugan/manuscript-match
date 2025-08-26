@@ -1,1 +1,7 @@
 project_id = "ofutrsieokzfvypdoeen"
+
+[functions.api-papers]
+verify_jwt = false
+
+[functions.api-reviewers]
+verify_jwt = false
