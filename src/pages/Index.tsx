@@ -10,6 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { LogOut, FileText, Search, Users, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
+import { ActivityLog } from "@/components/activity/ActivityLog";
+import { ActivityLogger } from "@/services/activityLogger";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
 
 interface User {
   username: string;
@@ -49,13 +53,32 @@ const Index = () => {
   const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
   const [reviewers, setReviewers] = useState<Reviewer[]>([]);
   const { toast } = useToast();
+  const logger = ActivityLogger.getInstance();
 
-  const handleLogin = (credentials: { username: string; password: string }) => {
+  useEffect(() => {
+    if (user) {
+      logger.setUser(user.username);
+    } else {
+      logger.clearUser();
+    }
+  }, [user]);
+
+  const handleLogin = async (credentials: { username: string; password: string }) => {
     // In a real app, this would validate against a backend
     setUser({ username: credentials.username });
+    await logger.logActivity(
+      "login",
+      `User ${credentials.username} logged in`,
+      { timestamp: new Date().toISOString() }
+    );
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logger.logActivity(
+      "logout",
+      `User ${user?.username} logged out`,
+      { timestamp: new Date().toISOString() }
+    );
     setUser(null);
     setCurrentStep(1);
     setUploadedFile(null);
@@ -65,8 +88,14 @@ const Index = () => {
     setReviewers([]);
   };
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
     setUploadedFile(file);
+    
+    await logger.logActivity(
+      "upload",
+      `Uploaded file: ${file.name}`,
+      { fileName: file.name, fileSize: file.size, fileType: file.type }
+    );
     
     // Simulate data extraction
     const mockData: ExtractedData = {
@@ -92,7 +121,12 @@ const Index = () => {
     setSecondaryKeywords(secondary);
   };
 
-  const handleSearch = (keywords: string[], databases: string[]) => {
+  const handleSearch = async (keywords: string[], databases: string[]) => {
+    await logger.logActivity(
+      "search",
+      `Performed reviewer search`,
+      { keywords, databases, timestamp: new Date().toISOString() }
+    );
     // Simulate reviewer search results
     const mockReviewers: Reviewer[] = [
       {
@@ -146,7 +180,12 @@ const Index = () => {
     setCurrentStep(3);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    await logger.logActivity(
+      "export",
+      `Exported reviewer data to CSV`,
+      { reviewerCount: reviewers.length, timestamp: new Date().toISOString() }
+    );
     toast({
       title: "Export successful",
       description: "Reviewer data has been exported to CSV format.",
@@ -222,37 +261,48 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Step Content */}
-        <div className="space-y-8">
-          {currentStep === 1 && (
-            <FileUpload 
-              onFileUpload={handleFileUpload}
-              uploadedFile={uploadedFile}
-            />
-          )}
-
-          {currentStep === 2 && extractedData && (
-            <div className="space-y-8">
-              <DataExtraction 
-                data={extractedData}
-                fileName={uploadedFile?.name || "manuscript.docx"}
+        {/* Main Content with Activity Tracking */}
+        <Tabs defaultValue="workflow" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+            <TabsTrigger value="activity">Activity Log</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="workflow" className="space-y-8">
+            {currentStep === 1 && (
+              <FileUpload 
+                onFileUpload={handleFileUpload}
+                uploadedFile={uploadedFile}
               />
-              <ReviewerSearch
-                primaryKeywords={primaryKeywords}
-                secondaryKeywords={secondaryKeywords}
-                onKeywordsChange={handleKeywordsChange}
-                onSearch={handleSearch}
-              />
-            </div>
-          )}
+            )}
 
-          {currentStep === 3 && reviewers.length > 0 && (
-            <ReviewerResults 
-              reviewers={reviewers}
-              onExport={handleExport}
-            />
-          )}
-        </div>
+            {currentStep === 2 && extractedData && (
+              <div className="space-y-8">
+                <DataExtraction 
+                  data={extractedData}
+                  fileName={uploadedFile?.name || "manuscript.docx"}
+                />
+                <ReviewerSearch
+                  primaryKeywords={primaryKeywords}
+                  secondaryKeywords={secondaryKeywords}
+                  onKeywordsChange={handleKeywordsChange}
+                  onSearch={handleSearch}
+                />
+              </div>
+            )}
+
+            {currentStep === 3 && reviewers.length > 0 && (
+              <ReviewerResults 
+                reviewers={reviewers}
+                onExport={handleExport}
+              />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="activity">
+            <ActivityLog userId={user?.username} currentUser={user?.username} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
