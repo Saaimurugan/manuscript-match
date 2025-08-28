@@ -1,19 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { FileUpload } from "@/components/upload/FileUpload";
 import { DataExtraction } from "@/components/extraction/DataExtraction";
 import { ReviewerSearch } from "@/components/search/ReviewerSearch";
 import { ReviewerResults } from "@/components/results/ReviewerResults";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { LogOut, FileText, Search, Users, CheckCircle } from "lucide-react";
+import { LogOut, FileText, Search, Users, CheckCircle, Activity, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
 import { ActivityLog } from "@/components/activity/ActivityLog";
 import { ActivityLogger } from "@/services/activityLogger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect } from "react";
 
 interface User {
   username: string;
@@ -180,15 +180,45 @@ const Index = () => {
     setCurrentStep(3);
   };
 
-  const handleExport = async () => {
+  const handleExport = async (selectedReviewers: Reviewer[]) => {
+    // Log export activity
     await logger.logActivity(
-      "export",
-      `Exported reviewer data to CSV`,
-      { reviewerCount: reviewers.length, timestamp: new Date().toISOString() }
+      "EXPORT",
+      `Exported ${selectedReviewers.length} reviewers`,
+      { 
+        reviewerCount: selectedReviewers.length, 
+        reviewerNames: selectedReviewers.map(r => r.name),
+        databases: [...new Set(selectedReviewers.map(r => r.database))],
+        timestamp: new Date().toISOString() 
+      }
     );
+
+    // Create CSV content
+    const csvContent = [
+      ["Name", "Email", "Affiliation", "Country", "Match Score", "Database", "Expertise"],
+      ...selectedReviewers.map(r => [
+        r.name,
+        r.email || "",
+        r.affiliation,
+        r.country,
+        r.matchScore.toString(),
+        r.database,
+        r.expertise.join("; ")
+      ])
+    ].map(row => row.join(",")).join("\n");
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "reviewers.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+
     toast({
       title: "Export successful",
-      description: "Reviewer data has been exported to CSV format.",
+      description: `${selectedReviewers.length} reviewers exported to CSV format.`,
     });
   };
 
@@ -263,9 +293,12 @@ const Index = () => {
 
         {/* Main Content with Activity Tracking */}
         <Tabs defaultValue="workflow" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className={`grid w-full ${user.username === "admin" ? "grid-cols-3" : "grid-cols-2"} max-w-md`}>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
             <TabsTrigger value="activity">Activity Log</TabsTrigger>
+            {user.username === "admin" && (
+              <TabsTrigger value="admin">Admin</TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="workflow" className="space-y-8">
@@ -302,6 +335,12 @@ const Index = () => {
           <TabsContent value="activity">
             <ActivityLog userId={user?.username} currentUser={user?.username} />
           </TabsContent>
+
+          {user.username === "admin" && (
+            <TabsContent value="admin">
+              <AdminDashboard />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>

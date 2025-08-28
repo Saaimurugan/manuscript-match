@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Download, Filter, Mail, Building, BookOpen, ExternalLink } from "lucide-react";
+import { ActivityLogger } from "@/services/activityLogger";
+import { toast } from "sonner";
 
 interface Reviewer {
   id: string;
@@ -21,12 +24,13 @@ interface Reviewer {
 
 interface ReviewerResultsProps {
   reviewers: Reviewer[];
-  onExport: () => void;
+  onExport: (selectedReviewers: Reviewer[]) => void;
 }
 
 export const ReviewerResults = ({ reviewers, onExport }: ReviewerResultsProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDatabase, setFilterDatabase] = useState<string>("all");
+  const [selectedReviewerIds, setSelectedReviewerIds] = useState<Set<string>>(new Set());
 
   const filteredReviewers = reviewers.filter(reviewer => {
     const matchesSearch = reviewer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,6 +51,48 @@ export const ReviewerResults = ({ reviewers, onExport }: ReviewerResultsProps) =
     return "bg-muted text-muted-foreground";
   };
 
+  const handleSelectReviewer = (reviewerId: string, checked: boolean) => {
+    const newSelectedIds = new Set(selectedReviewerIds);
+    if (checked) {
+      newSelectedIds.add(reviewerId);
+    } else {
+      newSelectedIds.delete(reviewerId);
+    }
+    setSelectedReviewerIds(newSelectedIds);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedReviewerIds(new Set(filteredReviewers.map(r => r.id)));
+    } else {
+      setSelectedReviewerIds(new Set());
+    }
+  };
+
+  const handleExport = async () => {
+    const selectedReviewers = reviewers.filter(r => selectedReviewerIds.has(r.id));
+    
+    if (selectedReviewers.length === 0) {
+      toast.error("Please select at least one reviewer to export");
+      return;
+    }
+
+    // Log the export activity
+    const logger = ActivityLogger.getInstance();
+    await logger.logActivity(
+      'EXPORT',
+      `Exported ${selectedReviewers.length} reviewers`,
+      {
+        reviewerCount: selectedReviewers.length,
+        reviewerNames: selectedReviewers.map(r => r.name),
+        databases: [...new Set(selectedReviewers.map(r => r.database))]
+      }
+    );
+
+    onExport(selectedReviewers);
+    toast.success(`Exported ${selectedReviewers.length} reviewers successfully`);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -61,9 +107,13 @@ export const ReviewerResults = ({ reviewers, onExport }: ReviewerResultsProps) =
                 Found {reviewers.length} potential reviewers across multiple databases
               </CardDescription>
             </div>
-            <Button onClick={onExport} variant="outline">
+            <Button 
+              onClick={handleExport} 
+              variant="outline"
+              disabled={selectedReviewerIds.size === 0}
+            >
               <Download className="w-4 h-4 mr-2" />
-              Export CSV
+              Export Selected ({selectedReviewerIds.size})
             </Button>
           </div>
         </CardHeader>
@@ -92,8 +142,25 @@ export const ReviewerResults = ({ reviewers, onExport }: ReviewerResultsProps) =
             </div>
           </div>
 
-          <div className="text-sm text-muted-foreground mb-4">
-            Showing {filteredReviewers.length} of {reviewers.length} reviewers
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredReviewers.length} of {reviewers.length} reviewers
+            </div>
+            {filteredReviewers.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="select-all"
+                  checked={filteredReviewers.every(r => selectedReviewerIds.has(r.id))}
+                  onCheckedChange={handleSelectAll}
+                />
+                <label
+                  htmlFor="select-all"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Select All
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -101,7 +168,13 @@ export const ReviewerResults = ({ reviewers, onExport }: ReviewerResultsProps) =
               <Card key={reviewer.id} className="border-l-4 border-l-primary/30">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <Checkbox
+                        id={`reviewer-${reviewer.id}`}
+                        checked={selectedReviewerIds.has(reviewer.id)}
+                        onCheckedChange={(checked) => handleSelectReviewer(reviewer.id, checked as boolean)}
+                      />
+                      <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <h3 className="font-semibold text-lg">{reviewer.name}</h3>
                         <Badge className={getMatchScoreColor(reviewer.matchScore)}>
@@ -127,6 +200,7 @@ export const ReviewerResults = ({ reviewers, onExport }: ReviewerResultsProps) =
                           <BookOpen className="w-4 h-4 mr-2" />
                           {reviewer.publicationCount} publications (last 10 years)
                         </div>
+                      </div>
                       </div>
                     </div>
                     
