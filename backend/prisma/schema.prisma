@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  passwordHash String @map("password_hash")
+  role      String   @default("USER") // UserRole as string
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  processes Process[]
+  activityLogs ActivityLog[]
+  
+  @@map("users")
+}
+
+model Process {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  title       String
+  status      String   // ProcessStatus as string
+  currentStep String   @map("current_step") // ProcessStep as string
+  metadata    String?  // JSON string
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  processAuthors ProcessAuthor[]
+  shortlists   Shortlist[]
+  activityLogs ActivityLog[]
+  
+  @@map("processes")
+}
+
+model Author {
+  id               String   @id @default(uuid())
+  name             String
+  email            String?
+  publicationCount Int      @default(0) @map("publication_count")
+  clinicalTrials   Int      @default(0) @map("clinical_trials")
+  retractions      Int      @default(0)
+  researchAreas    String?  // JSON array as string
+  meshTerms        String?  @map("mesh_terms") // JSON array as string
+  createdAt        DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  processAuthors ProcessAuthor[]
+  affiliations   AuthorAffiliation[]
+  
+  @@map("authors")
+}
+
+model Affiliation {
+  id              String   @id @default(uuid())
+  institutionName String   @map("institution_name")
+  department      String?
+  address         String
+  country         String
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  authorAffiliations AuthorAffiliation[]
+  
+  @@map("affiliations")
+}
+
+model AuthorAffiliation {
+  id            String @id @default(uuid())
+  authorId      String @map("author_id")
+  affiliationId String @map("affiliation_id")
+  
+  // Relations
+  author      Author      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  affiliation Affiliation @relation(fields: [affiliationId], references: [id], onDelete: Cascade)
+  
+  @@unique([authorId, affiliationId])
+  @@map("author_affiliations")
+}
+
+model ProcessAuthor {
+  id               String   @id @default(uuid())
+  processId        String   @map("process_id")
+  authorId         String   @map("author_id")
+  role             String   // AuthorRole as string
+  validationStatus String?  @map("validation_status") // JSON string
+  addedAt          DateTime @default(now()) @map("added_at")
+  
+  // Relations
+  process Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  author  Author  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@unique([processId, authorId, role])
+  @@map("process_authors")
+}
+
+model Shortlist {
+  id        String   @id @default(uuid())
+  processId String   @map("process_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  process Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+  
+  @@map("shortlists")
+}
+
+model ActivityLog {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  processId String?     @map("process_id")
+  action    String
+  details   String?     // JSON string
+  timestamp DateTime    @default(now())
+  
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  process Process? @relation(fields: [processId], references: [id], onDelete: Cascade)
+  
+  @@map("activity_logs")
+}
+
+// Note: SQLite doesn't support enums, so we use string constants in TypeScript
+// These enums are defined in src/types/index.ts
