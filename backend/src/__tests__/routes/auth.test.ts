@@ -6,20 +6,21 @@ import jwt from 'jsonwebtoken';
 import { config } from '@/config/environment';
 
 // Mock external dependencies
-const mockPrisma = {
-  user: {
-    findUnique: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-  },
-  activityLog: {
-    create: jest.fn(),
-  },
-};
-
 jest.mock('@/config/database', () => ({
-  prisma: mockPrisma,
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    activityLog: {
+      create: jest.fn(),
+    },
+  },
 }));
+
+// Get the mocked prisma
+const { prisma: mockPrisma } = jest.requireMock('@/config/database');
 
 describe('Auth Routes', () => {
   beforeEach(() => {

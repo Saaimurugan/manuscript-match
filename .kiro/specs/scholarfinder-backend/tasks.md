@@ -53,6 +53,7 @@
 
 
   - Implement user registration and login endpoints with password hashing (bcrypt)
+
   - Create JWT token generation and validation middleware
   - Build user context extraction and request enrichment
   - Add role-based authorization for admin endpoints
@@ -60,7 +61,9 @@
   - Write tests for authentication and authorization flows
   - _Requirements: 11.1, 12.1_
 
-- [ ] 4. Create process management API endpoints
+- [x] 4. Create process management API endpoints
+
+
   - Implement POST /api/processes endpoint for creating new processes
   - Build GET /api/processes endpoint with user filtering and pagination
   - Create GET /api/processes/:id endpoint for process details

@@ -2,20 +2,6 @@ import request from 'supertest';
 import app from '../../app';
 import { prisma } from '../../config/database';
 import { UserRole } from '../../types';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { describe } from 'node:test';
 
 describe('Authentication Integration Tests', () => {
   beforeAll(async () => {

@@ -2,17 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { authorize, requireAdmin } from '@/middleware/auth';
 import { UserRole } from '@/types';
 import { CustomError, ErrorType } from '@/middleware/errorHandler';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { it } from 'node:test';
-import { describe } from 'node:test';
-import { beforeEach } from 'node:test';
-import { describe } from 'node:test';
 
 // Mock the dependencies
 jest.mock('@/services/AuthService');
@@ -21,7 +10,7 @@ jest.mock('@/repositories/ActivityLogRepository');
 jest.mock('@/config/database');
 
 describe('Authentication Middleware', () => {
-  let mockRequest: Partial<Request>;
+  let mockRequest: Partial<Request> & { user?: any };
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
 

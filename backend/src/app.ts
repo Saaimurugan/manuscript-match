@@ -64,9 +64,10 @@ app.get('/health', (_req, res) => {
 
 // API routes
 import authRoutes from '@/routes/auth';
+import processRoutes from '@/routes/processes';
 
 app.use('/api/auth', authRoutes);
-// app.use('/api/processes', processRoutes);
+app.use('/api/processes', processRoutes);
 // app.use('/api/admin', adminRoutes);
 
 // 404 handler

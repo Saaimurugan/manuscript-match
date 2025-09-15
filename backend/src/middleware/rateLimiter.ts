@@ -15,6 +15,7 @@ export const apiRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => config.env === 'test', // Skip rate limiting in test environment
   handler: (_req, _res) => {
     throw new CustomError(
       ErrorType.RATE_LIMIT_ERROR,
@@ -38,6 +39,7 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
+  skip: () => config.env === 'test', // Skip rate limiting in test environment
 });
 
 // File upload rate limiter
