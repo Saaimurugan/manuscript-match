@@ -85,7 +85,8 @@ export class CursorPaginationService {
       ? results[results.length - 1][this.config.cursorField!]
       : undefined;
 
-    const previousCursor = cursor || undefined;
+    // Previous cursor is the current cursor for reference
+    // const previousCursor = cursor || undefined;
 
     return {
       data: results,

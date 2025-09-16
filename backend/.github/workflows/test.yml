@@ -1,0 +1,166 @@
+name: Comprehensive Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+
+    - name: Generate Prisma client
+      working-directory: ./backend
+      run: npx prisma generate
+
+    - name: Run database migrations
+      working-directory: ./backend
+      run: npx prisma migrate deploy
+      env:
+        DATABASE_URL: file:./test.db
+
+    - name: Run unit tests
+      working-directory: ./backend
+      run: npm run test:unit
+      env:
+        NODE_ENV: test
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-jwt-secret-that-is-at-least-32-characters-long
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run integration tests
+      working-directory: ./backend
+      run: npm run test:integration
+      env:
+        NODE_ENV: test
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-jwt-secret-that-is-at-least-32-characters-long
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run end-to-end tests
+      working-directory: ./backend
+      run: npm run test:e2e
+      env:
+        NODE_ENV: test
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-jwt-secret-that-is-at-least-32-characters-long
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run performance tests
+      working-directory: ./backend
+      run: npm run test:performance
+      env:
+        NODE_ENV: test
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-jwt-secret-that-is-at-least-32-characters-long
+        REDIS_URL: redis://localhost:6379
+
+    - name: Generate coverage report
+      working-directory: ./backend
+      run: npm run test:coverage
+      env:
+        NODE_ENV: test
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-jwt-secret-that-is-at-least-32-characters-long
+        REDIS_URL: redis://localhost:6379
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage/lcov.info
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: true
+
+    - name: Archive test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.node-version }}
+        path: |
+          backend/coverage/
+          backend/test-results.xml
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run security audit
+      working-directory: ./backend
+      run: npm audit --audit-level moderate
+
+    - name: Run dependency check
+      working-directory: ./backend
+      run: npx audit-ci --moderate
+
+  performance-benchmark:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+
+    - name: Run performance benchmarks
+      working-directory: ./backend
+      run: npm run test:performance
+      env:
+        NODE_ENV: test
+        DATABASE_URL: file:./test.db
+        JWT_SECRET: test-jwt-secret-that-is-at-least-32-characters-long
+        PERFORMANCE_BENCHMARK: true
+
+    - name: Store benchmark results
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'customSmallerIsBetter'
+        output-file-path: backend/benchmark-results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
