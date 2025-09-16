@@ -220,4 +220,65 @@ export class ProcessAuthorRepository extends BaseRepository<ProcessAuthor, Creat
     
     return record !== null;
   }
+
+  async removeByProcessAndRole(processId: string, role: AuthorRole): Promise<void> {
+    this.validateId(processId);
+    
+    await this.prisma.processAuthor.deleteMany({
+      where: {
+        processId,
+        role,
+      },
+    });
+  }
+
+  async findByProcessAndAuthor(processId: string, authorId: string): Promise<ProcessAuthor | null> {
+    this.validateId(processId);
+    this.validateId(authorId);
+    
+    return this.prisma.processAuthor.findFirst({
+      where: {
+        processId,
+        authorId,
+      },
+    });
+  }
+
+  async removeByProcessAndAuthor(processId: string, authorId: string): Promise<boolean> {
+    this.validateId(processId);
+    this.validateId(authorId);
+    
+    try {
+      const result = await this.prisma.processAuthor.deleteMany({
+        where: {
+          processId,
+          authorId,
+        },
+      });
+      return result.count > 0;
+    } catch (error) {
+      console.error('Error removing process author:', error);
+      return false;
+    }
+  }
+
+  async updateAuthorRoles(processId: string, authorIds: string[], role: AuthorRole): Promise<void> {
+    this.validateId(processId);
+    
+    for (const authorId of authorIds) {
+      this.validateId(authorId);
+    }
+
+    await this.prisma.processAuthor.updateMany({
+      where: {
+        processId,
+        authorId: {
+          in: authorIds,
+        },
+      },
+      data: {
+        role,
+      },
+    });
+  }
 }

@@ -64,6 +64,19 @@ export interface SearchTerms {
   booleanQueries: Record<DatabaseType, string>;
 }
 
+export interface KeywordEnhancementResult {
+  originalKeywords: string[];
+  enhancedKeywords: string[];
+  meshTerms: string[];
+  selectedKeywords: string[];
+  searchStrings: Record<DatabaseType, string>;
+}
+
+export interface KeywordSelectionUpdate {
+  keyword: string;
+  selected: boolean;
+}
+
 export enum DatabaseType {
   PUBMED = 'pubmed',
   ELSEVIER = 'elsevier',
@@ -115,6 +128,7 @@ export interface ProcessMetadata {
   validationCompletedAt?: Date;
   totalCandidates?: number;
   validatedCandidates?: number;
+  keywordEnhancement?: KeywordEnhancementResult;
 }
 
 // Authentication types

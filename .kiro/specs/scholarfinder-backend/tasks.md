@@ -72,7 +72,19 @@
   - Write integration tests for process management endpoints
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ] 5. Implement manuscript file processing service
+- [x] 5. Implement manuscript file processing service
+
+
+
+
+
+
+
+
+
+
+
+
   - Create file upload handling with multipart form data support
   - Build PDF text extraction using pdf-parse library
   - Implement Word document processing using mammoth library
@@ -82,7 +94,12 @@
   - Write unit tests for file processing and metadata extraction
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 6. Build author and affiliation management endpoints
+- [x] 6. Build author and affiliation management endpoints
+
+
+
+
+
   - Create GET /api/processes/:id/metadata endpoint for extracted data
   - Implement PUT /api/processes/:id/metadata for user edits
   - Build GET /api/processes/:id/authors endpoint with structured author data
@@ -92,7 +109,12 @@
   - Write integration tests for author and affiliation endpoints
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 7. Implement keyword enhancement service
+- [x] 7. Implement keyword enhancement service
+
+
+
+
+
   - Create keyword generation service using NLP libraries or external APIs
   - Build MeSH term extraction functionality
   - Implement database-specific search string generation (PubMed, Elsevier, Wiley, Taylor & Francis)
@@ -101,7 +123,12 @@
   - Write unit tests for keyword enhancement and search string generation
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 8. Build multi-database integration service
+- [x] 8. Build multi-database integration service
+
+
+
+
+
   - Create abstract database client interface and implementations for each database
   - Implement PubMed API client with search and author extraction
   - Build Elsevier API client with authentication and search capabilities
@@ -112,7 +139,19 @@
   - Write integration tests with mocked external API responses
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 9. Implement manual reviewer search functionality
+- [x] 9. Implement manual reviewer search functionality
+
+
+
+
+
+
+
+
+
+
+
+
   - Create author search by name functionality across all databases
   - Build email-based author lookup service
   - Implement manual reviewer addition to candidate pool
@@ -121,7 +160,12 @@
   - Write unit tests for manual search and management features
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 10. Build author validation and filtering service
+- [x] 10. Build author validation and filtering service
+
+
+
+
+
   - Create conflict of interest detection (manuscript authors, co-authors)
   - Implement retraction checking against retraction databases
   - Build publication threshold filtering with configurable parameters
@@ -132,7 +176,12 @@
   - Write comprehensive unit tests for all validation rules
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 11. Implement reviewer recommendation and filtering system
+- [x] 11. Implement reviewer recommendation and filtering system
+
+
+
+
+
   - Create GET /api/processes/:id/candidates endpoint with validated authors
   - Build real-time filtering system for recommendation table
   - Implement multi-column sorting functionality
@@ -142,7 +191,12 @@
   - Write integration tests for recommendation filtering and sorting
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 12. Build reviewer profile and network analysis
+- [x] 12. Build reviewer profile and network analysis
+
+
+
+
+
   - Create detailed reviewer profile service with research areas and MeSH terms
   - Implement co-author relationship analysis
   - Build publication history and citation metrics integration
@@ -152,7 +206,12 @@
   - Write unit tests for profile analysis and network detection
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 13. Implement shortlist management and export functionality
+- [x] 13. Implement shortlist management and export functionality
+
+
+
+
+
   - Create shortlist creation and management service
   - Build POST /api/processes/:id/shortlist endpoint for shortlist creation
   - Implement CSV export with structured columns and proper formatting

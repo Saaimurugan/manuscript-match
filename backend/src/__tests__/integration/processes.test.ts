@@ -338,6 +338,303 @@ describe('Process Management API', () => {
     });
   });
 
+  describe('Author Management', () => {
+    beforeAll(async () => {
+      // Ensure we have a process to work with
+      if (!processId) {
+        const response = await request(app)
+          .post('/api/processes')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({
+            title: 'Test Manuscript Analysis for Authors',
+          });
+        processId = response.body.data.id;
+      }
+    });
+
+    const testAuthors = [
+      {
+        name: 'Dr. John Smith',
+        email: 'john.smith@university.edu',
+        publicationCount: 25,
+        clinicalTrials: 3,
+        retractions: 0,
+        researchAreas: ['Machine Learning', 'Data Science'],
+        meshTerms: ['Algorithms', 'Neural Networks'],
+        affiliations: [
+          {
+            institutionName: 'University of Technology',
+            department: 'Computer Science',
+            address: '123 Tech Street, Tech City, TC 12345',
+            country: 'United States',
+          },
+        ],
+      },
+      {
+        name: 'Dr. Jane Doe',
+        email: 'jane.doe@research.org',
+        publicationCount: 18,
+        clinicalTrials: 1,
+        retractions: 0,
+        researchAreas: ['Artificial Intelligence'],
+        meshTerms: ['Deep Learning'],
+        affiliations: [
+          {
+            institutionName: 'Research Institute',
+            department: 'AI Lab',
+            address: '456 Research Ave, Research City, RC 67890',
+            country: 'Canada',
+          },
+        ],
+      },
+    ];
+
+    describe('GET /api/processes/:id/authors', () => {
+      it('should return empty array for process without authors', async () => {
+        const response = await request(app)
+          .get(`/api/processes/${processId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toEqual([]);
+      });
+
+      it('should return 404 for non-existent process', async () => {
+        const fakeId = '550e8400-e29b-41d4-a716-446655440000';
+        const response = await request(app)
+          .get(`/api/processes/${fakeId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(404);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('NOT_FOUND');
+      });
+
+      it('should return 400 for invalid process ID', async () => {
+        const response = await request(app)
+          .get('/api/processes/invalid-id/authors')
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('VALIDATION_ERROR');
+      });
+    });
+
+    describe('PUT /api/processes/:id/authors', () => {
+      it('should update process authors successfully', async () => {
+        const response = await request(app)
+          .put(`/api/processes/${processId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(testAuthors);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(2);
+        
+        const authors = response.body.data;
+        expect(authors[0]).toMatchObject({
+          name: 'Dr. John Smith',
+          email: 'john.smith@university.edu',
+          publicationCount: 25,
+          clinicalTrials: 3,
+          retractions: 0,
+          role: 'MANUSCRIPT_AUTHOR',
+        });
+        expect(authors[0].researchAreas).toEqual(['Machine Learning', 'Data Science']);
+        expect(authors[0].meshTerms).toEqual(['Algorithms', 'Neural Networks']);
+        expect(authors[0].affiliations).toHaveLength(1);
+        expect(authors[0].affiliations[0]).toMatchObject({
+          institutionName: 'University of Technology',
+          department: 'Computer Science',
+          country: 'United States',
+        });
+      });
+
+      it('should get updated authors after PUT', async () => {
+        // First, ensure authors are created
+        await request(app)
+          .put(`/api/processes/${processId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(testAuthors);
+
+        // Then get the authors
+        const response = await request(app)
+          .get(`/api/processes/${processId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(2);
+        
+        const authorNames = response.body.data.map((author: any) => author.name);
+        expect(authorNames).toContain('Dr. John Smith');
+        expect(authorNames).toContain('Dr. Jane Doe');
+      });
+
+      it('should reject invalid author data', async () => {
+        const invalidAuthors = [
+          {
+            name: '', // Invalid: empty name
+            email: 'invalid-email', // Invalid: malformed email
+          },
+        ];
+
+        const response = await request(app)
+          .put(`/api/processes/${processId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(invalidAuthors);
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('VALIDATION_ERROR');
+      });
+
+      it('should reject empty authors array', async () => {
+        const response = await request(app)
+          .put(`/api/processes/${processId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send([]);
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('VALIDATION_ERROR');
+      });
+
+      it('should return 404 for non-existent process', async () => {
+        const fakeId = '550e8400-e29b-41d4-a716-446655440000';
+        const response = await request(app)
+          .put(`/api/processes/${fakeId}/authors`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(testAuthors);
+
+        expect(response.status).toBe(404);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('NOT_FOUND');
+      });
+    });
+  });
+
+  describe('Affiliation Management', () => {
+    const testAffiliations = [
+      {
+        institutionName: 'Harvard University',
+        department: 'Medical School',
+        address: '25 Shattuck Street, Boston, MA 02115',
+        country: 'United States',
+      },
+      {
+        institutionName: 'Oxford University',
+        department: 'Department of Computer Science',
+        address: 'Parks Road, Oxford OX1 3QD',
+        country: 'United Kingdom',
+      },
+    ];
+
+    describe('GET /api/processes/:id/affiliations', () => {
+      it('should return affiliations from process authors', async () => {
+        const response = await request(app)
+          .get(`/api/processes/${processId}/affiliations`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toBeInstanceOf(Array);
+        // Should have affiliations from the authors we added earlier
+        expect(response.body.data.length).toBeGreaterThan(0);
+      });
+
+      it('should return 404 for non-existent process', async () => {
+        const fakeId = '550e8400-e29b-41d4-a716-446655440000';
+        const response = await request(app)
+          .get(`/api/processes/${fakeId}/affiliations`)
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(404);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('NOT_FOUND');
+      });
+
+      it('should return 400 for invalid process ID', async () => {
+        const response = await request(app)
+          .get('/api/processes/invalid-id/affiliations')
+          .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('VALIDATION_ERROR');
+      });
+    });
+
+    describe('PUT /api/processes/:id/affiliations', () => {
+      it('should update process affiliations successfully', async () => {
+        const response = await request(app)
+          .put(`/api/processes/${processId}/affiliations`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(testAffiliations);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toHaveLength(2);
+        
+        const affiliations = response.body.data;
+        expect(affiliations[0]).toMatchObject({
+          institutionName: 'Harvard University',
+          department: 'Medical School',
+          country: 'United States',
+        });
+        expect(affiliations[1]).toMatchObject({
+          institutionName: 'Oxford University',
+          department: 'Department of Computer Science',
+          country: 'United Kingdom',
+        });
+      });
+
+      it('should reject invalid affiliation data', async () => {
+        const invalidAffiliations = [
+          {
+            institutionName: '', // Invalid: empty institution name
+            address: '', // Invalid: empty address
+            country: '', // Invalid: empty country
+          },
+        ];
+
+        const response = await request(app)
+          .put(`/api/processes/${processId}/affiliations`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(invalidAffiliations);
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('VALIDATION_ERROR');
+      });
+
+      it('should allow empty affiliations array', async () => {
+        const response = await request(app)
+          .put(`/api/processes/${processId}/affiliations`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send([]);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toEqual([]);
+      });
+
+      it('should return 404 for non-existent process', async () => {
+        const fakeId = '550e8400-e29b-41d4-a716-446655440000';
+        const response = await request(app)
+          .put(`/api/processes/${fakeId}/affiliations`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(testAffiliations);
+
+        expect(response.status).toBe(404);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.type).toBe('NOT_FOUND');
+      });
+    });
+  });
+
   describe('Authorization', () => {
     let otherUserToken: string;
     let otherUserProcessId: string;
@@ -401,6 +698,64 @@ describe('Process Management API', () => {
       const response = await request(app)
         .delete(`/api/processes/${otherUserProcessId}`)
         .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.type).toBe('NOT_FOUND');
+    });
+
+    it('should not allow access to other user\'s process authors', async () => {
+      const response = await request(app)
+        .get(`/api/processes/${otherUserProcessId}/authors`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.type).toBe('NOT_FOUND');
+    });
+
+    it('should not allow updating other user\'s process authors', async () => {
+      const testAuthors = [
+        {
+          name: 'Hacker Author',
+          email: 'hacker@evil.com',
+          affiliations: [],
+        },
+      ];
+
+      const response = await request(app)
+        .put(`/api/processes/${otherUserProcessId}/authors`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(testAuthors);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.type).toBe('NOT_FOUND');
+    });
+
+    it('should not allow access to other user\'s process affiliations', async () => {
+      const response = await request(app)
+        .get(`/api/processes/${otherUserProcessId}/affiliations`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error.type).toBe('NOT_FOUND');
+    });
+
+    it('should not allow updating other user\'s process affiliations', async () => {
+      const testAffiliations = [
+        {
+          institutionName: 'Evil Corp',
+          address: '123 Evil Street',
+          country: 'Hackland',
+        },
+      ];
+
+      const response = await request(app)
+        .put(`/api/processes/${otherUserProcessId}/affiliations`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(testAffiliations);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);

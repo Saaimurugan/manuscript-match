@@ -31,8 +31,8 @@ describe('AuthorRepository', () => {
         publicationCount: 25,
         clinicalTrials: 3,
         retractions: 0,
-        researchAreas: '["cardiology", "clinical trials"]',
-        meshTerms: '["Heart Disease", "Clinical Trial"]',
+        researchAreas: ["cardiology", "clinical trials"],
+        meshTerms: ["Heart Disease", "Clinical Trial"],
       };
 
       const expectedAuthor = {

@@ -52,6 +52,14 @@ export const updateProcessStepSchema = Joi.object({
   status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
 });
 
+// Affiliation validation schemas (defined before author schemas to avoid circular dependency)
+export const createAffiliationSchema = Joi.object({
+  institutionName: Joi.string().min(1).max(300).required(),
+  department: Joi.string().max(200).optional(),
+  address: Joi.string().min(1).max(500).required(),
+  country: Joi.string().min(1).max(100).required(),
+});
+
 // Author validation schemas
 export const createAuthorSchema = Joi.object({
   name: Joi.string().min(1).max(200).required(),
@@ -61,6 +69,17 @@ export const createAuthorSchema = Joi.object({
   retractions: Joi.number().integer().min(0).optional(),
   researchAreas: Joi.array().items(Joi.string()).optional(),
   meshTerms: Joi.array().items(Joi.string()).optional(),
+});
+
+export const createAuthorWithAffiliationsSchema = Joi.object({
+  name: Joi.string().min(1).max(200).required(),
+  email: optionalEmailSchema,
+  publicationCount: Joi.number().integer().min(0).optional(),
+  clinicalTrials: Joi.number().integer().min(0).optional(),
+  retractions: Joi.number().integer().min(0).optional(),
+  researchAreas: Joi.array().items(Joi.string()).optional(),
+  meshTerms: Joi.array().items(Joi.string()).optional(),
+  affiliations: Joi.array().items(createAffiliationSchema).optional(),
 });
 
 export const updateAuthorSchema = Joi.object({
@@ -81,14 +100,6 @@ export const authorSearchSchema = Joi.object({
   researchArea: Joi.string().optional(),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(20),
-});
-
-// Affiliation validation schemas
-export const createAffiliationSchema = Joi.object({
-  institutionName: Joi.string().min(1).max(300).required(),
-  department: Joi.string().max(200).optional(),
-  address: Joi.string().min(1).max(500).required(),
-  country: Joi.string().min(1).max(100).required(),
 });
 
 export const updateAffiliationSchema = Joi.object({
@@ -188,6 +199,55 @@ export const validationResultSchema = Joi.object({
   }).required(),
 });
 
+// Author validation configuration schema
+export const validationConfigSchema = Joi.object({
+  minPublications: Joi.number().integer().min(0).default(5),
+  maxRetractions: Joi.number().integer().min(0).default(0),
+  minRecentPublications: Joi.number().integer().min(0).default(2),
+  recentYears: Joi.number().integer().min(1).max(20).default(5),
+  checkInstitutionalConflicts: Joi.boolean().default(true),
+  checkCoAuthorConflicts: Joi.boolean().default(true),
+  collaborationYears: Joi.number().integer().min(1).max(10).default(3),
+});
+
+// Validation step result schema
+export const validationStepResultSchema = Joi.object({
+  stepName: Joi.string().required(),
+  passed: Joi.boolean().required(),
+  message: Joi.string().required(),
+  details: Joi.any().optional(),
+});
+
+// Author validation result schema
+export const authorValidationResultSchema = Joi.object({
+  author: createAuthorSchema.required(),
+  passed: Joi.boolean().required(),
+  conflicts: Joi.array().items(Joi.string().valid('manuscript_author', 'co_author', 'institutional', 'recent_collaboration')).required(),
+  retractionFlags: Joi.array().items(Joi.object({
+    publicationTitle: Joi.string().required(),
+    journal: Joi.string().required(),
+    retractionDate: Joi.date().required(),
+    reason: Joi.string().required(),
+  })).required(),
+  publicationMetrics: Joi.object({
+    totalPublications: Joi.number().integer().min(0).required(),
+    recentPublications: Joi.number().integer().min(0).required(),
+    hIndex: Joi.number().integer().min(0).optional(),
+    citationCount: Joi.number().integer().min(0).optional(),
+  }).required(),
+  validationSteps: Joi.array().items(validationStepResultSchema).required(),
+});
+
+// Process validation result schema
+export const processValidationResultSchema = Joi.object({
+  processId: uuidSchema,
+  totalCandidates: Joi.number().integer().min(0).required(),
+  validatedCandidates: Joi.number().integer().min(0).required(),
+  validationResults: Joi.array().items(authorValidationResultSchema).required(),
+  validationConfig: validationConfigSchema.required(),
+  completedAt: Joi.date().required(),
+});
+
 // Database search result validation schemas
 export const databaseSearchResultSchema = Joi.object({
   database: Joi.string().valid(...Object.values(DatabaseType)).required(),
@@ -222,6 +282,52 @@ export const activityLogSearchSchema = Joi.object({
   endDate: Joi.date().optional(),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(20),
+});
+
+// Recommendation filtering schemas
+export const recommendationFiltersSchema = Joi.object({
+  minPublications: Joi.number().integer().min(0).optional(),
+  maxRetractions: Joi.number().integer().min(0).optional(),
+  minClinicalTrials: Joi.number().integer().min(0).optional(),
+  countries: Joi.array().items(Joi.string().min(1)).optional(),
+  institutions: Joi.array().items(Joi.string().min(1)).optional(),
+  researchAreas: Joi.array().items(Joi.string().min(1)).optional(),
+  excludeConflicts: Joi.array().items(
+    Joi.string().valid('manuscript_author', 'co_author', 'institutional', 'recent_collaboration')
+  ).optional(),
+  onlyValidated: Joi.boolean().optional(),
+});
+
+export const sortOptionsSchema = Joi.object({
+  field: Joi.string().valid('name', 'publicationCount', 'clinicalTrials', 'retractions', 'country', 'institution').required(),
+  order: Joi.string().valid('asc', 'desc').required(),
+});
+
+export const recommendationQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(20),
+  sortBy: Joi.string().valid('name', 'publicationCount', 'clinicalTrials', 'retractions', 'country', 'institution').optional(),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+  minPublications: Joi.number().integer().min(0).optional(),
+  maxRetractions: Joi.number().integer().min(0).optional(),
+  minClinicalTrials: Joi.number().integer().min(0).optional(),
+  countries: Joi.alternatives().try(
+    Joi.string().min(1),
+    Joi.array().items(Joi.string().min(1))
+  ).optional(),
+  institutions: Joi.alternatives().try(
+    Joi.string().min(1),
+    Joi.array().items(Joi.string().min(1))
+  ).optional(),
+  researchAreas: Joi.alternatives().try(
+    Joi.string().min(1),
+    Joi.array().items(Joi.string().min(1))
+  ).optional(),
+  excludeConflicts: Joi.alternatives().try(
+    Joi.string().valid('manuscript_author', 'co_author', 'institutional', 'recent_collaboration'),
+    Joi.array().items(Joi.string().valid('manuscript_author', 'co_author', 'institutional', 'recent_collaboration'))
+  ).optional(),
+  onlyValidated: Joi.boolean().optional(),
 });
 
 // Common validation helpers

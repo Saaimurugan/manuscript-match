@@ -7,8 +7,8 @@ export interface CreateAuthorInput {
   publicationCount?: number;
   clinicalTrials?: number;
   retractions?: number;
-  researchAreas?: string;
-  meshTerms?: string;
+  researchAreas?: string[];
+  meshTerms?: string[];
 }
 
 export interface UpdateAuthorInput {
@@ -17,8 +17,8 @@ export interface UpdateAuthorInput {
   publicationCount?: number;
   clinicalTrials?: number;
   retractions?: number;
-  researchAreas?: string;
-  meshTerms?: string;
+  researchAreas?: string[];
+  meshTerms?: string[];
 }
 
 export interface AuthorWithAffiliations extends Author {
@@ -42,7 +42,15 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
 
   async create(data: CreateAuthorInput): Promise<Author> {
     return this.prisma.author.create({
-      data,
+      data: {
+        name: data.name,
+        email: data.email || null,
+        publicationCount: data.publicationCount || 0,
+        clinicalTrials: data.clinicalTrials || 0,
+        retractions: data.retractions || 0,
+        researchAreas: data.researchAreas ? JSON.stringify(data.researchAreas) : null,
+        meshTerms: data.meshTerms ? JSON.stringify(data.meshTerms) : null,
+      },
     });
   }
 
@@ -160,9 +168,19 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
 
   async update(id: string, data: UpdateAuthorInput): Promise<Author> {
     this.validateId(id);
+    const updateData: any = {};
+    
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email || null;
+    if (data.publicationCount !== undefined) updateData.publicationCount = data.publicationCount;
+    if (data.clinicalTrials !== undefined) updateData.clinicalTrials = data.clinicalTrials;
+    if (data.retractions !== undefined) updateData.retractions = data.retractions;
+    if (data.researchAreas !== undefined) updateData.researchAreas = data.researchAreas ? JSON.stringify(data.researchAreas) : null;
+    if (data.meshTerms !== undefined) updateData.meshTerms = data.meshTerms ? JSON.stringify(data.meshTerms) : null;
+
     return this.prisma.author.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 
@@ -174,8 +192,18 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
   }
 
   async bulkCreate(authors: CreateAuthorInput[]): Promise<number> {
+    const transformedAuthors = authors.map(author => ({
+      name: author.name,
+      email: author.email || null,
+      publicationCount: author.publicationCount || 0,
+      clinicalTrials: author.clinicalTrials || 0,
+      retractions: author.retractions || 0,
+      researchAreas: author.researchAreas ? JSON.stringify(author.researchAreas) : null,
+      meshTerms: author.meshTerms ? JSON.stringify(author.meshTerms) : null,
+    }));
+
     const result = await this.prisma.author.createMany({
-      data: authors,
+      data: transformedAuthors,
     });
     return result.count;
   }
@@ -204,5 +232,27 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
 
   async count(): Promise<number> {
     return this.prisma.author.count();
+  }
+
+  async addAffiliation(authorId: string, affiliationId: string): Promise<void> {
+    this.validateId(authorId);
+    this.validateId(affiliationId);
+    
+    // Check if relationship already exists
+    const existing = await this.prisma.authorAffiliation.findFirst({
+      where: {
+        authorId,
+        affiliationId,
+      },
+    });
+
+    if (!existing) {
+      await this.prisma.authorAffiliation.create({
+        data: {
+          authorId,
+          affiliationId,
+        },
+      });
+    }
   }
 }
