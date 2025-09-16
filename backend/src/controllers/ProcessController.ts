@@ -8,6 +8,7 @@ import { ManualReviewerSearchService } from '../services/ManualReviewerSearchSer
 import { AuthorValidationService } from '../services/AuthorValidationService';
 import { RecommendationService } from '../services/RecommendationService';
 import { ShortlistService } from '../services/ShortlistService';
+import { ActivityLogService } from '../services/ActivityLogService';
 import { 
   createProcessSchema, 
   updateProcessSchema, 
@@ -17,7 +18,8 @@ import {
   manuscriptMetadataSchema,
   createAuthorWithAffiliationsSchema,
   createAffiliationSchema,
-  recommendationQuerySchema
+  recommendationQuerySchema,
+  activityLogSearchSchema
 } from '../validation/schemas';
 import Joi from 'joi';
 import { ProcessStatus, ProcessStep, ApiResponse, ManuscriptMetadata, AuthorRole } from '../types';
@@ -33,6 +35,7 @@ export class ProcessController {
   private authorValidationService: AuthorValidationService;
   private recommendationService: RecommendationService;
   private shortlistService: ShortlistService;
+  private activityLogService: ActivityLogService;
 
   constructor() {
     this.processService = new ProcessService(prisma);
@@ -53,6 +56,7 @@ export class ProcessController {
       new (require('../repositories/ProcessAuthorRepository').ProcessAuthorRepository)(prisma),
       new (require('../repositories/AuthorRepository').AuthorRepository)(prisma)
     );
+    this.activityLogService = new ActivityLogService(prisma);
   }
 
   // POST /api/processes - Create new process
@@ -2811,6 +2815,87 @@ export class ProcessController {
         error: {
           type: 'INTERNAL_ERROR',
           message: 'Failed to export shortlist',
+          requestId: req.requestId || 'unknown',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+  };
+
+  // GET /api/processes/:id/logs - Get activity logs for process
+  getProcessLogs = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const processId = req.params['id'] as string;
+      
+      const { error: idError } = uuidSchema.validate(processId);
+      if (idError) {
+        res.status(400).json({
+          success: false,
+          error: {
+            type: 'VALIDATION_ERROR',
+            message: 'Invalid process ID format',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      // Validate query parameters
+      const { error: queryError, value: queryParams } = activityLogSearchSchema.validate(req.query);
+      if (queryError) {
+        res.status(400).json({
+          success: false,
+          error: {
+            type: 'VALIDATION_ERROR',
+            message: queryError.details[0]?.message || 'Invalid query parameters',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      const userId = req.user!.id;
+      
+      // Verify process ownership
+      const process = await this.processService.getProcessById(processId, userId);
+      if (!process) {
+        res.status(404).json({
+          success: false,
+          error: {
+            type: 'NOT_FOUND',
+            message: 'Process not found',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      // Get activity logs for the process
+      const result = await this.activityLogService.getProcessLogs(processId, {
+        page: queryParams.page,
+        limit: queryParams.limit,
+        userId: queryParams.userId,
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: result.logs,
+      };
+
+      // Add pagination info to response
+      (response as any).pagination = result.pagination;
+
+      res.json(response);
+    } catch (error) {
+      console.error('Error fetching process logs:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          type: 'INTERNAL_ERROR',
+          message: 'Failed to fetch process logs',
           requestId: req.requestId || 'unknown',
           timestamp: new Date().toISOString(),
         },

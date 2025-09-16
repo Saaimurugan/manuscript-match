@@ -41,6 +41,12 @@ const envSchema = Joi.object({
   LOG_LEVEL: Joi.string()
     .valid('error', 'warn', 'info', 'debug')
     .default('info'),
+  
+  // Redis Cache
+  REDIS_HOST: Joi.string().default('localhost'),
+  REDIS_PORT: Joi.number().port().default(6379),
+  REDIS_PASSWORD: Joi.string().optional(),
+  REDIS_DB: Joi.number().min(0).max(15).default(0),
 }).unknown();
 
 // Validate environment variables
@@ -94,6 +100,13 @@ export const config = {
   
   logging: {
     level: envVars.LOG_LEVEL,
+  },
+  
+  redis: {
+    host: envVars.REDIS_HOST,
+    port: envVars.REDIS_PORT,
+    password: envVars.REDIS_PASSWORD,
+    db: envVars.REDIS_DB,
   },
 } as const;
 

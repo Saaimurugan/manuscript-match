@@ -61,4 +61,7 @@ router.post('/:id/shortlist', processController.createShortlist);
 router.get('/:id/shortlists', processController.getShortlists);
 router.get('/:id/export/:format', processController.exportShortlist);
 
+// Activity logging routes
+router.get('/:id/logs', processController.getProcessLogs);
+
 export default router;

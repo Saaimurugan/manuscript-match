@@ -23,4 +23,9 @@ export abstract class BaseRepository<T, CreateInput, UpdateInput> {
       throw new Error('Invalid ID provided');
     }
   }
+
+  // Public method to access Prisma client for admin operations
+  public getPrismaClient(): PrismaClient {
+    return this.prisma;
+  }
 }

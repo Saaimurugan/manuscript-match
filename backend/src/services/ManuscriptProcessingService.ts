@@ -1,7 +1,10 @@
 import * as path from 'path';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+import { Readable } from 'stream';
 import { ManuscriptMetadata, Author, Affiliation, FileProcessingResult } from '../types';
+import { streamFileProcessingService, ProcessingProgress } from './StreamFileProcessingService';
+import { performanceMonitoringService } from './PerformanceMonitoringService';
 
 export interface FileValidationResult {
   isValid: boolean;
@@ -115,52 +118,98 @@ export class ManuscriptProcessingService {
   }
 
   /**
-   * Extract metadata from manuscript text
+   * Extract metadata from manuscript text (legacy method for backward compatibility)
    */
   async extractMetadata(buffer: Buffer, originalName: string, mimeType: string): Promise<FileProcessingResult> {
-    const startTime = Date.now();
+    return performanceMonitoringService.measureExecutionTime(
+      'manuscript_processing.extract_metadata',
+      async () => {
+        const startTime = Date.now();
 
-    try {
-      // Add small delay to ensure processing time > 0
-      await new Promise(resolve => setTimeout(resolve, 1));
-      
-      // Validate file first
-      const validation = this.validateFile(buffer, originalName, mimeType);
-      if (!validation.isValid) {
-        return {
-          success: false,
-          error: validation.error || 'Validation failed',
-          processingTime: Date.now() - startTime
-        };
-      }
+        try {
+          // Add small delay to ensure processing time > 0
+          await new Promise(resolve => setTimeout(resolve, 1));
+          
+          // Validate file first
+          const validation = this.validateFile(buffer, originalName, mimeType);
+          if (!validation.isValid) {
+            return {
+              success: false,
+              error: validation.error || 'Validation failed',
+              processingTime: Date.now() - startTime
+            };
+          }
 
-      // Extract text content
-      const textContent = await this.extractTextContent(buffer, mimeType);
-      
-      if (!textContent || textContent.trim().length === 0) {
-        return {
-          success: false,
-          error: 'No text content could be extracted from the file',
-          processingTime: Date.now() - startTime
-        };
-      }
+          // Extract text content
+          const textContent = await this.extractTextContent(buffer, mimeType);
+          
+          if (!textContent || textContent.trim().length === 0) {
+            return {
+              success: false,
+              error: 'No text content could be extracted from the file',
+              processingTime: Date.now() - startTime
+            };
+          }
 
-      // Extract structured metadata
-      const metadata = await this.parseManuscriptContent(textContent);
+          // Extract structured metadata
+          const metadata = await this.parseManuscriptContent(textContent);
 
-      return {
-        success: true,
-        metadata,
-        processingTime: Date.now() - startTime
-      };
+          return {
+            success: true,
+            metadata,
+            processingTime: Date.now() - startTime
+          };
 
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown processing error',
-        processingTime: Date.now() - startTime
-      };
-    }
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown processing error',
+            processingTime: Date.now() - startTime
+          };
+        }
+      },
+      { file_type: mimeType, file_size: buffer.length.toString() }
+    );
+  }
+
+  /**
+   * Stream-based metadata extraction for large files
+   */
+  async extractMetadataStream(
+    fileStream: Readable,
+    originalName: string,
+    mimeType: string,
+    onProgress?: (progress: ProcessingProgress) => void
+  ): Promise<FileProcessingResult> {
+    return performanceMonitoringService.measureExecutionTime(
+      'manuscript_processing.extract_metadata_stream',
+      async () => {
+        const startTime = Date.now();
+
+        try {
+          const metadata = await streamFileProcessingService.processFileStream(
+            fileStream,
+            mimeType,
+            originalName,
+            onProgress
+          );
+
+          return {
+            success: true,
+            metadata,
+            processingTime: Date.now() - startTime
+          };
+
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Stream processing error',
+            processingTime: Date.now() - startTime
+          };
+        }
+      },
+      { file_type: mimeType, processing_type: 'stream' }
+    );
   }
 
   /**

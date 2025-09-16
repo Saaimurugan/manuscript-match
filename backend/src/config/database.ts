@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from './environment';
 
-// Create Prisma client instance
+// Create Prisma client instance with optimized connection pooling
 export const prisma = new PrismaClient({
   log: config.env === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
   datasources: {

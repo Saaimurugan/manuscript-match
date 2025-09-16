@@ -352,3 +352,66 @@ export const validatePagination = (page?: number, limit?: number) => {
   }
   return value;
 };
+
+// Admin validation schemas
+export const adminPaginationSchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(20),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+  userId: uuidSchema.optional(),
+  status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+  search: Joi.string().min(1).optional(),
+});
+
+export const adminLogFiltersSchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(50),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+  userId: uuidSchema.optional(),
+  processId: uuidSchema.optional(),
+  action: Joi.string().min(1).optional(),
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+  search: Joi.string().min(1).optional(),
+});
+
+export const dateRangeSchema = Joi.object({
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+}).custom((value, helpers) => {
+  if (value.startDate && value.endDate && value.startDate > value.endDate) {
+    return helpers.error('date.range', { message: 'Start date must be before end date' });
+  }
+  return value;
+});
+
+export const exportTypeSchema = Joi.object({
+  type: Joi.string().valid('processes', 'logs', 'users').required(),
+  format: Joi.string().valid('csv', 'xlsx').default('csv'),
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+});
+
+// Admin validation helper functions
+export const validatePaginationParams = (query: any) => {
+  const { error, value } = adminPaginationSchema.validate(query);
+  if (error) {
+    throw new Error(`Invalid pagination parameters: ${error.message}`);
+  }
+  return value;
+};
+
+export const validateDateRange = (dateRange: { startDate?: string; endDate?: string }) => {
+  const { error, value } = dateRangeSchema.validate({
+    startDate: dateRange.startDate ? new Date(dateRange.startDate) : undefined,
+    endDate: dateRange.endDate ? new Date(dateRange.endDate) : undefined,
+  });
+  if (error) {
+    throw new Error(`Invalid date range: ${error.message}`);
+  }
+  return value;
+};

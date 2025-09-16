@@ -7,9 +7,20 @@ import { config } from '@/config/environment';
 import { 
   errorHandler, 
   notFoundHandler, 
-  requestIdMiddleware 
+  requestIdMiddleware,
+  setupGlobalErrorHandlers 
 } from '@/middleware/errorHandler';
+import { errorCorrelationMiddleware } from '@/middleware/errorRecovery';
 import { apiRateLimiter } from '@/middleware/rateLimiter';
+import { requestMonitoringMiddleware } from '@/middleware/requestMonitoring';
+import { MonitoringService } from '@/services/MonitoringService';
+import { 
+  performanceMonitoringMiddleware,
+  databasePerformanceMiddleware,
+  cachePerformanceMiddleware,
+  performanceHeadersMiddleware,
+  performanceErrorHandler
+} from '@/middleware/performanceMonitoring';
 
 // Create Express application
 const app = express();
@@ -42,6 +53,18 @@ app.use(compression());
 // Request ID middleware
 app.use(requestIdMiddleware);
 
+// Error correlation middleware
+app.use(errorCorrelationMiddleware);
+
+// Request monitoring middleware
+app.use(requestMonitoringMiddleware);
+
+// Performance monitoring middleware
+app.use(performanceMonitoringMiddleware);
+app.use(databasePerformanceMiddleware());
+app.use(cachePerformanceMiddleware);
+app.use(performanceHeadersMiddleware);
+
 // Logging middleware
 if (config.env !== 'test') {
   app.use(morgan('combined', {
@@ -52,28 +75,41 @@ if (config.env !== 'test') {
 // Rate limiting
 app.use('/api', apiRateLimiter);
 
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: config.env,
-    version: process.env['npm_package_version'] || '1.0.0',
-  });
+// Initialize monitoring service
+const monitoring = MonitoringService.getInstance();
+
+// Set up monitoring alerts
+monitoring.setAlertThresholds({
+  errorRate: 10, // 10% error rate
+  responseTime: 5000, // 5 seconds
+  memoryUsage: 85, // 85% memory usage
+  consecutiveErrors: 5, // 5 consecutive errors
 });
+
+// Set up global error handlers for uncaught exceptions
+setupGlobalErrorHandlers();
 
 // API routes
 import authRoutes from '@/routes/auth';
 import processRoutes from '@/routes/processes';
+import adminRoutes from '@/routes/admin';
+import healthRoutes from '@/routes/health';
+import performanceRoutes from '@/routes/performance';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/processes', processRoutes);
-// app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/performance', performanceRoutes);
+app.use('/', healthRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
+
+// Performance error handler (before main error handler)
+app.use(performanceErrorHandler);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
 export default app;
+export { app };

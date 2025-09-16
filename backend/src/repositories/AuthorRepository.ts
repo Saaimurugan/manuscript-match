@@ -1,5 +1,9 @@
 import { PrismaClient, Author } from '@prisma/client';
 import { BaseRepository } from './BaseRepository';
+import { cacheService } from '../services/CacheService';
+import { createAuthorPagination } from '../utils/CursorPagination';
+import { queryOptimizationService } from '../services/QueryOptimizationService';
+import { performanceMonitoringService } from '../services/PerformanceMonitoringService';
 
 export interface CreateAuthorInput {
   name: string;
@@ -36,6 +40,9 @@ export interface AuthorSearchOptions {
 }
 
 export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, UpdateAuthorInput> {
+  private readonly cacheTTL = 1800; // 30 minutes
+  private readonly paginationService = createAuthorPagination();
+
   constructor(prisma: PrismaClient) {
     super(prisma);
   }
@@ -56,14 +63,36 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
 
   async findById(id: string): Promise<Author | null> {
     this.validateId(id);
-    return this.prisma.author.findUnique({
+    
+    const cacheKey = `author:${id}`;
+    const cached = await cacheService.get<Author>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const author = await this.prisma.author.findUnique({
       where: { id },
     });
+
+    if (author) {
+      await cacheService.set(cacheKey, author, { ttl: this.cacheTTL });
+    }
+
+    return author;
   }
 
   async findByIdWithAffiliations(id: string): Promise<AuthorWithAffiliations | null> {
     this.validateId(id);
-    return this.prisma.author.findUnique({
+    
+    const cacheKey = `author:${id}:affiliations`;
+    const cached = await cacheService.get<AuthorWithAffiliations>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const author = await this.prisma.author.findUnique({
       where: { id },
       include: {
         affiliations: {
@@ -73,6 +102,12 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
         },
       },
     });
+
+    if (author) {
+      await cacheService.set(cacheKey, author, { ttl: this.cacheTTL });
+    }
+
+    return author;
   }
 
   async findByEmail(email: string): Promise<Author | null> {
@@ -98,6 +133,13 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
   }
 
   async search(options: AuthorSearchOptions): Promise<Author[]> {
+    const cacheKey = `author:search:${JSON.stringify(options)}`;
+    const cached = await cacheService.get<Author[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     const where: any = {};
 
     if (options.name) {
@@ -143,7 +185,12 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
       query.take = options.take;
     }
 
-    return this.prisma.author.findMany(query);
+    const authors = await this.prisma.author.findMany(query);
+    
+    // Cache search results for 15 minutes (shorter TTL for search results)
+    await cacheService.set(cacheKey, authors, { ttl: 900 });
+    
+    return authors;
   }
 
   async findMany(options?: {
@@ -166,7 +213,7 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
     return this.prisma.author.findMany(query);
   }
 
-  async update(id: string, data: UpdateAuthorInput): Promise<Author> {
+  async updateAuthor(id: string, data: UpdateAuthorInput): Promise<Author> {
     this.validateId(id);
     const updateData: any = {};
     
@@ -178,17 +225,23 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
     if (data.researchAreas !== undefined) updateData.researchAreas = data.researchAreas ? JSON.stringify(data.researchAreas) : null;
     if (data.meshTerms !== undefined) updateData.meshTerms = data.meshTerms ? JSON.stringify(data.meshTerms) : null;
 
-    return this.prisma.author.update({
+    const author = await this.prisma.author.update({
       where: { id },
       data: updateData,
     });
+
+    // Invalidate cache after update
+    await this.invalidateAuthorCache(id);
+    return author;
   }
 
-  async delete(id: string): Promise<void> {
+  async deleteAuthor(id: string): Promise<void> {
     this.validateId(id);
     await this.prisma.author.delete({
       where: { id },
     });
+    // Invalidate cache after deletion
+    await this.invalidateAuthorCache(id);
   }
 
   async bulkCreate(authors: CreateAuthorInput[]): Promise<number> {
@@ -253,6 +306,137 @@ export class AuthorRepository extends BaseRepository<Author, CreateAuthorInput, 
           affiliationId,
         },
       });
+      
+      // Invalidate related caches
+      await this.invalidateAuthorCache(authorId);
     }
+  }
+
+  // Cache management methods
+  private async invalidateAuthorCache(authorId: string): Promise<void> {
+    await Promise.all([
+      cacheService.del(`author:${authorId}`),
+      cacheService.del(`author:${authorId}:affiliations`),
+      cacheService.invalidatePattern('author:search:*')
+    ]);
+  }
+
+  async searchWithPagination(
+    options: AuthorSearchOptions & { cursor?: string; limit?: number }
+  ) {
+    const where: any = {};
+
+    if (options.name) {
+      where.name = { contains: options.name };
+    }
+    if (options.email) {
+      where.email = { contains: options.email };
+    }
+    if (options.minPublications !== undefined) {
+      where.publicationCount = { gte: options.minPublications };
+    }
+    if (options.maxRetractions !== undefined) {
+      where.retractions = { lte: options.maxRetractions };
+    }
+    if (options.researchArea) {
+      where.researchAreas = { contains: options.researchArea };
+    }
+
+    const paginationOptions: any = {
+      orderBy: { publicationCount: 'desc' }
+    };
+    
+    if (options.cursor) {
+      paginationOptions.cursor = options.cursor;
+    }
+    
+    if (options.limit) {
+      paginationOptions.limit = options.limit;
+    }
+
+    return this.paginationService.paginate(
+      this.prisma.author,
+      paginationOptions,
+      where
+    );
+  }
+
+  // Advanced search with query optimization
+  async findAuthorsWithRelationships(options: {
+    authorIds?: string[];
+    affiliationIds?: string[];
+    researchAreas?: string[];
+    publicationThreshold?: number;
+    excludeAuthors?: string[];
+  }) {
+    return performanceMonitoringService.measureExecutionTime(
+      'author_repository.find_with_relationships',
+      async () => {
+        return queryOptimizationService.findAuthorsWithRelationships(options, {
+          useCache: true,
+          cacheTTL: this.cacheTTL
+        });
+      },
+      { query_type: 'complex_relationships' }
+    );
+  }
+
+  // Optimized co-author analysis
+  async analyzeCoAuthorRelationships(authorIds: string[]) {
+    return performanceMonitoringService.measureExecutionTime(
+      'author_repository.analyze_coauthors',
+      async () => {
+        return queryOptimizationService.analyzeCoAuthorRelationships(authorIds, {
+          useCache: true,
+          cacheTTL: 3600 // 1 hour cache for relationship analysis
+        });
+      },
+      { author_count: authorIds.length.toString() }
+    );
+  }
+
+  // Batch processing for large datasets
+  async *batchProcessAuthors(
+    query: {
+      minPublications?: number;
+      researchAreas?: string[];
+      excludeAuthors?: string[];
+    },
+    batchSize: number = 100
+  ) {
+    for await (const batch of queryOptimizationService.batchProcessAuthors(query, batchSize)) {
+      yield batch;
+    }
+  }
+
+  // Optimized search with full-text capabilities
+  async searchOptimized(
+    searchTerm: string,
+    filters: {
+      minPublications?: number;
+      maxRetractions?: number;
+      researchAreas?: string[];
+      excludeAuthors?: string[];
+    } = {}
+  ) {
+    return performanceMonitoringService.measureExecutionTime(
+      'author_repository.search_optimized',
+      async () => {
+        return queryOptimizationService.searchAuthorsOptimized(searchTerm, filters, {
+          useCache: true,
+          cacheTTL: 900 // 15 minutes cache for search results
+        });
+      },
+      { search_term_length: searchTerm.length.toString() }
+    );
+  }
+
+  // Implement abstract methods from BaseRepository
+  async update(id: string, data: UpdateAuthorInput): Promise<Author> {
+    return this.updateAuthor(id, data);
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.deleteAuthor(id);
   }
 }
