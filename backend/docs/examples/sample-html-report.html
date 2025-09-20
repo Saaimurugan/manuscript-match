@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScholarFinder Backend - Test Report</title>
+    <style>
+        /* Embedded CSS for self-contained report */
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background-color: #ffffff;
+            --surface-color: #f8fafc;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --success-color: #34d399;
+            --warning-color: #fbbf24;
+            --danger-color: #f87171;
+            --background-color: #111827;
+            --surface-color: #1f2937;
+            --text-color: #f9fafb;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .report-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-metadata {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .summary-card h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card .status {
+            font-size: 1.2rem;
+        }
+
+        .success { color: var(--success-color); }
+        .warning { color: var(--warning-color); }
+        .danger { color: var(--danger-color); }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-color), #34d399);
+            transition: width 0.3s ease;
+        }
+
+        .section {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: var(--card-bg);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: var(--text-color);
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .section-header.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: 1.5rem;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .test-table th,
+        .test-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .test-table th {
+            background-color: var(--card-bg);
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .test-table tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-passed {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-failed {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .coverage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .coverage-item {
+            text-align: center;
+        }
+
+        .coverage-item h4 {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .coverage-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            margin: 1rem 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🧪 ScholarFinder Backend</h1>
+            <div class="subtitle">
+                Test Report - Generated on January 15, 2024 at 2:30 PM<br>
+                Build v1.2.3 (commit: abc123f) | Node.js v18.17.0
+            </div>
+        </header>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h3>Total Tests</h3>
+                <div class="value">156</div>
+                <div class="status">🧪 Test Suites</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Pass Rate</h3>
+                <div class="value success">100%</div>
+                <div class="status success">✅ All Passing</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Code Coverage</h3>
+                <div class="value success">94.2%</div>
+                <div class="status success">✅ Excellent</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 94.2%"></div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <h3>Duration</h3>
+                <div class="value">12.3s</div>
+                <div class="status">⚡ Fast</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 85%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>📊 Coverage Report</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="coverage-grid">
+                    <div class="coverage-item">
+                        <h4>Lines</h4>
+                        <div class="coverage-value success">94.2%</div>
+                        <div>1,847 / 1,960</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 94.2%"></div>
+                        </div>
+                    </div>
+                    <div class="coverage-item">
+                        <h4>Functions</h4>
+                        <div class="coverage-value success">91.8%</div>
+                        <div>312 / 340</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 91.8%"></div>
+                        </div>
+                    </div>
+                    <div class="coverage-item">
+                        <h4>Branches</h4>
+                        <div class="coverage-value success">87.3%</div>
+                        <div>194 / 222</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 87.3%"></div>
+                        </div>
+                    </div>
+                    <div class="coverage-item">
+                        <h4>Statements</h4>
+                        <div class="coverage-value success">94.1%</div>
+                        <div>1,843 / 1,958</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 94.1%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>🔬 Unit Tests (89 tests)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <p><strong>Status:</strong> <span class="status-badge status-passed">All Passing</span></p>
+                <p><strong>Duration:</strong> 3.2s | <strong>Coverage:</strong> 96.1%</p>
+                
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Test Suite</th>
+                            <th>Tests</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>AuthService.test.ts</td>
+                            <td>15</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>234ms</td>
+                            <td>98.2%</td>
+                        </tr>
+                        <tr>
+                            <td>UserRepository.test.ts</td>
+                            <td>12</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>189ms</td>
+                            <td>96.5%</td>
+                        </tr>
+                        <tr>
+                            <td>ValidationUtils.test.ts</td>
+                            <td>18</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>156ms</td>
+                            <td>97.8%</td>
+                        </tr>
+                        <tr>
+                            <td>ProcessService.test.ts</td>
+                            <td>22</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>298ms</td>
+                            <td>94.1%</td>
+                        </tr>
+                        <tr>
+                            <td>FileProcessor.test.ts</td>
+                            <td>14</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>445ms</td>
+                            <td>89.3%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>🔗 Integration Tests (45 tests)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <p><strong>Status:</strong> <span class="status-badge status-passed">All Passing</span></p>
+                <p><strong>Duration:</strong> 6.1s | <strong>Coverage:</strong> 89.4%</p>
+                
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Test Suite</th>
+                            <th>Tests</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>API Integration.test.ts</td>
+                            <td>20</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>2.1s</td>
+                            <td>91.2%</td>
+                        </tr>
+                        <tr>
+                            <td>Database Integration.test.ts</td>
+                            <td>15</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>1.8s</td>
+                            <td>88.7%</td>
+                        </tr>
+                        <tr>
+                            <td>External Services.test.ts</td>
+                            <td>10</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>2.2s</td>
+                            <td>87.1%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>🎭 End-to-End Tests (22 tests)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <p><strong>Status:</strong> <span class="status-badge status-passed">All Passing</span></p>
+                <p><strong>Duration:</strong> 3.0s | <strong>Coverage:</strong> 78.2%</p>
+                
+                <div class="chart-container">
+                    📈 Performance metrics chart would appear here
+                </div>
+                
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Test Scenario</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Avg Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>User Registration Flow</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>456ms</td>
+                            <td>45ms</td>
+                        </tr>
+                        <tr>
+                            <td>Authentication Workflow</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>234ms</td>
+                            <td>32ms</td>
+                        </tr>
+                        <tr>
+                            <td>Manuscript Processing</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>1.2s</td>
+                            <td>234ms</td>
+                        </tr>
+                        <tr>
+                            <td>Reviewer Recommendations</td>
+                            <td><span class="status-badge status-passed">Passed</span></td>
+                            <td>890ms</td>
+                            <td>156ms</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>⚡ Performance Metrics</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>Endpoint</th>
+                            <th>Avg Response</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>Requests</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>POST /api/auth/login</td>
+                            <td>45ms</td>
+                            <td>23ms</td>
+                            <td>89ms</td>
+                            <td>15</td>
+                            <td>⚡ Fast</td>
+                        </tr>
+                        <tr>
+                            <td>GET /api/processes</td>
+                            <td>32ms</td>
+                            <td>18ms</td>
+                            <td>67ms</td>
+                            <td>25</td>
+                            <td>⚡ Fast</td>
+                        </tr>
+                        <tr>
+                            <td>POST /api/processes</td>
+                            <td>78ms</td>
+                            <td>45ms</td>
+                            <td>123ms</td>
+                            <td>12</td>
+                            <td>✅ Good</td>
+                        </tr>
+                        <tr>
+                            <td>POST /api/upload</td>
+                            <td>234ms</td>
+                            <td>156ms</td>
+                            <td>445ms</td>
+                            <td>8</td>
+                            <td>✅ Good</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Report generated by ScholarFinder Automated Test Reporting System v1.0.0</p>
+            <p>Generation time: 2.3 seconds | Report size: 4.2MB</p>
+        </footer>
+    </div>
+
+    <script>
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+                icon.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+                icon.textContent = '▶';
+            }
+        }
+
+        // Initialize collapsible sections
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth animations
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

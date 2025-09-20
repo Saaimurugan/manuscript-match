@@ -6,9 +6,7 @@ import { ProcessService } from '../../services/ProcessService';
 import { 
   ProcessStatus, 
   ProcessStep, 
-  AuthorRole,
   ManuscriptMetadata,
-  Author,
   Affiliation
 } from '../../types';
 
@@ -71,14 +69,15 @@ describe('Author Validation Integration Tests', () => {
 
     // Create test user
     const user = await authService.register(testUser.email, testUser.password);
-    userId = user.id;
+    userId = user.user.id;
 
     // Login to get token
     const loginResult = await authService.login(testUser.email, testUser.password);
     authToken = loginResult.token;
 
     // Create test process
-    const process = await processService.createProcess(userId, {
+    const process = await processService.createProcess({
+      userId,
       title: 'Validation Test Process'
     });
     processId = process.id;

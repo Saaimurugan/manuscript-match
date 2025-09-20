@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AdminController } from '@/controllers/AdminController';
 import { AdminService } from '@/services/AdminService';
-import { ProcessStatus, UserRole } from '@/types';
+import { ProcessStatus, ProcessStep, UserRole } from '@/types';
 import { CustomError, ErrorType } from '@/middleware/errorHandler';
 
 // Mock the AdminService

@@ -1,0 +1,552 @@
+{
+  "metadata": {
+    "generatedAt": "2024-01-15T14:30:00.000Z",
+    "generationTime": 2341,
+    "reportVersion": "1.0.0",
+    "projectName": "ScholarFinder Backend",
+    "reportId": "report-20240115-143000",
+    "generator": "ScholarFinder Automated Test Reporting System"
+  },
+  "summary": {
+    "totalTests": 156,
+    "passedTests": 156,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "passRate": 100,
+    "executionTime": 12300,
+    "startTime": "2024-01-15T14:29:45.123Z",
+    "endTime": "2024-01-15T14:29:57.423Z",
+    "status": "success"
+  },
+  "coverage": {
+    "overall": {
+      "lines": {
+        "total": 1960,
+        "covered": 1847,
+        "percentage": 94.2,
+        "uncovered": 113
+      },
+      "functions": {
+        "total": 340,
+        "covered": 312,
+        "percentage": 91.8,
+        "uncovered": 28
+      },
+      "branches": {
+        "total": 222,
+        "covered": 194,
+        "percentage": 87.3,
+        "uncovered": 28
+      },
+      "statements": {
+        "total": 1958,
+        "covered": 1843,
+        "percentage": 94.1,
+        "uncovered": 115
+      }
+    },
+    "byCategory": {
+      "unit": {
+        "lines": { "percentage": 96.1, "covered": 1234, "total": 1284 },
+        "functions": { "percentage": 94.2, "covered": 189, "total": 201 },
+        "branches": { "percentage": 89.7, "covered": 156, "total": 174 },
+        "statements": { "percentage": 95.8, "covered": 1221, "total": 1275 }
+      },
+      "integration": {
+        "lines": { "percentage": 89.4, "covered": 445, "total": 498 },
+        "functions": { "percentage": 87.1, "covered": 89, "total": 102 },
+        "branches": { "percentage": 82.3, "covered": 67, "total": 81 },
+        "statements": { "percentage": 88.9, "covered": 441, "total": 496 }
+      },
+      "e2e": {
+        "lines": { "percentage": 78.2, "covered": 168, "total": 215 },
+        "functions": { "percentage": 75.8, "covered": 34, "total": 45 },
+        "branches": { "percentage": 71.4, "covered": 25, "total": 35 },
+        "statements": { "percentage": 77.8, "covered": 181, "total": 233 }
+      }
+    },
+    "thresholds": {
+      "excellent": 90,
+      "good": 80,
+      "acceptable": 60
+    },
+    "status": {
+      "overall": "excellent",
+      "lines": "excellent",
+      "functions": "excellent",
+      "branches": "good",
+      "statements": "excellent"
+    }
+  },
+  "testSuites": [
+    {
+      "name": "AuthService",
+      "filePath": "src/services/__tests__/AuthService.test.ts",
+      "status": "passed",
+      "duration": 234,
+      "category": "unit",
+      "tests": [
+        {
+          "name": "should authenticate valid user",
+          "status": "passed",
+          "duration": 12,
+          "category": "unit",
+          "fullName": "AuthService should authenticate valid user"
+        },
+        {
+          "name": "should reject invalid credentials",
+          "status": "passed",
+          "duration": 8,
+          "category": "unit",
+          "fullName": "AuthService should reject invalid credentials"
+        },
+        {
+          "name": "should handle missing credentials",
+          "status": "passed",
+          "duration": 6,
+          "category": "unit",
+          "fullName": "AuthService should handle missing credentials"
+        },
+        {
+          "name": "should generate JWT token on success",
+          "status": "passed",
+          "duration": 15,
+          "category": "unit",
+          "fullName": "AuthService should generate JWT token on success"
+        },
+        {
+          "name": "should validate token expiration",
+          "status": "passed",
+          "duration": 9,
+          "category": "unit",
+          "fullName": "AuthService should validate token expiration"
+        }
+      ],
+      "coverage": {
+        "lines": { "percentage": 98.2, "covered": 234, "total": 238 },
+        "functions": { "percentage": 96.7, "covered": 28, "total": 29 },
+        "branches": { "percentage": 94.1, "covered": 32, "total": 34 },
+        "statements": { "percentage": 98.0, "covered": 235, "total": 240 }
+      },
+      "performance": {
+        "averageTestDuration": 10,
+        "slowestTest": "should generate JWT token on success",
+        "fastestTest": "should handle missing credentials"
+      }
+    },
+    {
+      "name": "UserRepository",
+      "filePath": "src/repositories/__tests__/UserRepository.test.ts",
+      "status": "passed",
+      "duration": 189,
+      "category": "unit",
+      "tests": [
+        {
+          "name": "should create new user",
+          "status": "passed",
+          "duration": 18,
+          "category": "unit"
+        },
+        {
+          "name": "should find user by email",
+          "status": "passed",
+          "duration": 14,
+          "category": "unit"
+        },
+        {
+          "name": "should update user profile",
+          "status": "passed",
+          "duration": 22,
+          "category": "unit"
+        },
+        {
+          "name": "should delete user",
+          "status": "passed",
+          "duration": 16,
+          "category": "unit"
+        }
+      ],
+      "coverage": {
+        "lines": { "percentage": 96.5, "covered": 189, "total": 196 },
+        "functions": { "percentage": 95.7, "covered": 22, "total": 23 },
+        "branches": { "percentage": 91.2, "covered": 31, "total": 34 },
+        "statements": { "percentage": 96.2, "covered": 188, "total": 195 }
+      }
+    },
+    {
+      "name": "API Integration",
+      "filePath": "src/__tests__/integration/api.test.ts",
+      "status": "passed",
+      "duration": 2100,
+      "category": "integration",
+      "tests": [
+        {
+          "name": "should handle user registration flow",
+          "status": "passed",
+          "duration": 456,
+          "category": "integration"
+        },
+        {
+          "name": "should authenticate and return token",
+          "status": "passed",
+          "duration": 234,
+          "category": "integration"
+        },
+        {
+          "name": "should create and retrieve process",
+          "status": "passed",
+          "duration": 567,
+          "category": "integration"
+        },
+        {
+          "name": "should upload and process manuscript",
+          "status": "passed",
+          "duration": 843,
+          "category": "integration"
+        }
+      ],
+      "coverage": {
+        "lines": { "percentage": 91.2, "covered": 445, "total": 488 },
+        "functions": { "percentage": 88.9, "covered": 89, "total": 100 },
+        "branches": { "percentage": 84.6, "covered": 67, "total": 79 },
+        "statements": { "percentage": 90.8, "covered": 441, "total": 486 }
+      }
+    }
+  ],
+  "performance": {
+    "endpoints": [
+      {
+        "path": "POST /api/auth/login",
+        "method": "POST",
+        "averageResponseTime": 45,
+        "minResponseTime": 23,
+        "maxResponseTime": 89,
+        "requestCount": 15,
+        "successRate": 100,
+        "status": "fast"
+      },
+      {
+        "path": "GET /api/processes",
+        "method": "GET",
+        "averageResponseTime": 32,
+        "minResponseTime": 18,
+        "maxResponseTime": 67,
+        "requestCount": 25,
+        "successRate": 100,
+        "status": "fast"
+      },
+      {
+        "path": "POST /api/processes",
+        "method": "POST",
+        "averageResponseTime": 78,
+        "minResponseTime": 45,
+        "maxResponseTime": 123,
+        "requestCount": 12,
+        "successRate": 100,
+        "status": "good"
+      },
+      {
+        "path": "POST /api/upload",
+        "method": "POST",
+        "averageResponseTime": 234,
+        "minResponseTime": 156,
+        "maxResponseTime": 445,
+        "requestCount": 8,
+        "successRate": 100,
+        "status": "good"
+      }
+    ],
+    "memory": {
+      "peak": "87.3MB",
+      "average": "62.1MB",
+      "peakBytes": 91625472,
+      "averageBytes": 65142784
+    },
+    "cpu": {
+      "average": 23,
+      "peak": 45
+    },
+    "database": {
+      "totalQueries": 1234,
+      "averageQueryTime": 12,
+      "slowestQuery": "SELECT * FROM users WHERE email LIKE '%@%'",
+      "slowestQueryTime": 89
+    }
+  },
+  "buildInfo": {
+    "environment": "development",
+    "nodeVersion": "v18.17.0",
+    "npmVersion": "v9.6.7",
+    "jestVersion": "29.7.0",
+    "typescriptVersion": "5.2.2",
+    "operatingSystem": "Linux",
+    "platform": "linux",
+    "architecture": "x64",
+    "git": {
+      "branch": "feature/test-reporting",
+      "commit": "abc123f",
+      "commitFull": "abc123f456789012345678901234567890123456",
+      "author": "Development Team",
+      "message": "Add comprehensive test reporting system",
+      "date": "2024-01-15T14:25:00Z",
+      "isDirty": false
+    },
+    "buildDuration": 45200,
+    "testDuration": 12300,
+    "reportGenerationDuration": 2341,
+    "timestamp": "2024-01-15T14:30:00.000Z"
+  },
+  "categories": {
+    "unit": {
+      "name": "Unit Tests",
+      "displayName": "🔬 Unit Tests",
+      "totalTests": 89,
+      "passedTests": 89,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "passRate": 100,
+      "duration": 3200,
+      "averageTestDuration": 36,
+      "coverage": {
+        "lines": { "percentage": 96.1 },
+        "functions": { "percentage": 94.2 },
+        "branches": { "percentage": 89.7 },
+        "statements": { "percentage": 95.8 }
+      },
+      "status": "passed",
+      "color": "#10b981"
+    },
+    "integration": {
+      "name": "Integration Tests",
+      "displayName": "🔗 Integration Tests",
+      "totalTests": 45,
+      "passedTests": 45,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "passRate": 100,
+      "duration": 6100,
+      "averageTestDuration": 136,
+      "coverage": {
+        "lines": { "percentage": 89.4 },
+        "functions": { "percentage": 87.1 },
+        "branches": { "percentage": 82.3 },
+        "statements": { "percentage": 88.9 }
+      },
+      "status": "passed",
+      "color": "#3b82f6"
+    },
+    "e2e": {
+      "name": "End-to-End Tests",
+      "displayName": "🎭 End-to-End Tests",
+      "totalTests": 22,
+      "passedTests": 22,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "passRate": 100,
+      "duration": 3000,
+      "averageTestDuration": 136,
+      "coverage": {
+        "lines": { "percentage": 78.2 },
+        "functions": { "percentage": 75.8 },
+        "branches": { "percentage": 71.4 },
+        "statements": { "percentage": 77.8 }
+      },
+      "status": "passed",
+      "color": "#8b5cf6"
+    }
+  },
+  "quality": {
+    "testCoverage": {
+      "score": 94.2,
+      "grade": "A+",
+      "status": "excellent"
+    },
+    "codeQuality": {
+      "maintainabilityIndex": 92,
+      "cyclomaticComplexity": 3.2,
+      "technicalDebt": "2.1 hours",
+      "grade": "A+",
+      "status": "excellent"
+    },
+    "testQuality": {
+      "testToCodeRatio": 1.8,
+      "assertionDensity": 4.2,
+      "testSmells": 0,
+      "grade": "A",
+      "status": "good"
+    }
+  },
+  "trends": {
+    "lastBuilds": [
+      {
+        "buildNumber": 156,
+        "date": "2024-01-15T14:30:00Z",
+        "tests": 156,
+        "passRate": 100,
+        "coverage": 94.2,
+        "duration": 12.3,
+        "status": "success"
+      },
+      {
+        "buildNumber": 155,
+        "date": "2024-01-15T10:15:00Z",
+        "tests": 154,
+        "passRate": 99.4,
+        "coverage": 93.8,
+        "duration": 11.9,
+        "status": "success"
+      },
+      {
+        "buildNumber": 154,
+        "date": "2024-01-14T16:45:00Z",
+        "tests": 152,
+        "passRate": 100,
+        "coverage": 93.1,
+        "duration": 11.2,
+        "status": "success"
+      },
+      {
+        "buildNumber": 153,
+        "date": "2024-01-14T14:20:00Z",
+        "tests": 150,
+        "passRate": 98.7,
+        "coverage": 92.5,
+        "duration": 10.8,
+        "status": "warning"
+      },
+      {
+        "buildNumber": 152,
+        "date": "2024-01-14T11:30:00Z",
+        "tests": 148,
+        "passRate": 100,
+        "coverage": 91.9,
+        "duration": 10.3,
+        "status": "success"
+      }
+    ],
+    "changes": {
+      "testCount": {
+        "value": 8,
+        "percentage": 5.4,
+        "trend": "up"
+      },
+      "passRate": {
+        "value": 0.6,
+        "percentage": 0.6,
+        "trend": "stable"
+      },
+      "coverage": {
+        "value": 2.3,
+        "percentage": 2.5,
+        "trend": "up"
+      },
+      "duration": {
+        "value": 2.0,
+        "percentage": 19.4,
+        "trend": "up"
+      }
+    }
+  },
+  "recommendations": {
+    "immediate": [
+      {
+        "priority": "high",
+        "category": "coverage",
+        "title": "Improve ExternalApiService.ts coverage",
+        "description": "Current coverage is 72.1%, below the 80% threshold",
+        "action": "Add tests for error handling scenarios and timeout mechanisms",
+        "file": "src/services/ExternalApiService.ts",
+        "currentCoverage": 72.1,
+        "targetCoverage": 85
+      },
+      {
+        "priority": "medium",
+        "category": "performance",
+        "title": "Optimize file upload performance",
+        "description": "Average response time is 234ms, target is <150ms",
+        "action": "Consider implementing streaming uploads",
+        "endpoint": "POST /api/upload",
+        "currentTime": 234,
+        "targetTime": 150
+      }
+    ],
+    "longTerm": [
+      {
+        "priority": "medium",
+        "category": "testing",
+        "title": "Add performance tests",
+        "description": "Implement performance tests for critical user journeys",
+        "action": "Set up performance testing framework and define benchmarks"
+      },
+      {
+        "priority": "low",
+        "category": "testing",
+        "title": "Implement mutation testing",
+        "description": "Validate test quality with mutation testing",
+        "action": "Set up Stryker or similar mutation testing tool"
+      }
+    ]
+  },
+  "files": {
+    "highCoverage": [
+      {
+        "path": "src/services/AuthService.ts",
+        "coverage": 98.2,
+        "lines": { "covered": 234, "total": 238 },
+        "functions": { "covered": 28, "total": 29 }
+      },
+      {
+        "path": "src/utils/ValidationUtils.ts",
+        "coverage": 97.8,
+        "lines": { "covered": 156, "total": 159 },
+        "functions": { "covered": 18, "total": 18 }
+      },
+      {
+        "path": "src/repositories/UserRepository.ts",
+        "coverage": 96.5,
+        "lines": { "covered": 189, "total": 196 },
+        "functions": { "covered": 22, "total": 23 }
+      }
+    ],
+    "lowCoverage": [
+      {
+        "path": "src/services/ExternalApiService.ts",
+        "coverage": 72.1,
+        "lines": { "covered": 145, "total": 201 },
+        "functions": { "covered": 12, "total": 18 },
+        "priority": "high"
+      },
+      {
+        "path": "src/utils/FileProcessor.ts",
+        "coverage": 76.8,
+        "lines": { "covered": 234, "total": 305 },
+        "functions": { "covered": 15, "total": 21 },
+        "priority": "medium"
+      },
+      {
+        "path": "src/middleware/ErrorHandler.ts",
+        "coverage": 78.9,
+        "lines": { "covered": 67, "total": 85 },
+        "functions": { "covered": 8, "total": 11 },
+        "priority": "medium"
+      }
+    ]
+  },
+  "errors": [],
+  "warnings": [
+    {
+      "type": "coverage",
+      "message": "ExternalApiService.ts has coverage below 80% threshold",
+      "file": "src/services/ExternalApiService.ts",
+      "coverage": 72.1,
+      "threshold": 80
+    },
+    {
+      "type": "performance",
+      "message": "File upload endpoint exceeds 200ms response time target",
+      "endpoint": "POST /api/upload",
+      "averageTime": 234,
+      "target": 200
+    }
+  ]
+}

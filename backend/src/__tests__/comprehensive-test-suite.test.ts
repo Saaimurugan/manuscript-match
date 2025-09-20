@@ -5,7 +5,7 @@
  * ensuring all components are thoroughly tested with high coverage.
  */
 
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { TestContext, createTestContext, seedTestDatabase } from '../test/testUtils';
 import { testUsers, testProcesses, testAuthors } from '../test/fixtures';
 

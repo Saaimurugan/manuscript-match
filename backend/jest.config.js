@@ -27,4 +27,14 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
   testTimeout: 10000,
+  // Custom reporters for automated test reporting
+  reporters: [
+    'default', // Keep the default Jest reporter
+    [
+      '<rootDir>/src/test-reporting/JestReporter.js',
+      // Configuration is loaded from jest-reporter.config.js
+      // Can be overridden with environment variables
+      {}
+    ]
+  ],
 };

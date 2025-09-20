@@ -89,6 +89,12 @@ monitoring.setAlertThresholds({
 // Set up global error handlers for uncaught exceptions
 setupGlobalErrorHandlers();
 
+// Swagger documentation setup
+import { setupSwagger } from '@/config/swagger';
+if (config.NODE_ENV !== 'production') {
+  setupSwagger(app);
+}
+
 // API routes
 import authRoutes from '@/routes/auth';
 import processRoutes from '@/routes/processes';

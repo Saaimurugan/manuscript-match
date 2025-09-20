@@ -176,7 +176,7 @@ describe('End-to-End Workflow Tests', () => {
       expect(searchComplete).toBe(true);
 
       // Step 6: Add manual reviewers if needed
-      const manualReviewerResponse = await testContext.request
+      await testContext.request
         .post(`/api/processes/${processId}/reviewers/manual`)
         .set(authHeaders)
         .send({
