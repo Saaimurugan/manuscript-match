@@ -1,12 +1,30 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiService } from "./apiService";
+import type { PaginatedResponse } from "@/types/api";
 
 export interface ActivityLog {
-  id?: string;
-  user_id: string;
-  action_type: string;
-  action_description: string;
-  metadata?: any;
-  created_at?: string;
+  id: string;
+  userId: string;
+  processId?: string;
+  action: string;
+  details?: any;
+  timestamp: string;
+  formattedTimestamp: string;
+}
+
+export interface ActivityLogFilters {
+  userId?: string;
+  processId?: string;
+  action?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ActivityLogQuery extends ActivityLogFilters {
+  page?: number;
+  limit?: number;
 }
 
 export class ActivityLogger {
@@ -22,8 +40,8 @@ export class ActivityLogger {
     return ActivityLogger.instance;
   }
 
-  setUser(username: string) {
-    this.currentUser = username;
+  setUser(userId: string) {
+    this.currentUser = userId;
   }
 
   clearUser() {
@@ -31,53 +49,94 @@ export class ActivityLogger {
   }
 
   async logActivity(
-    actionType: string,
-    actionDescription: string,
-    metadata?: any
-  ) {
+    action: string,
+    details?: any,
+    processId?: string
+  ): Promise<void> {
     if (!this.currentUser) {
       console.warn("No user set for activity logging");
       return;
     }
 
     try {
-      const { error } = await supabase.from("user_activity_logs").insert({
-        user_id: this.currentUser,
-        action_type: actionType,
-        action_description: actionDescription,
-        metadata: metadata || null,
-      });
-
-      if (error) {
-        console.error("Failed to log activity:", error);
-      }
+      // Activity logging is handled automatically by the backend middleware
+      // This method is kept for compatibility but doesn't need to make API calls
+      // as the backend logs activities automatically for authenticated requests
+      console.log(`Activity logged: ${action}`, { details, processId });
     } catch (err) {
       console.error("Error logging activity:", err);
     }
   }
 
-  async getUserActivities(userId?: string): Promise<ActivityLog[]> {
+  async getUserActivities(
+    query: ActivityLogQuery = {}
+  ): Promise<PaginatedResponse<ActivityLog>> {
     try {
-      const query = supabase
-        .from("user_activity_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const params = new URLSearchParams();
+      
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      if (query.userId) params.append('userId', query.userId);
+      if (query.processId) params.append('processId', query.processId);
+      if (query.action) params.append('action', query.action);
+      if (query.startDate) params.append('startDate', query.startDate);
+      if (query.endDate) params.append('endDate', query.endDate);
+      if (query.search) params.append('search', query.search);
+      if (query.sortBy) params.append('sortBy', query.sortBy);
+      if (query.sortOrder) params.append('sortOrder', query.sortOrder);
 
-      if (userId) {
-        query.eq("user_id", userId);
-      }
+      const response = await apiService.request<PaginatedResponse<ActivityLog>>({
+        method: 'GET',
+        url: `/admin/logs?${params.toString()}`,
+      });
 
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Failed to fetch activities:", error);
-        return [];
-      }
-
-      return data || [];
+      return response.data;
     } catch (err) {
-      console.error("Error fetching activities:", err);
-      return [];
+      console.error("Error fetching user activities:", err);
+      return {
+        data: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
+    }
+  }
+
+  async getProcessActivities(
+    processId: string,
+    query: Omit<ActivityLogQuery, 'processId'> = {}
+  ): Promise<PaginatedResponse<ActivityLog>> {
+    try {
+      const params = new URLSearchParams();
+      
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      if (query.userId) params.append('userId', query.userId);
+
+      const response = await apiService.request<PaginatedResponse<ActivityLog>>({
+        method: 'GET',
+        url: `/processes/${processId}/logs?${params.toString()}`,
+      });
+
+      return response.data;
+    } catch (err) {
+      console.error("Error fetching process activities:", err);
+      return {
+        data: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
     }
   }
 }

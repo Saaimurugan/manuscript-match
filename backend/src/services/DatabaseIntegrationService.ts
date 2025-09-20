@@ -3,6 +3,7 @@ import { PubMedClient } from './database/PubMedClient';
 import { ElsevierClient } from './database/ElsevierClient';
 import { WileyClient } from './database/WileyClient';
 import { TaylorFrancisClient } from './database/TaylorFrancisClient';
+import { acquireConnection } from '../config/database';
 import { Author, DatabaseType, SearchTerms } from '../types';
 
 export interface DatabaseSearchStatus {
@@ -162,9 +163,11 @@ export class DatabaseIntegrationService {
       dbProgress.status = 'searching';
       dbProgress.progress = 10;
 
-      // Perform the search
-      const result = await client.searchAuthors(searchTerms, {
-        maxResults: this.config.maxResultsPerDatabase || 100,
+      // Perform the search with connection management
+      const result = await acquireConnection(async () => {
+        return await client.searchAuthors(searchTerms, {
+          maxResults: this.config.maxResultsPerDatabase || 100,
+        });
       });
 
       // Update progress
@@ -186,7 +189,9 @@ export class DatabaseIntegrationService {
       .map(async database => {
         try {
           const client = this.clients.get(database)!;
-          return await client.searchByName(name);
+          return await acquireConnection(async () => {
+            return await client.searchByName(name);
+          });
         } catch (error) {
           console.error(`Search by name failed for ${database}:`, error);
           return [];

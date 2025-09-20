@@ -21,6 +21,7 @@ import {
   performanceHeadersMiddleware,
   performanceErrorHandler
 } from '@/middleware/performanceMonitoring';
+import { loadBalancingMiddleware } from '@/middleware/loadBalancing';
 
 // Create Express application
 const app = express();
@@ -33,14 +34,33 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
+// CORS debugging middleware (development only)
+if (config.env === 'development') {
+  app.use((req, res, next) => {
+    console.log(`CORS Debug - Origin: ${req.headers.origin}, Method: ${req.method}, Path: ${req.path}`);
+    next();
+  });
+}
+
 // CORS configuration
 app.use(cors({
   origin: config.env === 'production' 
     ? ['https://your-frontend-domain.com'] // Replace with actual frontend domain
-    : true, // Allow all origins in development
+    : [
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://localhost:8081',
+        'http://localhost:8082',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:8080',
+        'http://127.0.0.1:8081',
+        'http://127.0.0.1:8082'
+      ], // Allow common development ports
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Request parsing middleware
@@ -55,6 +75,9 @@ app.use(requestIdMiddleware);
 
 // Error correlation middleware
 app.use(errorCorrelationMiddleware);
+
+// Load balancing middleware (should be early in the chain)
+app.use(loadBalancingMiddleware);
 
 // Request monitoring middleware
 app.use(requestMonitoringMiddleware);

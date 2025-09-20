@@ -1,0 +1,654 @@
+<testsuites id="" name="" tests="25" failures="25" skipped="0" errors="0" time="89.679343">
+<testsuite name="complete-workflow.e2e.test.ts" timestamp="2025-09-20T11:43:27.480Z" hostname="chromium" tests="5" failures="5" skipped="0" time="155.167" errors="0">
+<testcase name="Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation" classname="complete-workflow.e2e.test.ts" time="31.068">
+<failure message="complete-workflow.e2e.test.ts:15:3 should complete full workflow from login to shortlist creation" type="FAILURE">
+<![CDATA[  [chromium] › complete-workflow.e2e.test.ts:15:3 › Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      15 |   test('should complete full workflow from login to shortlist creation', async ({ page }) => {
+      16 |     // Step 1: Login
+    > 17 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+         |                ^
+      18 |     await page.fill('[data-testid="password-input"]', 'password123');
+      19 |     await page.click('[data-testid="login-button"]');
+      20 |
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:17:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-chromium\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow" classname="complete-workflow.e2e.test.ts" time="31.046">
+<failure message="complete-workflow.e2e.test.ts:138:3 should handle errors gracefully during workflow" type="FAILURE">
+<![CDATA[  [chromium] › complete-workflow.e2e.test.ts:138:3 › Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      138 |   test('should handle errors gracefully during workflow', async ({ page }) => {
+      139 |     // Login first
+    > 140 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      141 |     await page.fill('[data-testid="password-input"]', 'password123');
+      142 |     await page.click('[data-testid="login-button"]');
+      143 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:140:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-chromium\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow" classname="complete-workflow.e2e.test.ts" time="30.955">
+<failure message="complete-workflow.e2e.test.ts:167:3 should save progress and allow resuming workflow" type="FAILURE">
+<![CDATA[  [chromium] › complete-workflow.e2e.test.ts:167:3 › Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      167 |   test('should save progress and allow resuming workflow', async ({ page }) => {
+      168 |     // Login and start workflow
+    > 169 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      170 |     await page.fill('[data-testid="password-input"]', 'password123');
+      171 |     await page.click('[data-testid="login-button"]');
+      172 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:169:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-chromium\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms" classname="complete-workflow.e2e.test.ts" time="31.034">
+<failure message="complete-workflow.e2e.test.ts:205:3 should handle network errors and retry mechanisms" type="FAILURE">
+<![CDATA[  [chromium] › complete-workflow.e2e.test.ts:205:3 › Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      205 |   test('should handle network errors and retry mechanisms', async ({ page }) => {
+      206 |     // Login first
+    > 207 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      208 |     await page.fill('[data-testid="password-input"]', 'password123');
+      209 |     await page.click('[data-testid="login-button"]');
+      210 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:207:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-chromium\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow" classname="complete-workflow.e2e.test.ts" time="31.064">
+<failure message="complete-workflow.e2e.test.ts:253:3 should handle authentication expiration during workflow" type="FAILURE">
+<![CDATA[  [chromium] › complete-workflow.e2e.test.ts:253:3 › Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      253 |   test('should handle authentication expiration during workflow', async ({ page }) => {
+      254 |     // Login first
+    > 255 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      256 |     await page.fill('[data-testid="password-input"]', 'password123');
+      257 |     await page.click('[data-testid="login-button"]');
+      258 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:255:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-a295b--expiration-during-workflow-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-a295b--expiration-during-workflow-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-a295b--expiration-during-workflow-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-a295b--expiration-during-workflow-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-a295b--expiration-during-workflow-chromium\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-a295b--expiration-during-workflow-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="complete-workflow.e2e.test.ts" timestamp="2025-09-20T11:43:27.480Z" hostname="firefox" tests="5" failures="5" skipped="0" time="0.061" errors="0">
+<testcase name="Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation" classname="complete-workflow.e2e.test.ts" time="0.008">
+<failure message="complete-workflow.e2e.test.ts:15:3 should complete full workflow from login to shortlist creation" type="FAILURE">
+<![CDATA[  [firefox] › complete-workflow.e2e.test.ts:15:3 › Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\firefox-1490\firefox\firefox.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow" classname="complete-workflow.e2e.test.ts" time="0.009">
+<failure message="complete-workflow.e2e.test.ts:138:3 should handle errors gracefully during workflow" type="FAILURE">
+<![CDATA[  [firefox] › complete-workflow.e2e.test.ts:138:3 › Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\firefox-1490\firefox\firefox.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow" classname="complete-workflow.e2e.test.ts" time="0.015">
+<failure message="complete-workflow.e2e.test.ts:167:3 should save progress and allow resuming workflow" type="FAILURE">
+<![CDATA[  [firefox] › complete-workflow.e2e.test.ts:167:3 › Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\firefox-1490\firefox\firefox.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms" classname="complete-workflow.e2e.test.ts" time="0.009">
+<failure message="complete-workflow.e2e.test.ts:205:3 should handle network errors and retry mechanisms" type="FAILURE">
+<![CDATA[  [firefox] › complete-workflow.e2e.test.ts:205:3 › Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\firefox-1490\firefox\firefox.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow" classname="complete-workflow.e2e.test.ts" time="0.02">
+<failure message="complete-workflow.e2e.test.ts:253:3 should handle authentication expiration during workflow" type="FAILURE">
+<![CDATA[  [firefox] › complete-workflow.e2e.test.ts:253:3 › Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\firefox-1490\firefox\firefox.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="complete-workflow.e2e.test.ts" timestamp="2025-09-20T11:43:27.480Z" hostname="webkit" tests="5" failures="5" skipped="0" time="0.045" errors="0">
+<testcase name="Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation" classname="complete-workflow.e2e.test.ts" time="0.012">
+<failure message="complete-workflow.e2e.test.ts:15:3 should complete full workflow from login to shortlist creation" type="FAILURE">
+<![CDATA[  [webkit] › complete-workflow.e2e.test.ts:15:3 › Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow" classname="complete-workflow.e2e.test.ts" time="0.008">
+<failure message="complete-workflow.e2e.test.ts:138:3 should handle errors gracefully during workflow" type="FAILURE">
+<![CDATA[  [webkit] › complete-workflow.e2e.test.ts:138:3 › Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow" classname="complete-workflow.e2e.test.ts" time="0.008">
+<failure message="complete-workflow.e2e.test.ts:167:3 should save progress and allow resuming workflow" type="FAILURE">
+<![CDATA[  [webkit] › complete-workflow.e2e.test.ts:167:3 › Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms" classname="complete-workflow.e2e.test.ts" time="0.009">
+<failure message="complete-workflow.e2e.test.ts:205:3 should handle network errors and retry mechanisms" type="FAILURE">
+<![CDATA[  [webkit] › complete-workflow.e2e.test.ts:205:3 › Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow" classname="complete-workflow.e2e.test.ts" time="0.008">
+<failure message="complete-workflow.e2e.test.ts:253:3 should handle authentication expiration during workflow" type="FAILURE">
+<![CDATA[  [webkit] › complete-workflow.e2e.test.ts:253:3 › Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="complete-workflow.e2e.test.ts" timestamp="2025-09-20T11:43:27.480Z" hostname="Mobile Chrome" tests="5" failures="5" skipped="0" time="171.175" errors="0">
+<testcase name="Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation" classname="complete-workflow.e2e.test.ts" time="31.398">
+<failure message="complete-workflow.e2e.test.ts:15:3 should complete full workflow from login to shortlist creation" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › complete-workflow.e2e.test.ts:15:3 › Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      15 |   test('should complete full workflow from login to shortlist creation', async ({ page }) => {
+      16 |     // Step 1: Login
+    > 17 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+         |                ^
+      18 |     await page.fill('[data-testid="password-input"]', 'password123');
+      19 |     await page.click('[data-testid="login-button"]');
+      20 |
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:17:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-24378-login-to-shortlist-creation-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow" classname="complete-workflow.e2e.test.ts" time="31.415">
+<failure message="complete-workflow.e2e.test.ts:138:3 should handle errors gracefully during workflow" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › complete-workflow.e2e.test.ts:138:3 › Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      138 |   test('should handle errors gracefully during workflow', async ({ page }) => {
+      139 |     // Login first
+    > 140 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      141 |     await page.fill('[data-testid="password-input"]', 'password123');
+      142 |     await page.click('[data-testid="login-button"]');
+      143 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:140:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2d577--gracefully-during-workflow-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow" classname="complete-workflow.e2e.test.ts" time="31.407">
+<failure message="complete-workflow.e2e.test.ts:167:3 should save progress and allow resuming workflow" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › complete-workflow.e2e.test.ts:167:3 › Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      167 |   test('should save progress and allow resuming workflow', async ({ page }) => {
+      168 |     // Login and start workflow
+    > 169 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      170 |     await page.fill('[data-testid="password-input"]', 'password123');
+      171 |     await page.click('[data-testid="login-button"]');
+      172 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:169:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\test-results\complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-2300e-and-allow-resuming-workflow-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms" classname="complete-workflow.e2e.test.ts" time="38.537">
+<failure message="complete-workflow.e2e.test.ts:205:3 should handle network errors and retry mechanisms" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › complete-workflow.e2e.test.ts:205:3 › Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      205 |   test('should handle network errors and retry mechanisms', async ({ page }) => {
+      206 |     // Login first
+    > 207 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      208 |     await page.fill('[data-testid="password-input"]', 'password123');
+      209 |     await page.click('[data-testid="login-button"]');
+      210 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:207:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-e6478-errors-and-retry-mechanisms-Mobile-Chrome\video.webm]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow" classname="complete-workflow.e2e.test.ts" time="38.418">
+<failure message="complete-workflow.e2e.test.ts:253:3 should handle authentication expiration during workflow" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › complete-workflow.e2e.test.ts:253:3 › Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: page.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('[data-testid="email-input"]')
+
+
+      253 |   test('should handle authentication expiration during workflow', async ({ page }) => {
+      254 |     // Login first
+    > 255 |     await page.fill('[data-testid="email-input"]', 'test@example.com');
+          |                ^
+      256 |     await page.fill('[data-testid="password-input"]', 'password123');
+      257 |     await page.click('[data-testid="login-button"]');
+      258 |     
+        at D:\PR\manuscript-match\src\test\e2e\complete-workflow.e2e.test.ts:255:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-a295b--expiration-during-workflow-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\..\..\test-results\complete-workflow.e2e-Comp-a295b--expiration-during-workflow-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|complete-workflow.e2e-Comp-a295b--expiration-during-workflow-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|complete-workflow.e2e-Comp-a295b--expiration-during-workflow-Mobile-Chrome\video.webm]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="complete-workflow.e2e.test.ts" timestamp="2025-09-20T11:43:27.480Z" hostname="Mobile Safari" tests="5" failures="5" skipped="0" time="0.044" errors="0">
+<testcase name="Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation" classname="complete-workflow.e2e.test.ts" time="0.012">
+<failure message="complete-workflow.e2e.test.ts:15:3 should complete full workflow from login to shortlist creation" type="FAILURE">
+<![CDATA[  [Mobile Safari] › complete-workflow.e2e.test.ts:15:3 › Complete Manuscript Analysis Workflow › should complete full workflow from login to shortlist creation 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow" classname="complete-workflow.e2e.test.ts" time="0.007">
+<failure message="complete-workflow.e2e.test.ts:138:3 should handle errors gracefully during workflow" type="FAILURE">
+<![CDATA[  [Mobile Safari] › complete-workflow.e2e.test.ts:138:3 › Complete Manuscript Analysis Workflow › should handle errors gracefully during workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow" classname="complete-workflow.e2e.test.ts" time="0.011">
+<failure message="complete-workflow.e2e.test.ts:167:3 should save progress and allow resuming workflow" type="FAILURE">
+<![CDATA[  [Mobile Safari] › complete-workflow.e2e.test.ts:167:3 › Complete Manuscript Analysis Workflow › should save progress and allow resuming workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms" classname="complete-workflow.e2e.test.ts" time="0.008">
+<failure message="complete-workflow.e2e.test.ts:205:3 should handle network errors and retry mechanisms" type="FAILURE">
+<![CDATA[  [Mobile Safari] › complete-workflow.e2e.test.ts:205:3 › Complete Manuscript Analysis Workflow › should handle network errors and retry mechanisms 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+<testcase name="Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow" classname="complete-workflow.e2e.test.ts" time="0.006">
+<failure message="complete-workflow.e2e.test.ts:253:3 should handle authentication expiration during workflow" type="FAILURE">
+<![CDATA[  [Mobile Safari] › complete-workflow.e2e.test.ts:253:3 › Complete Manuscript Analysis Workflow › should handle authentication expiration during workflow 
+
+    Error: browserType.launch: Executable doesn't exist at C:\Users\MAC011787\AppData\Local\ms-playwright\webkit-2203\Playwright.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

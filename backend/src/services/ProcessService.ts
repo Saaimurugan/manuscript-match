@@ -19,6 +19,7 @@ export interface ProcessWithMetadata {
   id: string;
   userId: string;
   title: string;
+  description?: string;
   status: ProcessStatus;
   currentStep: ProcessStep;
   metadata: ProcessMetadata | null;
@@ -37,12 +38,15 @@ export class ProcessService {
     this.activityLogRepository = new ActivityLogRepository(prisma);
   }
 
-  async createProcess(userId: string, data: { title: string }): Promise<ProcessWithMetadata> {
+  async createProcess(userId: string, data: { title: string; description?: string }): Promise<ProcessWithMetadata> {
+    const metadata = data.description ? JSON.stringify({ description: data.description }) : undefined;
+    
     const createData: CreateProcessInput = {
       userId,
       title: data.title,
       status: ProcessStatus.CREATED,
       currentStep: ProcessStep.UPLOAD,
+      metadata,
     };
 
     const process = await this.processRepository.create(createData);
@@ -52,7 +56,7 @@ export class ProcessService {
       userId,
       processId: process.id,
       action: 'PROCESS_CREATED',
-      details: JSON.stringify({ title: data.title }),
+      details: JSON.stringify({ title: data.title, description: data.description }),
     });
 
     return this.formatProcess(process);
@@ -160,7 +164,7 @@ export class ProcessService {
   async updateProcess(
     processId: string, 
     userId: string, 
-    data: UpdateProcessInput
+    data: UpdateProcessInput & { description?: string }
   ): Promise<ProcessWithMetadata | null> {
     const existingProcess = await this.processRepository.findById(processId);
     
@@ -168,7 +172,16 @@ export class ProcessService {
       return null;
     }
 
-    const updatedProcess = await this.processRepository.update(processId, data);
+    // Handle description by updating metadata
+    let updateData: UpdateProcessInput = { ...data };
+    if (data.description !== undefined) {
+      const existingMetadata = existingProcess.metadata ? JSON.parse(existingProcess.metadata) : {};
+      const newMetadata = { ...existingMetadata, description: data.description };
+      updateData.metadata = JSON.stringify(newMetadata);
+      delete (updateData as any).description; // Remove description from the update data
+    }
+
+    const updatedProcess = await this.processRepository.update(processId, updateData);
 
     // Log the activity
     await this.activityLogRepository.create({
@@ -623,13 +636,17 @@ export class ProcessService {
   }
 
   private formatProcess(process: any): ProcessWithMetadata {
+    const metadata = process.metadata ? JSON.parse(process.metadata) : null;
+    const description = metadata?.description || undefined;
+    
     return {
       id: process.id,
       userId: process.userId,
       title: process.title,
+      description,
       status: process.status as ProcessStatus,
       currentStep: process.currentStep as ProcessStep,
-      metadata: process.metadata ? JSON.parse(process.metadata) : null,
+      metadata,
       createdAt: process.createdAt,
       updatedAt: process.updatedAt,
     };

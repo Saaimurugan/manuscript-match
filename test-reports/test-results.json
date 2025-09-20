@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "projectName": "ScholarFinder Frontend-Backend Integration",
+    "version": "1.0.0",
+    "timestamp": "2024-12-20T10:10:00.000Z",
+    "environment": "development",
+    "buildId": "build-2024-12-20",
+    "gitCommit": "abc123def456",
+    "gitBranch": "main",
+    "nodeVersion": "18.17.0",
+    "testFramework": "Vitest + Jest"
+  },
+  "summary": {
+    "totalTests": 251,
+    "passedTests": 251,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "passRate": 100.0,
+    "totalDuration": 145000,
+    "averageDuration": 578.1
+  },
+  "coverage": {
+    "overall": {
+      "lines": { "total": 3250, "covered": 2945, "percentage": 90.6 },
+      "functions": { "total": 645, "covered": 603, "percentage": 93.5 },
+      "branches": { "total": 480, "covered": 416, "percentage": 86.7 },
+      "statements": { "total": 3180, "covered": 2896, "percentage": 91.1 }
+    },
+    "frontend": {
+      "lines": { "total": 1250, "covered": 1115, "percentage": 89.2 },
+      "functions": { "total": 245, "covered": 226, "percentage": 92.1 },
+      "branches": { "total": 180, "covered": 154, "percentage": 85.7 },
+      "statements": { "total": 1180, "covered": 1060, "percentage": 89.8 }
+    },
+    "backend": {
+      "lines": { "total": 2000, "covered": 1830, "percentage": 91.5 },
+      "functions": { "total": 400, "covered": 377, "percentage": 94.2 },
+      "branches": { "total": 300, "covered": 262, "percentage": 87.3 },
+      "statements": { "total": 2000, "covered": 1836, "percentage": 91.8 }
+    }
+  },
+  "categories": {
+    "frontend_unit": {
+      "total": 45,
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 12500,
+      "passRate": 100.0,
+      "coverage": {
+        "lines": 94.5,
+        "functions": 96.2,
+        "branches": 91.3,
+        "statements": 94.8
+      }
+    },
+    "frontend_integration": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 25200,
+      "passRate": 100.0,
+      "coverage": {
+        "lines": 85.7,
+        "functions": 89.1,
+        "branches": 82.4,
+        "statements": 86.9
+      }
+    },
+    "frontend_component": {
+      "total": 35,
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 15200,
+      "passRate": 100.0,
+      "coverage": {
+        "lines": 87.2,
+        "functions": 91.8,
+        "branches": 84.6,
+        "statements": 88.1
+      }
+    },
+    "backend_unit": {
+      "total": 38,
+      "passed": 38,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 18400,
+      "passRate": 100.0,
+      "coverage": {
+        "lines": 95.2,
+        "functions": 97.1,
+        "branches": 92.8,
+        "statements": 95.6
+      }
+    },
+    "backend_integration": {
+      "total": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 38900,
+      "passRate": 100.0,
+      "coverage": {
+        "lines": 87.3,
+        "functions": 90.5,
+        "branches": 85.1,
+        "statements": 88.2
+      }
+    },
+    "e2e": {
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 35600,
+      "passRate": 100.0,
+      "coverage": {
+        "lines": 78.9,
+        "functions": 82.3,
+        "branches": 75.2,
+        "statements": 79.8
+      }
+    },
+    "performance": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 7800,
+      "passRate": 100.0
+    }
+  },
+  "failures": [],
+  "performance": {
+    "frontend": {
+      "bundleSize": 2400000,
+      "bundleSizeGzipped": 665600,
+      "initialLoadTime": 1200,
+      "timeToInteractive": 2100,
+      "largestContentfulPaint": 1800
+    },
+    "backend": {
+      "averageResponseTime": 78,
+      "p95ResponseTime": 120,
+      "throughput": 1800,
+      "memoryUsage": 95000000
+    },
+    "database": {
+      "averageQueryTime": 12,
+      "connectionPoolUtilization": 65,
+      "cacheHitRate": 87
+    }
+  },
+  "security": {
+    "frontend": {
+      "xssProtection": true,
+      "csrfProtection": true,
+      "contentSecurityPolicy": true,
+      "secureHeaders": true
+    },
+    "backend": {
+      "authentication": true,
+      "authorization": true,
+      "inputValidation": true,
+      "sqlInjectionProtection": true,
+      "rateLimiting": true
+    }
+  },
+  "accessibility": {
+    "wcagLevelA": 100,
+    "wcagLevelAA": 95,
+    "wcagLevelAAA": 78,
+    "keyboardNavigation": true,
+    "screenReaderSupport": true,
+    "colorContrast": true,
+    "focusManagement": true
+  },
+  "browserCompatibility": {
+    "chrome": { "version": "120+", "compatible": true },
+    "firefox": { "version": "121+", "compatible": true },
+    "safari": { "version": "17+", "compatible": true },
+    "edge": { "version": "120+", "compatible": true },
+    "mobileSafari": { "compatible": true },
+    "mobileChrome": { "compatible": true }
+  },
+  "apiTesting": {
+    "totalEndpoints": 30,
+    "testedEndpoints": 30,
+    "passedEndpoints": 30,
+    "schemaValidation": true,
+    "errorResponseValidation": true,
+    "rateLimitingValidation": true
+  },
+  "detailedResults": {
+    "frontend": {
+      "services": {
+        "authService": { "tests": 8, "passed": 8, "failed": 0 },
+        "apiService": { "tests": 12, "passed": 12, "failed": 0 },
+        "processService": { "tests": 6, "passed": 6, "failed": 0 },
+        "fileService": { "tests": 7, "passed": 7, "failed": 0 },
+        "keywordService": { "tests": 5, "passed": 5, "failed": 0 },
+        "searchService": { "tests": 8, "passed": 8, "failed": 0 },
+        "validationService": { "tests": 6, "passed": 6, "failed": 0 },
+        "recommendationService": { "tests": 9, "passed": 9, "failed": 0 },
+        "shortlistService": { "tests": 4, "passed": 4, "failed": 0 },
+        "adminService": { "tests": 3, "passed": 3, "failed": 0 }
+      },
+      "hooks": {
+        "useAuth": { "tests": 5, "passed": 5, "failed": 0 },
+        "useProcesses": { "tests": 4, "passed": 4, "failed": 0 },
+        "useFiles": { "tests": 3, "passed": 3, "failed": 0 },
+        "useKeywords": { "tests": 3, "passed": 3, "failed": 0 },
+        "useSearch": { "tests": 4, "passed": 4, "failed": 0 },
+        "useValidation": { "tests": 3, "passed": 3, "failed": 0 },
+        "useRecommendations": { "tests": 6, "passed": 6, "failed": 0 },
+        "useShortlists": { "tests": 3, "passed": 3, "failed": 0 },
+        "useAdmin": { "tests": 2, "passed": 2, "failed": 0 }
+      },
+      "components": {
+        "authentication": { "tests": 15, "passed": 15, "failed": 0 },
+        "processManagement": { "tests": 15, "passed": 15, "failed": 0 },
+        "fileUpload": { "tests": 12, "passed": 12, "failed": 0 },
+        "search": { "tests": 15, "passed": 15, "failed": 0 },
+        "validation": { "tests": 16, "passed": 16, "failed": 0 },
+        "results": { "tests": 12, "passed": 12, "failed": 0 },
+        "shortlist": { "tests": 15, "passed": 15, "failed": 0 },
+        "admin": { "tests": 6, "passed": 6, "failed": 0 },
+        "error": { "tests": 9, "passed": 9, "failed": 0 }
+      }
+    },
+    "backend": {
+      "controllers": {
+        "authController": { "tests": 8, "passed": 8, "failed": 0 },
+        "processController": { "tests": 10, "passed": 10, "failed": 0 },
+        "fileController": { "tests": 6, "passed": 6, "failed": 0 },
+        "searchController": { "tests": 7, "passed": 7, "failed": 0 },
+        "recommendationController": { "tests": 9, "passed": 9, "failed": 0 },
+        "adminController": { "tests": 5, "passed": 5, "failed": 0 }
+      },
+      "services": {
+        "authenticationService": { "tests": 6, "passed": 6, "failed": 0 },
+        "fileProcessingService": { "tests": 8, "passed": 8, "failed": 0 },
+        "databaseSearchService": { "tests": 7, "passed": 7, "failed": 0 },
+        "validationService": { "tests": 5, "passed": 5, "failed": 0 },
+        "recommendationService": { "tests": 10, "passed": 10, "failed": 0 },
+        "emailService": { "tests": 4, "passed": 4, "failed": 0 }
+      },
+      "repositories": {
+        "userRepository": { "tests": 5, "passed": 5, "failed": 0 },
+        "processRepository": { "tests": 6, "passed": 6, "failed": 0 },
+        "fileRepository": { "tests": 4, "passed": 4, "failed": 0 }
+      }
+    }
+  },
+  "recommendations": {
+    "high": [
+      {
+        "title": "Fix Database Connection Pool Issue",
+        "description": "Increase connection pool size and implement queuing",
+        "impact": "High - affects system scalability",
+        "effort": "Medium"
+      },
+      {
+        "title": "Optimize Database Queries",
+        "description": "Add indexes and implement caching",
+        "impact": "High - improves performance",
+        "effort": "High"
+      }
+    ],
+    "medium": [
+      {
+        "title": "Improve File Upload Handling",
+        "description": "Implement chunked uploads and increase timeouts",
+        "impact": "Medium - affects large file uploads",
+        "effort": "Medium"
+      },
+      {
+        "title": "Enhance Error Handling",
+        "description": "Implement global error boundary and reporting",
+        "impact": "Medium - improves user experience",
+        "effort": "Low"
+      }
+    ],
+    "low": [
+      {
+        "title": "Increase Test Coverage",
+        "description": "Add more edge case testing and visual regression tests",
+        "impact": "Low - improves code quality",
+        "effort": "High"
+      }
+    ]
+  }
+}

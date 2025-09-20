@@ -1,0 +1,2 @@
+This is an invalid file for testing error handling.
+It should not be accepted by the file upload component.

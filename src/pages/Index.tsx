@@ -1,234 +1,50 @@
-import { useState, useEffect } from "react";
-import { LoginForm } from "@/components/auth/LoginForm";
-import { FileUpload } from "@/components/upload/FileUpload";
-import { DataExtraction } from "@/components/extraction/DataExtraction";
-import { ReviewerSearch } from "@/components/search/ReviewerSearch";
-import { ReviewerResults } from "@/components/results/ReviewerResults";
+import { useState } from "react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { ProcessDashboard, ProcessWorkflow } from "@/components/process";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { LogOut, FileText, Search, Users, CheckCircle, Activity, Shield } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 import { ActivityLog } from "@/components/activity/ActivityLog";
-import { ActivityLogger } from "@/services/activityLogger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Process } from "@/types/api";
 
-interface User {
-  username: string;
-}
-
-interface ExtractedData {
-  title: string;
-  abstract: string;
-  keywords: string[];
-  authors: Array<{
-    name: string;
-    affiliation: string;
-    email?: string;
-  }>;
-  headings: string[];
-}
-
-interface Reviewer {
-  id: string;
-  name: string;
-  email?: string;
-  affiliation: string;
-  country: string;
-  publicationCount: number;
-  recentPublications: string[];
-  expertise: string[];
-  database: string;
-  matchScore: number;
-}
+type ViewMode = 'dashboard' | 'workflow';
 
 const Index = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
-  const [primaryKeywords, setPrimaryKeywords] = useState<string[]>([]);
-  const [secondaryKeywords, setSecondaryKeywords] = useState<string[]>([]);
-  const [reviewers, setReviewers] = useState<Reviewer[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
   const { toast } = useToast();
-  const logger = ActivityLogger.getInstance();
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      logger.setUser(user.username);
-    } else {
-      logger.clearUser();
-    }
-  }, [user]);
+  const handleSelectProcess = (process: Process) => {
+    setSelectedProcess(process);
+    setViewMode('workflow');
+  };
 
-  const handleLogin = async (credentials: { username: string; password: string }) => {
-    // In a real app, this would validate against a backend
-    setUser({ username: credentials.username });
-    await logger.logActivity(
-      "login",
-      `User ${credentials.username} logged in`,
-      { timestamp: new Date().toISOString() }
-    );
+  const handleBackToDashboard = () => {
+    setSelectedProcess(null);
+    setViewMode('dashboard');
   };
 
   const handleLogout = async () => {
-    await logger.logActivity(
-      "logout",
-      `User ${user?.username} logged out`,
-      { timestamp: new Date().toISOString() }
-    );
-    setUser(null);
-    setCurrentStep(1);
-    setUploadedFile(null);
-    setExtractedData(null);
-    setPrimaryKeywords([]);
-    setSecondaryKeywords([]);
-    setReviewers([]);
+    try {
+      await logout();
+      setViewMode('dashboard');
+      setSelectedProcess(null);
+      toast({
+        title: 'Logged out',
+        description: 'You have been successfully logged out.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to logout. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
-
-  const handleFileUpload = async (file: File) => {
-    setUploadedFile(file);
-    
-    await logger.logActivity(
-      "upload",
-      `Uploaded file: ${file.name}`,
-      { fileName: file.name, fileSize: file.size, fileType: file.type }
-    );
-    
-    // Simulate data extraction
-    const mockData: ExtractedData = {
-      title: "Machine Learning Applications in Biomedical Research: A Comprehensive Review",
-      abstract: "This comprehensive review examines the current state and future prospects of machine learning applications in biomedical research. We analyze various ML techniques including deep learning, ensemble methods, and natural language processing as applied to clinical diagnosis, drug discovery, and personalized medicine. Our findings indicate significant potential for ML to transform healthcare delivery and research methodologies.",
-      keywords: ["machine learning", "biomedical research", "deep learning", "clinical diagnosis", "drug discovery"],
-      authors: [
-        { name: "Dr. Sarah Johnson", affiliation: "Stanford University Medical Center", email: "s.johnson@stanford.edu" },
-        { name: "Prof. Michael Chen", affiliation: "MIT Computer Science Lab", email: "m.chen@mit.edu" },
-        { name: "Dr. Emily Rodriguez", affiliation: "Johns Hopkins Medical School" }
-      ],
-      headings: ["Introduction", "Literature Review", "Methodology", "Machine Learning Techniques", "Applications in Clinical Diagnosis", "Drug Discovery Applications", "Results and Discussion", "Future Directions", "Conclusion"]
-    };
-    
-    setExtractedData(mockData);
-    setPrimaryKeywords(mockData.keywords.slice(0, 3));
-    setSecondaryKeywords(mockData.keywords.slice(3));
-    setCurrentStep(2);
-  };
-
-  const handleKeywordsChange = (primary: string[], secondary: string[]) => {
-    setPrimaryKeywords(primary);
-    setSecondaryKeywords(secondary);
-  };
-
-  const handleSearch = async (keywords: string[], databases: string[]) => {
-    await logger.logActivity(
-      "search",
-      `Performed reviewer search`,
-      { keywords, databases, timestamp: new Date().toISOString() }
-    );
-    // Simulate reviewer search results
-    const mockReviewers: Reviewer[] = [
-      {
-        id: "1",
-        name: "Dr. Jennifer Walsh",
-        email: "j.walsh@harvard.edu",
-        affiliation: "Harvard Medical School",
-        country: "United States",
-        publicationCount: 23,
-        recentPublications: [
-          "Deep learning approaches for medical image analysis (2023)",
-          "Machine learning in clinical decision support systems (2022)",
-          "Automated diagnosis using neural networks (2023)"
-        ],
-        expertise: ["machine learning", "medical imaging", "neural networks", "clinical AI"],
-        database: "pubmed",
-        matchScore: 92
-      },
-      {
-        id: "2", 
-        name: "Prof. David Kumar",
-        affiliation: "University of Oxford",
-        country: "United Kingdom",
-        publicationCount: 31,
-        recentPublications: [
-          "Ensemble methods for biomedical classification (2023)",
-          "Drug discovery through AI-driven molecular analysis (2022)"
-        ],
-        expertise: ["drug discovery", "ensemble methods", "molecular analysis"],
-        database: "sciencedirect",
-        matchScore: 88
-      },
-      {
-        id: "3",
-        name: "Dr. Maria Gonzalez",
-        email: "m.gonzalez@ucl.ac.uk",
-        affiliation: "University College London",
-        country: "United Kingdom", 
-        publicationCount: 18,
-        recentPublications: [
-          "Natural language processing in clinical text mining (2023)",
-          "Personalized medicine through machine learning (2022)"
-        ],
-        expertise: ["natural language processing", "personalized medicine", "clinical text mining"],
-        database: "pubmed",
-        matchScore: 85
-      }
-    ];
-    
-    setReviewers(mockReviewers);
-    setCurrentStep(3);
-  };
-
-  const handleExport = async (selectedReviewers: Reviewer[]) => {
-    // Log export activity
-    await logger.logActivity(
-      "EXPORT",
-      `Exported ${selectedReviewers.length} reviewers`,
-      { 
-        reviewerCount: selectedReviewers.length, 
-        reviewerNames: selectedReviewers.map(r => r.name),
-        databases: [...new Set(selectedReviewers.map(r => r.database))],
-        timestamp: new Date().toISOString() 
-      }
-    );
-
-    // Create CSV content
-    const csvContent = [
-      ["Name", "Email", "Affiliation", "Country", "Match Score", "Database", "Expertise"],
-      ...selectedReviewers.map(r => [
-        r.name,
-        r.email || "",
-        r.affiliation,
-        r.country,
-        r.matchScore.toString(),
-        r.database,
-        r.expertise.join("; ")
-      ])
-    ].map(row => row.join(",")).join("\n");
-
-    // Download CSV
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "reviewers.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export successful",
-      description: `${selectedReviewers.length} reviewers exported to CSV format.`,
-    });
-  };
-
-  const getStepProgress = () => {
-    return ((currentStep - 1) / 4) * 100;
-  };
-
-  if (!user) {
-    return <LoginForm onLogin={handleLogin} />;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-academic-light">
@@ -244,7 +60,7 @@ const Index = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Welcome, {user.username}</span>
+              <span className="text-sm text-muted-foreground">Welcome, {user?.email}</span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -256,87 +72,34 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Progress Indicator */}
-        <Card className="mb-8">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Research Workflow Progress</CardTitle>
-              <span className="text-sm text-muted-foreground">Step {currentStep} of 5</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Progress value={getStepProgress()} className="mb-4" />
-            <div className="flex justify-between text-sm">
-              <div className={`flex items-center space-x-2 ${currentStep >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <FileText className="w-4 h-4" />
-                <span>Upload & Extract</span>
-              </div>
-              <div className={`flex items-center space-x-2 ${currentStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <Search className="w-4 h-4" />
-                <span>Keyword Curator</span>
-              </div>
-              <div className={`flex items-center space-x-2 ${currentStep >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <CheckCircle className="w-4 h-4" />
-                <span>String Generator</span>
-              </div>
-              <div className={`flex items-center space-x-2 ${currentStep >= 4 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <Users className="w-4 h-4" />
-                <span>Expert Curator</span>
-              </div>
-              <div className={`flex items-center space-x-2 ${currentStep >= 5 ? 'text-primary' : 'text-muted-foreground'}`}>
-                <CheckCircle className="w-4 h-4" />
-                <span>Expert Validator</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Main Content with Activity Tracking */}
-        <Tabs defaultValue="workflow" className="space-y-4">
-          <TabsList className={`grid w-full ${user.username === "admin" ? "grid-cols-3" : "grid-cols-2"} max-w-md`}>
-            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+        {/* Main Content with Process Management */}
+        <Tabs defaultValue="processes" className="space-y-4">
+          <TabsList className={`grid w-full ${user?.role === "ADMIN" ? "grid-cols-3" : "grid-cols-2"} max-w-md`}>
+            <TabsTrigger value="processes">Processes</TabsTrigger>
             <TabsTrigger value="activity">Activity Log</TabsTrigger>
-            {user.username === "admin" && (
+            {user?.role === "ADMIN" && (
               <TabsTrigger value="admin">Admin</TabsTrigger>
             )}
           </TabsList>
           
-          <TabsContent value="workflow" className="space-y-8">
-            {currentStep === 1 && (
-              <FileUpload 
-                onFileUpload={handleFileUpload}
-                uploadedFile={uploadedFile}
+          <TabsContent value="processes">
+            {viewMode === 'dashboard' ? (
+              <ProcessDashboard onSelectProcess={handleSelectProcess} />
+            ) : selectedProcess ? (
+              <ProcessWorkflow 
+                processId={selectedProcess.id}
+                onBack={handleBackToDashboard}
               />
-            )}
-
-            {currentStep === 2 && extractedData && (
-              <div className="space-y-8">
-                <DataExtraction 
-                  data={extractedData}
-                  fileName={uploadedFile?.name || "manuscript.docx"}
-                />
-                <ReviewerSearch
-                  primaryKeywords={primaryKeywords}
-                  secondaryKeywords={secondaryKeywords}
-                  onKeywordsChange={handleKeywordsChange}
-                  onSearch={handleSearch}
-                />
-              </div>
-            )}
-
-            {currentStep === 3 && reviewers.length > 0 && (
-              <ReviewerResults 
-                reviewers={reviewers}
-                onExport={handleExport}
-              />
+            ) : (
+              <ProcessDashboard onSelectProcess={handleSelectProcess} />
             )}
           </TabsContent>
           
           <TabsContent value="activity">
-            <ActivityLog userId={user?.username} currentUser={user?.username} />
+            <ActivityLog userId={user?.id} currentUser={user?.id} />
           </TabsContent>
 
-          {user.username === "admin" && (
+          {user?.role === "ADMIN" && (
             <TabsContent value="admin">
               <AdminDashboard />
             </TabsContent>

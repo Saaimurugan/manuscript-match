@@ -60,8 +60,8 @@ export const performanceMonitoringMiddleware = (
       });
     }
 
-    // Record slow requests
-    if (responseTime > 1000) {
+    // Record slow requests with improved threshold
+    if (responseTime > 500) { // Lowered threshold from 1000ms to 500ms
       performanceMonitoringService.recordMetric({
         name: 'endpoint.slow_request',
         value: responseTime,
@@ -70,9 +70,17 @@ export const performanceMonitoringMiddleware = (
           method: req.method,
           path: req.route?.path || req.path,
           status_code: res.statusCode.toString(),
-          threshold: 'slow'
+          threshold: responseTime > 1000 ? 'very_slow' : 'slow'
         }
       });
+    }
+
+    // Add response time header for debugging
+    res.setHeader('X-Response-Time', `${responseTime.toFixed(2)}ms`);
+    
+    // Add performance warning header for slow requests
+    if (responseTime > 1000) {
+      res.setHeader('X-Performance-Warning', 'slow-response');
     }
 
     // Call original end method and return the response

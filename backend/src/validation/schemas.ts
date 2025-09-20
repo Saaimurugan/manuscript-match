@@ -35,6 +35,7 @@ export const changePasswordSchema = Joi.object({
 // Process validation schemas
 export const createProcessSchema = Joi.object({
   title: Joi.string().min(1).max(500).required(),
+  description: Joi.string().min(1).max(1000).optional(),
   status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
   currentStep: Joi.string().valid(...Object.values(ProcessStep)).optional(),
   metadata: Joi.string().optional(),
@@ -42,6 +43,7 @@ export const createProcessSchema = Joi.object({
 
 export const updateProcessSchema = Joi.object({
   title: Joi.string().min(1).max(500).optional(),
+  description: Joi.string().min(1).max(1000).optional(),
   status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
   currentStep: Joi.string().valid(...Object.values(ProcessStep)).optional(),
   metadata: Joi.string().optional(),
@@ -174,7 +176,8 @@ export const paginationSchema = Joi.object({
 export const processQuerySchema = Joi.object({
   status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
   step: Joi.string().valid(...Object.values(ProcessStep)).optional(),
-}).concat(paginationSchema);
+  _t: Joi.string().optional(), // Allow cache-busting timestamp parameter
+}).concat(paginationSchema).unknown(true); // Allow other unknown parameters
 
 // Export validation schemas
 export const exportFormatSchema = Joi.object({
@@ -328,7 +331,8 @@ export const recommendationQuerySchema = Joi.object({
     Joi.array().items(Joi.string().valid('manuscript_author', 'co_author', 'institutional', 'recent_collaboration'))
   ).optional(),
   onlyValidated: Joi.boolean().optional(),
-});
+  _t: Joi.string().optional(), // Allow cache-busting timestamp parameter
+}).unknown(true); // Allow other unknown parameters
 
 // Common validation helpers
 export const validateId = (id: string): void => {
@@ -339,9 +343,45 @@ export const validateId = (id: string): void => {
 };
 
 export const validateEmail = (email: string): void => {
-  const { error } = emailSchema.validate(email);
-  if (error) {
-    throw new Error(`Invalid email: ${error.message}`);
+  // Use a more comprehensive RFC 5322 compliant email regex
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  if (!email || typeof email !== 'string') {
+    throw new Error('Email is required and must be a string');
+  }
+  
+  const trimmedEmail = email.trim();
+  if (!trimmedEmail) {
+    throw new Error('Email cannot be empty');
+  }
+  
+  if (trimmedEmail.length > 254) {
+    throw new Error('Email is too long (maximum 254 characters)');
+  }
+  
+  if (!emailRegex.test(trimmedEmail)) {
+    throw new Error('Invalid email format');
+  }
+  
+  // Additional checks for common edge cases
+  const [localPart, domain] = trimmedEmail.split('@');
+  
+  if (localPart.length > 64) {
+    throw new Error('Email local part is too long (maximum 64 characters)');
+  }
+  
+  if (domain.length > 253) {
+    throw new Error('Email domain is too long (maximum 253 characters)');
+  }
+  
+  // Check for consecutive dots
+  if (trimmedEmail.includes('..')) {
+    throw new Error('Email cannot contain consecutive dots');
+  }
+  
+  // Check for dots at the beginning or end of local part
+  if (localPart.startsWith('.') || localPart.endsWith('.')) {
+    throw new Error('Email local part cannot start or end with a dot');
   }
 };
 
