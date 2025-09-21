@@ -149,7 +149,7 @@ const loadConfig = (): AppConfig => {
         const environment = determineEnvironment();
         
         // Load configuration values
-        const apiBaseUrl = getEnvVar('VITE_API_BASE_URL', 'http://localhost:3001');
+        const apiBaseUrl = getEnvVar('VITE_API_BASE_URL', 'http://localhost:3002');
         const apiTimeout = getEnvNumber('VITE_API_TIMEOUT', 60000); // Increased to 60 seconds
         const apiRetryAttempts = getEnvNumber('VITE_API_RETRY_ATTEMPTS', 3);
         const apiRetryDelay = getEnvNumber('VITE_API_RETRY_DELAY', 1000);
@@ -265,8 +265,40 @@ const loadConfig = (): AppConfig => {
     }
 };
 
-// Export the configuration instance
-export const config = loadConfig();
+// Export the configuration instance with error handling
+let config: AppConfig;
+try {
+  config = loadConfig();
+} catch (error) {
+  console.error('Failed to load configuration, using defaults:', error);
+  
+  // Fallback configuration
+  config = {
+    apiBaseUrl: 'http://localhost:3002',
+    apiTimeout: 60000,
+    apiRetryAttempts: 3,
+    apiRetryDelay: 1000,
+    maxFileSize: 104857600,
+    supportedFileTypes: ['pdf', 'docx', 'doc'],
+    uploadChunkSize: 1048576,
+    jwtStorageKey: 'scholarfinder_token',
+    tokenRefreshThreshold: 300000,
+    enableDevTools: true,
+    enableQueryDevtools: true,
+    enableDebugLogging: true,
+    enablePerformanceMonitoring: true,
+    cacheStaleTime: 300000,
+    cacheGcTime: 600000,
+    paginationDefaultSize: 20,
+    toastDuration: 5000,
+    debounceDelay: 300,
+    enableApiMocking: false,
+    environment: 'development',
+    version: '1.0.0',
+  };
+}
+
+export { config };
 
 // Export individual config values for convenience
 export const {

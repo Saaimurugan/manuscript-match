@@ -23,6 +23,7 @@ import {
 } from "@/hooks/useAdmin";
 import { useAuth } from "@/hooks/useAuth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ErrorReportsViewer } from "./ErrorReportsViewer";
 
 export const AdminDashboard = () => {
   const { user } = useAuth();
@@ -190,11 +191,12 @@ export const AdminDashboard = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="processes">Processes</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="activities">Activity Logs</TabsTrigger>
+              <TabsTrigger value="errors">Error Reports</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
 
@@ -547,6 +549,10 @@ export const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="errors">
+              <ErrorReportsViewer />
             </TabsContent>
 
             <TabsContent value="system">

@@ -114,7 +114,7 @@ setupGlobalErrorHandlers();
 
 // Swagger documentation setup
 import { setupSwagger } from '@/config/swagger';
-if (config.NODE_ENV !== 'production') {
+if (config.env !== 'production') {
   setupSwagger(app);
 }
 

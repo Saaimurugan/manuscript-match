@@ -36,5 +36,8 @@ export * from './useAdmin';
 // Error handling hooks
 export * from './useErrorHandling';
 
+// Authentication error boundary hooks
+export * from './useAuthErrorBoundary';
+
 // Loading state hooks
 export * from './useLoadingStates';

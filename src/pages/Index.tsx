@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 import { ActivityLog } from "@/components/activity/ActivityLog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import type { Process } from "@/types/api";
 
 type ViewMode = 'dashboard' | 'workflow';

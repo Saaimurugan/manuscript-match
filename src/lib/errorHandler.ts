@@ -136,7 +136,7 @@ export class EnhancedErrorHandler {
     if (severity === 'medium') {
       const status = error.response?.status;
       // Don't report auth errors in development
-      if (status === 401 && process.env.NODE_ENV === 'development') {
+      if (status === 401 && typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
         return false;
       }
       return true;
@@ -448,6 +448,19 @@ export class EnhancedErrorHandler {
  * Initialize global error handlers
  */
 export const initializeGlobalErrorHandlers = (): void => {
+  // Set up error reporting consent for development
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+    // Dynamically import and set up error reporting consent
+    import('../services/errorReportService').then(({ errorReportService }) => {
+      if (!errorReportService.isErrorReportingEnabled()) {
+        errorReportService.setConsentLevel('basic');
+        console.log('🐛 Error reporting enabled for development with basic consent level');
+      }
+    }).catch((error) => {
+      console.warn('Failed to initialize error reporting consent:', error);
+    });
+  }
+
   // Handle JavaScript errors
   window.onerror = (message, filename, lineno, colno, error) => {
     EnhancedErrorHandler.handleJavaScriptError(

@@ -394,7 +394,7 @@ export function createImageLoader() {
 
 // Bundle size analyzer (development only)
 export function analyzeBundleSize(): void {
-  if (process.env.NODE_ENV === 'development') {
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
     // Log component sizes for optimization
     const components = [
       'ProcessDashboard',

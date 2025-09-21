@@ -9,9 +9,31 @@ import { useToast } from "@/hooks/use-toast";
 import { useFileUpload } from "@/hooks/useFiles";
 import { useRenderPerformance } from "@/hooks/usePerformance";
 import { config } from "@/lib/config";
-import { validateFile, formatFileSize, getFileTypeDescription, supportsMetadataExtraction } from "@/lib/fileValidation";
 import { cn } from "@/lib/utils";
 import type { UploadResponse } from "@/types/api";
+
+// Simple file utilities
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const getFileTypeDescription = (extension: string): string => {
+  const descriptions: Record<string, string> = {
+    'pdf': 'PDF Document',
+    'doc': 'Word Document',
+    'docx': 'Word Document'
+  };
+  return descriptions[extension.toLowerCase()] || extension.toUpperCase() + ' File';
+};
+
+const supportsMetadataExtraction = (fileName: string): boolean => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  return ['pdf', 'doc', 'docx'].includes(extension || '');
+};
 
 interface FileUploadProps {
   processId: string;
@@ -21,7 +43,7 @@ interface FileUploadProps {
 
 export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUploadProps) => {
   useRenderPerformance('FileUpload');
-  
+
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'processing' | 'completed' | 'error'>('idle');
@@ -29,8 +51,43 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
   const { toast } = useToast();
   const uploadMutation = useFileUpload();
 
-  const validateFileForUpload = (file: File) => {
-    return validateFile(file);
+  const validateFileForUpload = (file: File): { isValid: boolean; error?: string } => {
+    try {
+      // Simple inline validation as fallback
+      const allowedTypes = ['pdf', 'doc', 'docx'];
+      const maxSize = 100 * 1024 * 1024; // 100MB
+
+      const extension = file.name.split('.').pop()?.toLowerCase();
+
+      if (!extension || !allowedTypes.includes(extension)) {
+        return {
+          isValid: false,
+          error: 'Please upload a PDF or Word document (.pdf, .doc, .docx)'
+        };
+      }
+
+      if (file.size > maxSize) {
+        return {
+          isValid: false,
+          error: 'File size must be less than 100MB'
+        };
+      }
+
+      if (file.size === 0) {
+        return {
+          isValid: false,
+          error: 'File appears to be empty'
+        };
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      console.error('File validation error:', error);
+      return {
+        isValid: false,
+        error: 'File validation failed. Please try again.'
+      };
+    }
   };
 
   const handleFile = useCallback(async (file: File) => {
@@ -44,14 +101,12 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
       return;
     }
 
-    // Show warnings if any
-    if (validation.warnings && validation.warnings.length > 0) {
-      validation.warnings.forEach(warning => {
-        toast({
-          title: "File warning",
-          description: warning,
-          variant: "default",
-        });
+    // Check if file supports metadata extraction
+    if (!supportsMetadataExtraction(file.name)) {
+      toast({
+        title: "Limited metadata extraction",
+        description: `${getFileTypeDescription(file.name.split('.').pop() || '')} files may have limited metadata extraction capabilities.`,
+        variant: "default",
       });
     }
 
@@ -68,7 +123,7 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
       setUploadProgress(0);
       setUploadStatus('uploading');
       setCurrentFileName(file.name);
-      
+
       const uploadResponse = await uploadMutation.mutateAsync({
         processId,
         file,
@@ -82,7 +137,7 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
 
       setUploadStatus('completed');
       onFileUpload(uploadResponse);
-      
+
       toast({
         title: "File uploaded successfully",
         description: `${file.name} (${formatFileSize(file.size)}) has been uploaded and is being processed for metadata extraction.`,
@@ -90,9 +145,9 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
     } catch (error: any) {
       setUploadStatus('error');
       console.error('File upload error:', error);
-      
+
       let errorMessage = "There was an error uploading your file. Please try again.";
-      
+
       if (error.type === 'VALIDATION_ERROR') {
         errorMessage = error.message;
       } else if (error.type === 'NETWORK_ERROR') {
@@ -102,7 +157,7 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast({
         title: "Upload failed",
         description: errorMessage,
@@ -120,7 +175,7 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFile(files[0]);
@@ -236,7 +291,7 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
                 <FileText className="w-8 h-8 text-primary" />
               )}
             </div>
-            
+
             {isUploading ? (
               <div className="space-y-3 w-full max-w-xs">
                 <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -261,7 +316,7 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
                     </p>
                   )}
                 </div>
-                
+
                 <input
                   type="file"
                   accept={config.supportedFileTypes.map(type => `.${type}`).join(',')}
@@ -269,14 +324,14 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   disabled={isUploading}
                 />
-                
+
                 <Button variant="secondary" disabled={isUploading}>
                   Choose File
                 </Button>
               </>
             )}
           </div>
-          
+
           <div className="mt-6 text-xs text-muted-foreground">
             <p>Supported formats: {config.supportedFileTypes.join(', ')}</p>
             <p>Maximum file size: {Math.round(config.maxFileSize / (1024 * 1024))}MB</p>
@@ -286,3 +341,5 @@ export const FileUpload = ({ processId, onFileUpload, uploadedFile }: FileUpload
     </Card>
   );
 };
+
+export default FileUpload;

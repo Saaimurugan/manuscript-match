@@ -1,52 +1,27 @@
 {
   "summary": {
-    "totalTests": 3,
-    "passedTests": 3,
-    "failedTests": 0,
-    "skippedTests": 0,
-    "passRate": 100,
-    "executionTime": 12884
+    "passRate": 0,
+    "executionTime": 1758444886872
   },
   "testSuites": [
     {
-      "name": "simple-unit.test",
-      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\unit\\simple-unit.test.ts",
+      "name": "load.test",
+      "filePath": "/project/src/__tests__/performance/load.test.ts",
       "status": "passed",
-      "duration": 4140,
-      "numPassingTests": 3,
+      "duration": 9000,
+      "numPassingTests": 1,
       "numFailingTests": 0,
-      "numPendingTests": 0,
-      "category": "unit"
-    },
-    {
-      "name": "recommendation-endpoints.test",
-      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\unit\\recommendation-endpoints.test.ts",
-      "status": "passed",
-      "duration": 0,
-      "numPassingTests": 0,
-      "numFailingTests": 0,
-      "numPendingTests": 0,
-      "category": "integration"
-    },
-    {
-      "name": "comprehensive-unit.test",
-      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\unit\\comprehensive-unit.test.ts",
-      "status": "passed",
-      "duration": 0,
-      "numPassingTests": 0,
-      "numFailingTests": 0,
-      "numPendingTests": 0,
-      "category": "unit"
+      "category": "performance"
     }
   ],
-  "timestamp": "2025-09-20T04:52:32.060Z",
+  "timestamp": "2025-09-21T08:54:46.872Z",
   "buildMetadata": {
-    "timestamp": "2025-09-20T04:52:32.060Z",
+    "timestamp": "2025-09-21T08:54:46.872Z",
     "environment": "test",
     "nodeVersion": "v20.17.0",
     "platform": "win32"
   },
-  "generatedAt": "2025-09-20T04:52:32.060Z",
+  "generatedAt": "2025-09-21T08:54:46.872Z",
   "generator": "jest-reporter",
   "version": "1.0.0"
 }

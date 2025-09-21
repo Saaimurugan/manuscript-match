@@ -154,7 +154,7 @@ export const configurationExample = () => {
   console.log('Supported file types:', ['pdf', 'docx', 'doc']); // From config
   
   // Check if in development mode
-  if (process.env.NODE_ENV === 'development') {
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
     console.log('Running in development mode');
   }
 };

@@ -6,7 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { queryClient } from "./lib/queryClient";
 import { config } from "./lib/config";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProviderWithErrorBoundary } from "./components/auth/AuthProviderWithErrorBoundary";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { 
   ErrorBoundary, 
@@ -26,16 +26,17 @@ const App = () => (
       console.error('App-level error:', error, errorInfo);
     }}
     showErrorDetails={config.enableDevTools}
+    enableReporting={true}
   >
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <AuthProviderWithErrorBoundary enableAutoRecovery={true} maxRecoveryAttempts={3}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <NetworkStatusToast />
           <GlobalErrorToastHandler />
           <BrowserRouter>
-            <ErrorBoundary>
+            <ErrorBoundary enableReporting={true}>
               <Routes>
                 <Route path="/" element={
                   <ProtectedRoute>
@@ -49,7 +50,7 @@ const App = () => (
           </BrowserRouter>
           {config.enableDevTools && <ReactQueryDevtools initialIsOpen={false} />}
         </TooltipProvider>
-      </AuthProvider>
+      </AuthProviderWithErrorBoundary>
     </QueryClientProvider>
   </ErrorBoundary>
 );

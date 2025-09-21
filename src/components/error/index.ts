@@ -5,6 +5,7 @@
 
 // Error Boundary Components
 export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
+export { AuthErrorBoundary, withAuthErrorBoundary } from './AuthErrorBoundary';
 
 // Error Fallback Components
 export {

@@ -35,3 +35,9 @@ export * from './activityLogService';
 
 // Admin service
 export * from './adminService';
+
+// Error report service
+export * from './errorReportService';
+
+// Error logger service
+export * from './errorLogger';
