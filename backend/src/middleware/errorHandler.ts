@@ -83,7 +83,11 @@ export const errorHandler = (
   }
   // Handle rate limit errors specifically
 <<<<<<< HEAD
+<<<<<<< HEAD
   else if (error.name === 'TooManyRequestsError') {
+=======
+  else if (error.name === 'TooManyRequestsError' || type === ErrorType.RATE_LIMIT_ERROR) {
+>>>>>>> 9e091b2 (Bugs Fixed)
 =======
   else if (error.name === 'TooManyRequestsError' || type === ErrorType.RATE_LIMIT_ERROR) {
 >>>>>>> 9e091b2 (Bugs Fixed)

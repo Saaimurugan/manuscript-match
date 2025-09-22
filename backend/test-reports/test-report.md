@@ -1,7 +1,11 @@
 # Test Report
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 **Generated:** 2025-09-24T15:53:16.311Z
+=======
+**Generated:** 2025-09-22T11:49:13.489Z
+>>>>>>> 9e091b2 (Bugs Fixed)
 =======
 **Generated:** 2025-09-22T11:49:13.489Z
 >>>>>>> 9e091b2 (Bugs Fixed)
@@ -11,6 +15,7 @@
 | Metric | Value | Status |
 |--------|-------|--------|
 <<<<<<< HEAD
+<<<<<<< HEAD
 | Total Tests | 0 | - |
 | Passed | 0 | ⚠️ |
 | Failed | 0 | ✅ |
@@ -18,18 +23,24 @@
 | Pass Rate | 0.0% | ❌ |
 | Execution Time | 126s | - |
 =======
+=======
+>>>>>>> 9e091b2 (Bugs Fixed)
 | Total Tests | 8 | - |
 | Passed | 7 | ✅ |
 | Failed | 1 | ❌ |
 | Skipped | 0 | - |
 | Pass Rate | 87.5% | ⚠️ |
 | Execution Time | 58s | - |
+<<<<<<< HEAD
+>>>>>>> 9e091b2 (Bugs Fixed)
+=======
 >>>>>>> 9e091b2 (Bugs Fixed)
 
 ## Test Suites
 
 | Suite | Status | Passed | Failed | Duration | Category |
 |-------|--------|--------|--------|----------|----------|
+<<<<<<< HEAD
 <<<<<<< HEAD
 | admin-comprehensive.test | ✅ | 0 | 0 | 0ms | integration |
 | admin-workflows.test | ✅ | 0 | 0 | 0ms | e2e |
@@ -44,6 +55,8 @@
 | admin-basic.test | ✅ | 0 | 0 | 0ms | integration |
 | AdminController.test | ✅ | 0 | 0 | 0ms | unit |
 =======
+=======
+>>>>>>> 9e091b2 (Bugs Fixed)
 | MarkdownReportGenerator.integration.test | ✅ | 3 | 0 | 5104ms | integration |
 | DatabaseIntegrationService.test | ✅ | 0 | 0 | 0ms | integration |
 | reporter-integration.test | ❌ | 4 | 1 | 1998ms | integration |
@@ -68,6 +81,9 @@
 | admin.test | ✅ | 0 | 0 | 0ms | integration |
 | activity-logs.test | ✅ | 0 | 0 | 0ms | integration |
 | admin-basic.test | ✅ | 0 | 0 | 0ms | integration |
+<<<<<<< HEAD
+>>>>>>> 9e091b2 (Bugs Fixed)
+=======
 >>>>>>> 9e091b2 (Bugs Fixed)
 
 ## Test Results by Category
@@ -75,7 +91,10 @@
 
 ### Integration Tests
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 9e091b2 (Bugs Fixed)
 
 - **Total:** 8
 - **Passed:** 7
@@ -90,6 +109,7 @@
 - **Passed:** 0
 - **Failed:** 0
 - **Duration:** 0ms
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 
@@ -107,6 +127,8 @@
 - **Passed:** 0
 - **Failed:** 0
 - **Duration:** 0ms
+=======
+>>>>>>> 9e091b2 (Bugs Fixed)
 =======
 >>>>>>> 9e091b2 (Bugs Fixed)
 

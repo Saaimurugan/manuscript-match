@@ -18,7 +18,11 @@ export const apiRateLimiter = rateLimit({
   legacyHeaders: false,
   skip: () => config.env === 'test', // Skip rate limiting in test environment
 <<<<<<< HEAD
+<<<<<<< HEAD
   handler: (_req, _res, next) => {
+=======
+  handler: (req, res, next) => {
+>>>>>>> 9e091b2 (Bugs Fixed)
 =======
   handler: (req, res, next) => {
 >>>>>>> 9e091b2 (Bugs Fixed)
@@ -48,7 +52,11 @@ export const authRateLimiter = rateLimit({
   skipSuccessfulRequests: true,
   skip: () => config.env === 'test', // Skip rate limiting in test environment
 <<<<<<< HEAD
+<<<<<<< HEAD
   handler: (_req, _res, next) => {
+=======
+  handler: (req, res, next) => {
+>>>>>>> 9e091b2 (Bugs Fixed)
 =======
   handler: (req, res, next) => {
 >>>>>>> 9e091b2 (Bugs Fixed)
@@ -76,7 +84,11 @@ export const uploadRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 <<<<<<< HEAD
+<<<<<<< HEAD
   handler: (_req, _res, next) => {
+=======
+  handler: (req, res, next) => {
+>>>>>>> 9e091b2 (Bugs Fixed)
 =======
   handler: (req, res, next) => {
 >>>>>>> 9e091b2 (Bugs Fixed)
