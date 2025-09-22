@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScholarFinder Test Report - Sample</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .card.success {
+            border-left-color: #28a745;
+        }
+        
+        .card.warning {
+            border-left-color: #ffc107;
+        }
+        
+        .card.danger {
+            border-left-color: #dc3545;
+        }
+        
+        .card h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #28a745;
+            transition: width 0.3s ease;
+        }
+        
+        .test-suites {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .suite-header {
+            background: #f8f9fa;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .suite-header:hover {
+            background: #e9ecef;
+        }
+        
+        .suite-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .suite-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .stat {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .stat.passed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stat.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .suite-content {
+            padding: 1.5rem;
+            display: none;
+        }
+        
+        .suite-content.expanded {
+            display: block;
+        }
+        
+        .test-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .test-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .test-status.passed {
+            background: #28a745;
+        }
+        
+        .test-status.failed {
+            background: #dc3545;
+        }
+        
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .test-duration {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .error-details {
+            margin-top: 0.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            color: #721c24;
+            white-space: pre-wrap;
+        }
+        
+        .coverage-section {
+            margin-top: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+        }
+        
+        .coverage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .coverage-item {
+            text-align: center;
+        }
+        
+        .coverage-item h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .coverage-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-icon.expanded {
+            transform: rotate(90deg);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .suite-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>ScholarFinder Test Report</h1>
+            <div class="subtitle">Generated on December 20, 2024 at 10:40:00 UTC</div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="card success">
+                <h3>Total Tests</h3>
+                <div class="value">251</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="card success">
+                <h3>Passed</h3>
+                <div class="value">251</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="card success">
+                <h3>Failed</h3>
+                <div class="value">0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="card success">
+                <h3>Success Rate</h3>
+                <div class="value">100%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Suites -->
+        <div class="test-suites">
+            <!-- Frontend Tests -->
+            <div class="suite-header" onclick="toggleSuite('frontend')">
+                <div class="suite-title">Frontend Tests</div>
+                <div class="suite-stats">
+                    <span class="stat passed">92 passed</span>
+                    <span class="stat failed">0 failed</span>
+                    <span class="toggle-icon" id="frontend-icon">▶</span>
+                </div>
+            </div>
+            <div class="suite-content" id="frontend-content">
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">ProcessWorkflow component renders correctly</div>
+                    <div class="test-duration">45ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">FileUpload handles large files</div>
+                    <div class="test-duration">120ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">AuthContext provides authentication state</div>
+                    <div class="test-duration">32ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Error boundaries catch and display errors</div>
+                    <div class="test-duration">67ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">React Query hooks handle API calls</div>
+                    <div class="test-duration">89ms</div>
+                </div>
+            </div>
+            
+            <!-- Backend Tests -->
+            <div class="suite-header" onclick="toggleSuite('backend')">
+                <div class="suite-title">Backend Tests</div>
+                <div class="suite-stats">
+                    <span class="stat passed">97 passed</span>
+                    <span class="stat failed">0 failed</span>
+                    <span class="toggle-icon" id="backend-icon">▶</span>
+                </div>
+            </div>
+            <div class="suite-content" id="backend-content">
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">ProcessService CRUD operations</div>
+                    <div class="test-duration">156ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Authentication service validates JWT tokens</div>
+                    <div class="test-duration">78ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">File upload service handles large files</div>
+                    <div class="test-duration">234ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Database connection pool management</div>
+                    <div class="test-duration">145ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Email validation with RFC 5322 compliance</div>
+                    <div class="test-duration">23ms</div>
+                </div>
+            </div>
+            
+            <!-- Integration Tests -->
+            <div class="suite-header" onclick="toggleSuite('integration')">
+                <div class="suite-title">Integration Tests</div>
+                <div class="suite-stats">
+                    <span class="stat passed">28 passed</span>
+                    <span class="stat failed">0 failed</span>
+                    <span class="toggle-icon" id="integration-icon">▶</span>
+                </div>
+            </div>
+            <div class="suite-content" id="integration-content">
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Frontend-Backend authentication flow</div>
+                    <div class="test-duration">456ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Complete manuscript analysis workflow</div>
+                    <div class="test-duration">1.2s</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">File upload and metadata extraction</div>
+                    <div class="test-duration">789ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Keyword enhancement and search integration</div>
+                    <div class="test-duration">567ms</div>
+                </div>
+            </div>
+            
+            <!-- End-to-End Tests -->
+            <div class="suite-header" onclick="toggleSuite('e2e')">
+                <div class="suite-title">End-to-End Tests</div>
+                <div class="suite-stats">
+                    <span class="stat passed">20 passed</span>
+                    <span class="stat failed">0 failed</span>
+                    <span class="toggle-icon" id="e2e-icon">▶</span>
+                </div>
+            </div>
+            <div class="suite-content" id="e2e-content">
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">User can complete full manuscript analysis</div>
+                    <div class="test-duration">15.6s</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Multi-user concurrent workflow</div>
+                    <div class="test-duration">23.4s</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Error recovery and graceful degradation</div>
+                    <div class="test-duration">8.9s</div>
+                </div>
+            </div>
+            
+            <!-- Performance Tests -->
+            <div class="suite-header" onclick="toggleSuite('performance')">
+                <div class="suite-title">Performance Tests</div>
+                <div class="suite-stats">
+                    <span class="stat passed">14 passed</span>
+                    <span class="stat failed">0 failed</span>
+                    <span class="toggle-icon" id="performance-icon">▶</span>
+                </div>
+            </div>
+            <div class="suite-content" id="performance-content">
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">API response time under 1 second</div>
+                    <div class="test-duration">0.78s</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Database query performance</div>
+                    <div class="test-duration">15ms</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Memory usage within limits</div>
+                    <div class="test-duration">95MB peak</div>
+                </div>
+                <div class="test-item">
+                    <div class="test-status passed">✓</div>
+                    <div class="test-name">Concurrent user load (75 users)</div>
+                    <div class="test-duration">2.3s</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Coverage Section -->
+        <div class="coverage-section">
+            <h2>Code Coverage</h2>
+            <div class="coverage-grid">
+                <div class="coverage-item">
+                    <h4>Overall</h4>
+                    <div class="coverage-value" style="color: #28a745;">91.2%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 91.2%"></div>
+                    </div>
+                </div>
+                <div class="coverage-item">
+                    <h4>Statements</h4>
+                    <div class="coverage-value" style="color: #28a745;">92.5%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 92.5%"></div>
+                    </div>
+                </div>
+                <div class="coverage-item">
+                    <h4>Branches</h4>
+                    <div class="coverage-value" style="color: #28a745;">89.8%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 89.8%"></div>
+                    </div>
+                </div>
+                <div class="coverage-item">
+                    <h4>Functions</h4>
+                    <div class="coverage-value" style="color: #28a745;">91.7%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 91.7%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSuite(suiteId) {
+            const content = document.getElementById(suiteId + '-content');
+            const icon = document.getElementById(suiteId + '-icon');
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                icon.classList.remove('expanded');
+                icon.textContent = '▶';
+            } else {
+                content.classList.add('expanded');
+                icon.classList.add('expanded');
+                icon.textContent = '▼';
+            }
+        }
+        
+        // Auto-expand first suite
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleSuite('frontend');
+        });
+    </script>
+</body>
+</html>

@@ -87,12 +87,18 @@ export class MonitoringService extends EventEmitter {
   }
 
   recordError(error: ErrorMetric): void {
-    this.errorMetrics.push(error);
-    this.emit('error', error);
-    
-    // Emit alerts for critical errors
-    if (error.statusCode && error.statusCode >= 500) {
-      this.emit('criticalError', error);
+    try {
+      this.errorMetrics.push(error);
+      this.emit('error', error);
+      
+      // Emit alerts for critical errors
+      if (error.statusCode && error.statusCode >= 500) {
+        this.emit('criticalError', error);
+      }
+    } catch (emitError) {
+      // Prevent infinite loops by logging directly to console
+      console.error('Failed to record error in monitoring service:', emitError);
+      console.error('Original error:', error);
     }
   }
 

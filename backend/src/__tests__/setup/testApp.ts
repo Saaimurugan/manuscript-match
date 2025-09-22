@@ -3,6 +3,6 @@ import app from '../../app';
 
 export const testApp = app;
 
-export async function createTestApp(): Promise<Express> {
+export function createTestApp(): Express {
   return app;
 }

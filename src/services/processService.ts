@@ -46,14 +46,29 @@ class ProcessService {
   async getProcess(id: string): Promise<Process> {
     try {
       const response = await apiService.get<{ success: boolean; data: Process }>(`/api/processes/${id}`);
+      
+      // Handle different response structures
       if (response.data && response.data.data) {
         return response.data.data;
-      } else if (response.data) {
-        return response.data.data as Process;
+      } else if (response.data && !response.data.data && response.data.success !== false) {
+        // Handle direct process object response
+        return response.data as unknown as Process;
       } else {
-        throw new Error('Invalid response structure: no process found');
+        console.error('Invalid response structure:', response.data);
+        throw new Error('Process not found or invalid response structure');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to fetch process:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        throw new Error(`Process with ID ${id} not found`);
+      } else if (error.response?.status === 403) {
+        throw new Error('You do not have permission to access this process');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error occurred while fetching process');
+      }
+      
       throw error;
     }
   }
@@ -72,14 +87,19 @@ class ProcessService {
   async updateProcessStep(id: string, step: string): Promise<Process> {
     try {
       const response = await apiService.put<{ success: boolean; data: Process }>(`/api/processes/${id}/step`, { step });
+      
+      // Handle different response structures
       if (response.data && response.data.data) {
         return response.data.data;
-      } else if (response.data) {
-        return response.data.data as Process;
+      } else if (response.data && !response.data.data && response.data.success !== false) {
+        // Handle direct process object response
+        return response.data as unknown as Process;
       } else {
+        console.error('Invalid response structure:', response.data);
         throw new Error('Invalid response structure: no process found');
       }
     } catch (error) {
+      console.error('Failed to update process step:', error);
       throw error;
     }
   }
@@ -91,3 +111,5 @@ class ProcessService {
     await apiService.delete(`/api/processes/${id}`);
   }
 }
+
+export const processService = new ProcessService();

@@ -2,6 +2,24 @@ import { Router } from 'express';
 import { ProcessController } from '../controllers/ProcessController';
 import { authenticate } from '../middleware/auth';
 import { uploadSingle, handleUploadError } from '../middleware/upload';
+import rateLimit from 'express-rate-limit';
+
+// More lenient rate limiter for step updates
+const stepUpdateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // 50 requests per minute (much higher than default)
+  message: {
+    success: false,
+    error: {
+      type: 'RATE_LIMIT_ERROR',
+      message: 'Too many step updates, please slow down.',
+      timestamp: new Date().toISOString(),
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+});
 
 const router = Router();
 const processController = new ProcessController();
@@ -15,7 +33,7 @@ router.get('/', processController.getProcesses);
 router.get('/stats', processController.getProcessStats);
 router.get('/:id', processController.getProcess);
 router.put('/:id', processController.updateProcess);
-router.put('/:id/step', processController.updateProcessStep);
+router.put('/:id/step', stepUpdateLimiter, processController.updateProcessStep);
 router.delete('/:id', processController.deleteProcess);
 
 // Manuscript processing routes

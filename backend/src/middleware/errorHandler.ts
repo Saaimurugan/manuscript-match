@@ -80,6 +80,12 @@ export const errorHandler = (
     message = error.message;
     details = error.details;
   }
+  // Handle rate limit errors specifically
+  else if (error.name === 'TooManyRequestsError' || type === ErrorType.RATE_LIMIT_ERROR) {
+    statusCode = 429;
+    type = ErrorType.RATE_LIMIT_ERROR;
+    message = 'Rate limit exceeded';
+  }
   // Handle Prisma errors
   else if (error.name === 'PrismaClientKnownRequestError') {
     statusCode = 400;

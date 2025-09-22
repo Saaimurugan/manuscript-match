@@ -35,7 +35,11 @@ export const ProcessWorkflow: React.FC<ProcessWorkflowProps> = ({
   const updateStepMutation = useUpdateProcessStep();
   
   // API hooks for search and recommendations
-  const searchHook = useSearch(processId);
+  // Only enable search status polling if we're in a search-related step
+  const shouldPollSearch = process?.currentStep === 'DATABASE_SEARCH' || 
+                          process?.currentStep === 'RECOMMENDATIONS' ||
+                          process?.currentStep === 'MANUAL_SEARCH';
+  const searchHook = useSearch(processId, shouldPollSearch);
   const { data: recommendations, isLoading: recommendationsLoading } = useRecommendations(processId);
   const shortlistsHook = useShortlists(processId);
 
@@ -162,14 +166,43 @@ export const ProcessWorkflow: React.FC<ProcessWorkflowProps> = ({
         );
 
       case "RECOMMENDATIONS":
-        if (recommendationsLoading) {
+        // Check search status to determine what to show
+        const { isSearching, isCompleted, isFailed, isNotStarted } = searchHook;
+        
+        if (recommendationsLoading || isSearching) {
           return (
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <p className="text-muted-foreground">Loading recommendations...</p>
+                  <p className="text-muted-foreground">
+                    {isSearching ? 'Searching databases...' : 'Loading recommendations...'}
+                  </p>
                 </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        
+        if (isFailed) {
+          return (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Search failed. Please try again or contact support.
+                </p>
+              </CardContent>
+            </Card>
+          );
+        }
+        
+        if (isNotStarted) {
+          return (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Please perform a search first to see reviewer recommendations.
+                </p>
               </CardContent>
             </Card>
           );
@@ -180,7 +213,7 @@ export const ProcessWorkflow: React.FC<ProcessWorkflowProps> = ({
             processId={processId}
             onExport={handleExport}
           />
-        ) : searchCompleted ? (
+        ) : isCompleted ? (
           <Card>
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">

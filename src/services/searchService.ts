@@ -27,8 +27,20 @@ class SearchService {
    * Get search status for a process
    */
   async getSearchStatus(processId: string): Promise<SearchStatus> {
-    const response = await apiService.get<SearchStatus>(`/api/processes/${processId}/search/status`);
-    return response.data;
+    try {
+      const response = await apiService.get<SearchStatus>(`/api/processes/${processId}/search/status`);
+      return response.data;
+    } catch (error: any) {
+      // Handle 404 - search not initiated yet
+      if (error.response?.status === 404) {
+        return {
+          status: 'NOT_STARTED',
+          progress: {},
+          totalFound: 0
+        };
+      }
+      throw error;
+    }
   }
 
   /**

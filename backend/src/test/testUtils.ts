@@ -16,7 +16,7 @@ export class TestContext {
     this.prisma = new PrismaClient({
       datasources: {
         db: {
-          url: process.env.DATABASE_URL || 'file:./test.db'
+          url: process.env['DATABASE_URL'] || 'file:./test.db'
         }
       }
     });
@@ -126,14 +126,14 @@ export const mockAffiliationData = {
 // Database seeding utilities
 export async function seedTestDatabase(prisma: PrismaClient): Promise<void> {
   // Create test users
-  const users = await Promise.all([
+  await Promise.all([
     createTestUser(prisma, 'user1@test.com', 'password123'),
     createTestUser(prisma, 'user2@test.com', 'password123'),
     createTestUser(prisma, 'admin@test.com', 'adminpass123')
   ]);
 
   // Create test authors
-  const authors = await Promise.all([
+  await Promise.all([
     prisma.author.create({
       data: {
         name: 'Dr. Alice Johnson',
@@ -159,7 +159,7 @@ export async function seedTestDatabase(prisma: PrismaClient): Promise<void> {
   ]);
 
   // Create test affiliations
-  const affiliations = await Promise.all([
+  await Promise.all([
     prisma.affiliation.create({
       data: {
         institutionName: 'Stanford University',

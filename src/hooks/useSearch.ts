@@ -120,12 +120,13 @@ export const useCachedSearchByEmail = (processId: string, email: string, enabled
 /**
  * Hook for search progress tracking
  */
-export const useSearchProgress = (processId: string) => {
-  const { data: status, isLoading, error } = useSearchStatus(processId);
+export const useSearchProgress = (processId: string, enabled: boolean = true) => {
+  const { data: status, isLoading, error } = useSearchStatus(processId, enabled);
   
   const isSearching = status?.status === 'IN_PROGRESS' || status?.status === 'PENDING';
   const isCompleted = status?.status === 'COMPLETED';
   const isFailed = status?.status === 'FAILED';
+  const isNotStarted = status?.status === 'NOT_STARTED';
   
   const progress = status?.progress || {};
   const totalFound = status?.totalFound || 0;
@@ -145,6 +146,7 @@ export const useSearchProgress = (processId: string) => {
     isSearching,
     isCompleted,
     isFailed,
+    isNotStarted,
     isLoading,
     error,
   };

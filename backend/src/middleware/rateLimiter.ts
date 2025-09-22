@@ -7,6 +7,7 @@ export const apiRateLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.maxRequests,
   message: {
+    success: false,
     error: {
       type: ErrorType.RATE_LIMIT_ERROR,
       message: 'Too many requests from this IP, please try again later.',
@@ -16,12 +17,13 @@ export const apiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => config.env === 'test', // Skip rate limiting in test environment
-  handler: (_req, _res) => {
-    throw new CustomError(
+  handler: (req, res, next) => {
+    const error = new CustomError(
       ErrorType.RATE_LIMIT_ERROR,
       'Rate limit exceeded',
       429
     );
+    next(error);
   },
 });
 
@@ -30,6 +32,7 @@ export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 attempts per window
   message: {
+    success: false,
     error: {
       type: ErrorType.RATE_LIMIT_ERROR,
       message: 'Too many authentication attempts, please try again later.',
@@ -40,6 +43,14 @@ export const authRateLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   skip: () => config.env === 'test', // Skip rate limiting in test environment
+  handler: (req, res, next) => {
+    const error = new CustomError(
+      ErrorType.RATE_LIMIT_ERROR,
+      'Too many authentication attempts, please try again later.',
+      429
+    );
+    next(error);
+  },
 });
 
 // File upload rate limiter
@@ -47,6 +58,7 @@ export const uploadRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 uploads per minute
   message: {
+    success: false,
     error: {
       type: ErrorType.RATE_LIMIT_ERROR,
       message: 'Too many file uploads, please try again later.',
@@ -55,4 +67,12 @@ export const uploadRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res, next) => {
+    const error = new CustomError(
+      ErrorType.RATE_LIMIT_ERROR,
+      'Too many file uploads, please try again later.',
+      429
+    );
+    next(error);
+  },
 });

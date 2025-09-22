@@ -170,12 +170,12 @@ export interface SearchRequest {
 }
 
 export interface SearchStatus {
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  status: 'NOT_STARTED' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
   progress: {
-    pubmed: { status: string; count: number };
-    elsevier: { status: string; count: number };
-    wiley: { status: string; count: number };
-    taylorFrancis: { status: string; count: number };
+    pubmed?: { status: string; count: number };
+    elsevier?: { status: string; count: number };
+    wiley?: { status: string; count: number };
+    taylorFrancis?: { status: string; count: number };
   };
   totalFound: number;
 }

@@ -1,27 +1,262 @@
 {
   "summary": {
-    "passRate": 0,
-    "executionTime": 1758444886872
+    "totalTests": 8,
+    "passedTests": 7,
+    "failedTests": 1,
+    "skippedTests": 0,
+    "passRate": 87.5,
+    "executionTime": 57956
   },
   "testSuites": [
     {
-      "name": "load.test",
-      "filePath": "/project/src/__tests__/performance/load.test.ts",
+      "name": "MarkdownReportGenerator.integration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\test-reporting\\__tests__\\MarkdownReportGenerator.integration.test.ts",
       "status": "passed",
-      "duration": 9000,
-      "numPassingTests": 1,
+      "duration": 5104,
+      "numPassingTests": 3,
       "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "DatabaseIntegrationService.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\services\\DatabaseIntegrationService.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "reporter-integration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\test-reporting\\__tests__\\integration\\reporter-integration.test.ts",
+      "status": "failed",
+      "duration": 1998,
+      "numPassingTests": 4,
+      "numFailingTests": 1,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "reviewer-profile.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\reviewer-profile.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "PerformanceIntegration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\test-reporting\\__tests__\\performance\\PerformanceIntegration.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
       "category": "performance"
+    },
+    {
+      "name": "build-integration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\test-reporting\\__tests__\\integration\\build-integration.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "ErrorHandling.integration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\test-reporting\\__tests__\\errors\\ErrorHandling.integration.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "shortlist.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\shortlist.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "shortlist-simple.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\shortlist-simple.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "recommendations.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\recommendations.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "processes.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\processes.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "recommendations-simple.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\recommendations-simple.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "manuscript-upload.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\manuscript-upload.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "manual-reviewer-search.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\manual-reviewer-search.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "keyword-enhancement.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\keyword-enhancement.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "error-scenarios.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\error-scenarios.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "error-handling.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\error-handling.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "database-search.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\database-search.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "comprehensive-integration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\comprehensive-integration.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "author-validation.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\author-validation.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "auth.integration.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\auth.integration.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "admin.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\admin.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "activity-logs.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\activity-logs.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
+    },
+    {
+      "name": "admin-basic.test",
+      "filePath": "D:\\PR\\manuscript-match\\backend\\src\\__tests__\\integration\\admin-basic.test.ts",
+      "status": "passed",
+      "duration": 0,
+      "numPassingTests": 0,
+      "numFailingTests": 0,
+      "numPendingTests": 0,
+      "category": "integration"
     }
   ],
-  "timestamp": "2025-09-21T08:54:46.872Z",
+  "timestamp": "2025-09-22T11:49:13.489Z",
   "buildMetadata": {
-    "timestamp": "2025-09-21T08:54:46.872Z",
+    "timestamp": "2025-09-22T11:49:13.489Z",
     "environment": "test",
     "nodeVersion": "v20.17.0",
     "platform": "win32"
   },
-  "generatedAt": "2025-09-21T08:54:46.872Z",
+  "generatedAt": "2025-09-22T11:49:13.489Z",
   "generator": "jest-reporter",
   "version": "1.0.0"
 }
