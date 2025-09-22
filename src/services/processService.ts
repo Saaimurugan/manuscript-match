@@ -7,8 +7,7 @@ import { apiService } from './apiService';
 import type { 
   Process, 
   CreateProcessRequest, 
-  UpdateProcessRequest,
-  ApiResponse 
+  UpdateProcessRequest
 } from '../types/api';
 
 /**
@@ -19,40 +18,70 @@ class ProcessService {
    * Create a new process
    */
   async createProcess(data: CreateProcessRequest): Promise<Process> {
-    const response = await apiService.post<Process>('/api/processes', data);
-    return response.data;
+    const response = await apiService.post<{ success: boolean; data: Process }>('/api/processes', data);
+    return response.data.data;
   }
 
   /**
    * Get all processes for the current user
    */
   async getProcesses(): Promise<Process[]> {
-    const response = await apiService.get<Process[]>('/api/processes');
-    return response.data;
+    try {
+      const response = await apiService.get<{ success: boolean; data: Process[] }>('/api/processes');
+      if (response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else if (Array.isArray(response.data)) {
+        return response.data as Process[];
+      } else {
+        throw new Error('Invalid response structure: no processes found');
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
    * Get a specific process by ID
    */
   async getProcess(id: string): Promise<Process> {
-    const response = await apiService.get<Process>(`/api/processes/${id}`);
-    return response.data;
+    try {
+      const response = await apiService.get<{ success: boolean; data: Process }>(`/api/processes/${id}`);
+      if (response.data && response.data.data) {
+        return response.data.data;
+      } else if (response.data) {
+        return response.data.data as Process;
+      } else {
+        throw new Error('Invalid response structure: no process found');
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
    * Update a process
    */
   async updateProcess(id: string, data: UpdateProcessRequest): Promise<Process> {
-    const response = await apiService.put<Process>(`/api/processes/${id}`, data);
-    return response.data;
+    const response = await apiService.put<{ success: boolean; data: Process }>(`/api/processes/${id}`, data);
+    return response.data.data;
   }
 
   /**
    * Update process step
    */
   async updateProcessStep(id: string, step: string): Promise<Process> {
-    const response = await apiService.patch<Process>(`/api/processes/${id}/step`, { step });
-    return response.data;
+    try {
+      const response = await apiService.put<{ success: boolean; data: Process }>(`/api/processes/${id}/step`, { step });
+      if (response.data && response.data.data) {
+        return response.data.data;
+      } else if (response.data) {
+        return response.data.data as Process;
+      } else {
+        throw new Error('Invalid response structure: no process found');
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
@@ -62,7 +91,3 @@ class ProcessService {
     await apiService.delete(`/api/processes/${id}`);
   }
 }
-
-// Create and export service instance
-export const processService = new ProcessService();
-export default processService;

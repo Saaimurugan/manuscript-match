@@ -12,7 +12,7 @@ import type { LoginCredentials, UserProfile } from '../types/api';
 
 // Enhanced error state interface with retry tracking
 export interface AuthError {
-  type: 'TOKEN_INVALID' | 'TOKEN_EXPIRED' | 'REFRESH_FAILED' | 'NETWORK_ERROR' | 'VALIDATION_ERROR' | 'DECODE_ERROR' | 'MALFORMED_TOKEN';
+  type: 'TOKEN_INVALID' | 'TOKEN_EXPIRED' | 'REFRESH_FAILED' | 'NETWORK_ERROR' | 'VALIDATION_ERROR' | 'DECODE_ERROR' | 'MALFORMED_TOKEN' | 'PROFILE_LOAD_FAILED';
   message: string;
   timestamp: Date;
   shouldRetry: boolean;
@@ -80,10 +80,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isRecovering, setIsRecovering] = useState(false);
   const [lastRecoveryAttempt, setLastRecoveryAttempt] = useState<Date | null>(null);
   const [consecutiveFailures, setConsecutiveFailures] = useState(0);
-  
+
   // Token refresh manager
   const tokenRefreshManagerRef = useRef<TokenRefreshManager | null>(null);
-  
+
   // Constants for error recovery
   const MAX_CONSECUTIVE_FAILURES = 3;
   const RECOVERY_COOLDOWN_MS = 30000; // 30 seconds
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   ): AuthError => {
     const currentError = authError;
     const retryCount = currentError?.type === type ? (currentError.retryCount || 0) + 1 : 1;
-    
+
     const newError: AuthError = {
       type,
       message,
@@ -177,10 +177,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    */
   const cleanupInvalidState = (reason: string): void => {
     console.log('Cleaning up invalid authentication state', { reason });
-    
+
     // Log the cleanup event
     authLogger.logAuthEvent('LOGOUT', true, {
-      metadata: { 
+      metadata: {
         reason: 'automatic_cleanup',
         triggerReason: reason,
         consecutiveFailures,
@@ -188,13 +188,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }, {
       userId: user?.id,
     });
-    
+
     // Clear token refresh manager scheduled checks
     if (tokenRefreshManagerRef.current) {
       tokenRefreshManagerRef.current.clearScheduledChecks();
       tokenRefreshManagerRef.current.reset();
     }
-    
+
     // Clear token from storage
     try {
       authService.logout().catch(err => {
@@ -256,18 +256,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const refreshResult = await refreshManager.refreshToken();
-      
+
       if (refreshResult.success && refreshResult.token) {
         // Validate the new token before setting it
         const validationResult = jwtValidator.safeDecodeToken(refreshResult.token);
-        
+
         if (!validationResult.isValid) {
           const errorMessage = `Received invalid token from managed refresh: ${validationResult.error}`;
           console.error(errorMessage, {
             errorType: validationResult.errorType,
             timestamp: new Date().toISOString(),
           });
-          
+
           const refreshError = createAuthError(
             'REFRESH_FAILED',
             errorMessage,
@@ -281,7 +281,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Token is valid, update state
         const expirationTime = jwtValidator.getTokenExpirationTime(validationResult.payload);
-        
+
         setToken(refreshResult.token);
         setTokenState({
           token: refreshResult.token,
@@ -290,7 +290,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           lastValidated: new Date(),
           validationError: null,
         });
-        
+
         // Optionally refresh user profile
         try {
           const userProfile = await authService.getProfile();
@@ -307,12 +307,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Schedule next token check
         refreshManager.scheduleTokenCheck(refreshResult.token);
-        
+
       } else {
         // Refresh failed
         const errorMessage = refreshResult.error || 'Token refresh failed';
         console.error('Managed token refresh failed:', errorMessage);
-        
+
         const refreshError = createAuthError(
           'REFRESH_FAILED',
           errorMessage,
@@ -320,7 +320,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           'CLEAR_TOKEN'
         );
         setAuthError(refreshError);
-        
+
         // Execute recovery action if not retrying
         if (!refreshResult.shouldRetry) {
           executeRecoveryAction(refreshError);
@@ -329,7 +329,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       const errorMessage = `Managed token refresh error: ${error instanceof Error ? error.message : 'Unknown error'}`;
       console.error(errorMessage, error);
-      
+
       const refreshError = createAuthError(
         'REFRESH_FAILED',
         errorMessage,
@@ -377,7 +377,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (token) {
             await handleManagedTokenRefresh();
             setConsecutiveFailures(0); // Reset on successful recovery
-            
+
             authLogger.logAuthEvent('ERROR_RECOVERY', true, {
               duration: Date.now() - recoveryStartTime,
               metadata: {
@@ -406,7 +406,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (recoveryError) {
       console.error('Recovery action failed:', recoveryError);
       setConsecutiveFailures(prev => prev + 1);
-      
+
       // Log recovery failure
       authLogger.logAuthEvent('ERROR_RECOVERY', false, {
         duration: Date.now() - recoveryStartTime,
@@ -419,7 +419,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, {
         userId: user?.id,
       });
-      
+
       // If recovery fails, force cleanup
       cleanupInvalidState('Recovery action failed');
     } finally {
@@ -473,7 +473,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Validate token and set up managed refresh
     const validationResult = jwtValidator.safeDecodeToken(token);
-    
+
     if (!validationResult.isValid) {
       // Log specific validation error
       const errorMessage = `Token validation failed: ${validationResult.error}`;
@@ -550,7 +550,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           expiredAt: new Date(expirationTime).toISOString(),
           timestamp: new Date().toISOString(),
         });
-        
+
         handleManagedTokenRefresh();
       } else if (timeUntilExpiration < 5 * 60 * 1000) {
         // Token expires soon, attempt refresh
@@ -558,7 +558,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           expiresIn: Math.floor(timeUntilExpiration / 1000),
           timestamp: new Date().toISOString(),
         });
-        
+
         handleManagedTokenRefresh();
       }
     }
@@ -586,18 +586,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Get current token first
       const currentToken = authService.getCurrentToken();
-      
+
       if (currentToken) {
         // Validate token format and content before using it
         const validationResult = jwtValidator.safeDecodeToken(currentToken);
-        
+
         if (!validationResult.isValid) {
           console.warn('Stored token is invalid during initialization', {
             error: validationResult.error,
             errorType: validationResult.errorType,
             timestamp: new Date().toISOString(),
           });
-          
+
           const initError = createAuthError(
             'TOKEN_INVALID',
             `Stored token is invalid: ${validationResult.error}`,
@@ -605,7 +605,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             'CLEAR_TOKEN'
           );
           setAuthError(initError);
-          
+
           // Clear invalid stored token
           await authService.logout();
           setTokenState({
@@ -619,7 +619,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           authLogger.logAuthEvent('SESSION_INIT', false, {
             duration: Date.now() - initStartTime,
             errorMessage: `Invalid stored token: ${validationResult.error}`,
-            metadata: { 
+            metadata: {
               phase: 'token_validation',
               errorType: validationResult.errorType,
             },
@@ -629,44 +629,80 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Token format is valid, now verify with server
         const isValidToken = await authService.verifyToken();
-        
+
         if (isValidToken) {
-          // Get user profile
-          const userProfile = await authService.getProfile();
-          
-          const expirationTime = jwtValidator.getTokenExpirationTime(validationResult.payload);
-          
-          setToken(currentToken);
-          setUser(userProfile);
-          setTokenState({
-            token: currentToken,
-            isValid: true,
-            expiresAt: expirationTime ? new Date(expirationTime) : null,
-            lastValidated: new Date(),
-            validationError: null,
-          });
+          try {
+            // Get user profile
+            const userProfile = await authService.getProfile();
 
-          // Schedule token check with refresh manager
-          if (tokenRefreshManagerRef.current) {
-            tokenRefreshManagerRef.current.scheduleTokenCheck(currentToken);
-          }
+            if (!userProfile || !userProfile.id) {
+              throw new Error('Invalid user profile received from server');
+            }
 
-          console.log('Authentication initialized successfully', {
-            userId: userProfile.id,
-            expiresAt: expirationTime ? new Date(expirationTime).toISOString() : 'no expiration',
-            timestamp: new Date().toISOString(),
-          });
+            const expirationTime = jwtValidator.getTokenExpirationTime(validationResult.payload);
 
-          authLogger.logAuthEvent('SESSION_INIT', true, {
-            duration: Date.now() - initStartTime,
-            metadata: {
-              phase: 'complete',
+            setToken(currentToken);
+            setUser(userProfile);
+            setTokenState({
+              token: currentToken,
+              isValid: true,
+              expiresAt: expirationTime ? new Date(expirationTime) : null,
+              lastValidated: new Date(),
+              validationError: null,
+            });
+
+            // Schedule token check with refresh manager
+            if (tokenRefreshManagerRef.current) {
+              tokenRefreshManagerRef.current.scheduleTokenCheck(currentToken);
+            }
+
+            console.log('Authentication initialized successfully', {
               userId: userProfile.id,
-              tokenExpiresAt: expirationTime ? new Date(expirationTime).toISOString() : null,
-            },
-          }, {
-            userId: userProfile.id,
-          });
+              expiresAt: expirationTime ? new Date(expirationTime).toISOString() : 'no expiration',
+              timestamp: new Date().toISOString(),
+            });
+
+            authLogger.logAuthEvent('SESSION_INIT', true, {
+              duration: Date.now() - initStartTime,
+              metadata: {
+                phase: 'complete',
+                userId: userProfile.id,
+                tokenExpiresAt: expirationTime ? new Date(expirationTime).toISOString() : null,
+              },
+            }, {
+              userId: userProfile.id,
+            });
+          } catch (profileError) {
+            console.error('Failed to get user profile during initialization:', profileError);
+
+            // Clear invalid session
+            await authService.logout();
+            setTokenState({
+              token: null,
+              isValid: false,
+              expiresAt: null,
+              lastValidated: new Date(),
+              validationError: 'Failed to load user profile',
+            });
+
+            const initError = createAuthError(
+              'PROFILE_LOAD_FAILED',
+              'Failed to load user profile',
+              false,
+              'CLEAR_TOKEN'
+            );
+            setAuthError(initError);
+
+            authLogger.logAuthEvent('SESSION_INIT', false, {
+              duration: Date.now() - initStartTime,
+              errorMessage: 'Failed to load user profile',
+              metadata: {
+                phase: 'profile_load',
+                error: profileError instanceof Error ? profileError.message : 'Unknown error',
+              },
+            });
+            return;
+          }
         } else {
           console.warn('Token verification failed during initialization');
           const verificationError = createAuthError(
@@ -676,7 +712,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             'CLEAR_TOKEN'
           );
           setAuthError(verificationError);
-          
+
           // Clear invalid state
           setToken(null);
           setUser(null);
@@ -708,7 +744,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         authLogger.logAuthEvent('SESSION_INIT', true, {
           duration: Date.now() - initStartTime,
-          metadata: { 
+          metadata: {
             phase: 'complete',
             noTokenFound: true,
           },
@@ -724,7 +760,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         'NONE'
       );
       setAuthError(networkError);
-      
+
       setToken(null);
       setUser(null);
       setTokenState({
@@ -738,7 +774,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       authLogger.logAuthEvent('SESSION_INIT', false, {
         duration: Date.now() - initStartTime,
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        metadata: { 
+        metadata: {
           phase: 'error',
           stackTrace: error instanceof Error ? error.stack : undefined,
         },
@@ -759,17 +795,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const authResponse = await authService.login(credentials);
-      
+
       // Validate the received token before setting it
       const validationResult = jwtValidator.safeDecodeToken(authResponse.token);
-      
+
       if (!validationResult.isValid) {
         const errorMessage = `Received invalid token from login: ${validationResult.error}`;
         console.error(errorMessage, {
           errorType: validationResult.errorType,
           timestamp: new Date().toISOString(),
         });
-        
+
         const loginError = createAuthError(
           'TOKEN_INVALID',
           errorMessage,
@@ -786,13 +822,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             phase: 'token_validation',
           },
         });
-        
+
         throw new Error('Invalid token received from server');
       }
 
       // Token is valid, set authentication state
       const expirationTime = jwtValidator.getTokenExpirationTime(validationResult.payload);
-      
+
       setToken(authResponse.token);
       setUser(authResponse.user);
       setTokenState({
@@ -823,11 +859,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, {
         userId: authResponse.user.id,
       });
-      
+
     } catch (error: any) {
       console.error('Login failed:', error);
       setError(error.message || 'Login failed');
-      
+
       // Clear any partial state on login failure
       setToken(null);
       setUser(null);
@@ -847,7 +883,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           stackTrace: error.stack,
         },
       });
-      
+
       throw error;
     } finally {
       setIsLoading(false);
@@ -870,7 +906,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       await authService.logout();
-      
+
       authLogger.logAuthEvent('LOGOUT', true, {
         duration: Date.now() - logoutStartTime,
         metadata: {
@@ -882,7 +918,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
     } catch (error) {
       console.error('Logout service call failed:', error);
-      
+
       authLogger.logAuthEvent('LOGOUT', false, {
         duration: Date.now() - logoutStartTime,
         errorMessage: error instanceof Error ? error.message : 'Unknown logout error',
@@ -918,7 +954,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setConsecutiveFailures(0);
       setLastRecoveryAttempt(null);
       setIsLoading(false);
-      
+
       console.log('Logout completed - all state cleared', {
         timestamp: new Date().toISOString(),
       });
@@ -981,7 +1017,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, {
         userId: user?.id,
       });
-      
+
       throw error;
     }
   };
@@ -1014,7 +1050,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, {
         userId: user?.id,
       });
-      
+
       throw error;
     }
   };
@@ -1044,7 +1080,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Reset consecutive failures for manual recovery
     setConsecutiveFailures(0);
-    
+
     // Create a new error with incremented retry count for manual recovery
     const recoveryError: AuthError = {
       ...authError,
@@ -1054,7 +1090,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     setAuthError(recoveryError);
-    
+
     // Execute recovery action
     await executeRecoveryAction(recoveryError);
   };
@@ -1066,7 +1102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Handle error boundary clear authentication events
     const handleErrorBoundaryClear = async (event: CustomEvent) => {
       const { errorId, errorType, reason } = event.detail;
-      
+
       console.log('Error boundary requested auth clear', {
         errorId,
         errorType,
@@ -1085,7 +1121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Handle error boundary reinitialize authentication events
     const handleErrorBoundaryReinit = async (event: CustomEvent) => {
       const { errorId, errorType, reason } = event.detail;
-      
+
       console.log('Error boundary requested auth reinit', {
         errorId,
         errorType,
@@ -1148,11 +1184,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
  */
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
+
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 };
 

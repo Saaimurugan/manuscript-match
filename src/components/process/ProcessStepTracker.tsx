@@ -126,13 +126,13 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
       console.warn('ProcessStepTracker - No currentStep found, defaulting to 1');
       return 1;
     }
-    
+
     const currentStep = PROCESS_STEPS.find(step => step.id === process.currentStep);
     if (!currentStep) {
       console.warn(`ProcessStepTracker - Invalid currentStep: ${process.currentStep}, defaulting to 1`);
       return 1;
     }
-    
+
     return currentStep.order;
   };
 
@@ -151,14 +151,14 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
 
     // Validate step ID
     const stepInfo = PROCESS_STEPS.find(s => s.id === stepId);
-    console.log('Step validation:', { 
-      stepId, 
-      stepInfo, 
+    console.log('Step validation:', {
+      stepId,
+      stepInfo,
       allSteps: PROCESS_STEPS.map(s => s.id),
       stepIdType: typeof stepId,
-      stepIdLength: stepId?.length 
+      stepIdLength: stepId?.length
     });
-    
+
     if (!stepInfo) {
       console.error('Invalid step ID:', stepId);
       console.error('Available steps:', PROCESS_STEPS.map(s => ({ id: s.id, order: s.order })));
@@ -175,9 +175,9 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
         processId: process.id,
         step: stepId,
       });
-      
+
       onStepChange?.(stepId);
-      
+
       toast({
         title: 'Step updated',
         description: `Moved to step: ${stepInfo.title}`,
@@ -199,26 +199,26 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
 
   const getStepStatus = (stepId: string) => {
     if (!process?.currentStep) return stepId === 'UPLOAD' ? 'current' : 'upcoming';
-    
+
     const currentOrder = getCurrentStepOrder();
     const stepOrder = PROCESS_STEPS.find(step => step.id === stepId)?.order || 1;
-    
+
     if (stepOrder < currentOrder) return 'completed';
     if (stepOrder === currentOrder) return 'current';
     return 'upcoming';
   };
 
-  const getStepIcon = (step: ProcessStep, status: string) => {
+  const getStepIcon = (step: ProcessStepInfo, status: string) => {
     const IconComponent = step.icon;
-    
+
     if (status === 'completed') {
       return <CheckCircle className="w-5 h-5 text-green-600" />;
     }
-    
+
     if (status === 'current') {
       return <IconComponent className="w-5 h-5 text-primary" />;
     }
-    
+
     return <Circle className="w-5 h-5 text-muted-foreground" />;
   };
 
@@ -232,7 +232,7 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Progress Bar */}
         <div>
@@ -248,66 +248,62 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
           {PROCESS_STEPS.map((step) => {
             const status = getStepStatus(step.id);
             const isClickable = allowStepNavigation && status !== 'upcoming';
-            
+
             return (
               <div
                 key={step.id}
-                className={`flex items-start space-x-4 p-3 rounded-lg transition-colors ${
-                  isClickable 
-                    ? 'cursor-pointer hover:bg-muted/50' 
+                className={`flex items-start space-x-4 p-3 rounded-lg transition-colors ${isClickable
+                    ? 'cursor-pointer hover:bg-muted/50'
                     : ''
-                } ${
-                  status === 'current' 
-                    ? 'bg-primary/5 border border-primary/20' 
+                  } ${status === 'current'
+                    ? 'bg-primary/5 border border-primary/20'
                     : ''
-                }`}
+                  }`}
                 onClick={() => isClickable && handleStepClick(step.id)}
               >
                 {/* Step Icon */}
                 <div className="flex-shrink-0 mt-0.5">
                   {getStepIcon(step, status)}
                 </div>
-                
+
                 {/* Step Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <h4 className={`font-medium ${
-                      status === 'current' 
-                        ? 'text-primary' 
+                    <h4 className={`font-medium ${status === 'current'
+                        ? 'text-primary'
                         : status === 'completed'
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
-                    }`}>
+                          ? 'text-foreground'
+                          : 'text-muted-foreground'
+                      }`}>
                       {step.title}
                     </h4>
-                    
+
                     {status === 'completed' && (
                       <Badge variant="secondary" className="text-xs">
                         Complete
                       </Badge>
                     )}
-                    
+
                     {status === 'current' && (
                       <Badge className="text-xs">
                         Current
                       </Badge>
                     )}
                   </div>
-                  
+
                   <p className="text-sm text-muted-foreground mt-1">
                     {step.description}
                   </p>
                 </div>
-                
+
                 {/* Step Number */}
                 <div className="flex-shrink-0">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                    status === 'completed'
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${status === 'completed'
                       ? 'bg-green-100 text-green-700'
                       : status === 'current'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
                     {step.order}
                   </div>
                 </div>
@@ -331,7 +327,7 @@ export const ProcessStepTracker: React.FC<ProcessStepTrackerProps> = ({
             >
               Previous Step
             </Button>
-            
+
             <Button
               disabled={(() => {
                 const currentOrder = getCurrentStepOrder();

@@ -5,11 +5,11 @@
 
 import { apiService } from './apiService';
 import { TokenManager } from './apiService';
-import type { 
-  LoginCredentials, 
-  AuthResponse, 
-  UserProfile, 
-  ApiResponse 
+import type {
+  LoginCredentials,
+  AuthResponse,
+  UserProfile,
+  ApiResponse
 } from '../types/api';
 
 export interface ChangePasswordRequest {
@@ -26,19 +26,41 @@ export class AuthService {
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await apiService.post<AuthResponse>('/api/auth/login', credentials);
-      
+      const response = await apiService.post<{ success: boolean; data: AuthResponse }>('/api/auth/login', credentials);
+
+      // Debug: Log the actual response structure
+      console.log('DEBUG: Full API response:', response);
+      console.log('DEBUG: Response data:', response.data);
+
+      // Extract the actual auth response from the wrapped API response
+      const authResponse = response.data.data;
+
+      console.log('DEBUG: Extracted auth response:', authResponse);
+
+      // Handle different possible response structures
+      let finalAuthResponse: AuthResponse;
+
+      if (authResponse) {
+        // Response is wrapped in ApiResponse structure
+        finalAuthResponse = authResponse;
+      } else if (response.data.token) {
+        // Response data directly contains the auth response
+        finalAuthResponse = response.data as AuthResponse;
+      } else {
+        throw new Error('Invalid response structure: no token found');
+      }
+
       // Set the token in the API service and token manager
-      if (response.data.token) {
-        apiService.setAuthToken(response.data.token);
-        
+      if (finalAuthResponse.token) {
+        apiService.setAuthToken(finalAuthResponse.token);
+
         // Store refresh token if provided
-        if (response.data.refreshToken) {
-          TokenManager.setRefreshToken(response.data.refreshToken);
+        if (finalAuthResponse.refreshToken) {
+          TokenManager.setRefreshToken(finalAuthResponse.refreshToken);
         }
       }
-      
-      return response.data;
+
+      return finalAuthResponse;
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -70,7 +92,7 @@ export class AuthService {
   async verifyToken(): Promise<boolean> {
     try {
       const token = TokenManager.getToken();
-      
+
       // No token available
       if (!token) {
         return false;
@@ -97,8 +119,26 @@ export class AuthService {
    */
   async getProfile(): Promise<UserProfile> {
     try {
-      const response = await apiService.get<UserProfile>('/api/auth/profile');
-      return response.data;
+      console.log('DEBUG: Calling getProfile API...');
+      const response = await apiService.get<{ success: boolean; data: UserProfile }>('/api/auth/profile');
+      console.log('DEBUG: getProfile response:', response);
+      console.log('DEBUG: getProfile response.data:', response.data);
+      
+      // Handle different possible response structures
+      let userProfile: UserProfile;
+      
+      if (response.data.data) {
+        // Response is wrapped in ApiResponse structure
+        userProfile = response.data.data;
+      } else if (response.data.id) {
+        // Response data directly contains the user profile
+        userProfile = response.data as UserProfile;
+      } else {
+        throw new Error('Invalid response structure: no user profile found');
+      }
+      
+      console.log('DEBUG: Final user profile:', userProfile);
+      return userProfile;
     } catch (error) {
       console.error('Failed to get user profile:', error);
       throw error;
@@ -110,8 +150,8 @@ export class AuthService {
    */
   async updateProfile(profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      const response = await apiService.put<UserProfile>('/api/auth/profile', profileData);
-      return response.data;
+      const response = await apiService.put<{ success: boolean; data: UserProfile }>('/api/auth/profile', profileData);
+      return response.data.data;
     } catch (error) {
       console.error('Failed to update user profile:', error);
       throw error;
@@ -164,20 +204,22 @@ export class AuthService {
         throw new Error('No refresh token available');
       }
 
-      const response = await apiService.post<{ token: string; refreshToken?: string }>('/api/auth/refresh', {
+      const response = await apiService.post<{ success: boolean; data: { token: string; refreshToken?: string } }>('/api/auth/refresh', {
         refreshToken
       });
-      
-      if (response.data.token) {
-        apiService.setAuthToken(response.data.token);
-        
+
+      const tokenData = response.data.data;
+
+      if (tokenData.token) {
+        apiService.setAuthToken(tokenData.token);
+
         // Update refresh token if provided
-        if (response.data.refreshToken) {
-          TokenManager.setRefreshToken(response.data.refreshToken);
+        if (tokenData.refreshToken) {
+          TokenManager.setRefreshToken(tokenData.refreshToken);
         }
       }
-      
-      return response.data.token;
+
+      return tokenData.token;
     } catch (error) {
       console.error('Failed to refresh token:', error);
       apiService.clearAuthToken();

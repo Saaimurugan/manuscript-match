@@ -106,6 +106,14 @@ export const useUpdateProcessStep = () => {
     mutationFn: ({ processId, step }: { processId: string; step: string }): Promise<Process> => 
       processService.updateProcessStep(processId, step),
     onSuccess: (updatedProcess) => {
+      console.log('DEBUG: updateProcessStep onSuccess called with:', updatedProcess);
+      
+      // Safety check for updatedProcess
+      if (!updatedProcess || !updatedProcess.id) {
+        console.error('Invalid updatedProcess received:', updatedProcess);
+        return;
+      }
+      
       // Update process in the list cache
       queryClient.setQueryData<Process[]>(
         queryKeys.processes.list(),
