@@ -34,7 +34,11 @@ export class ProcessService {
 
   async createProcess(userId: string, data: { title: string; description?: string }): Promise<ProcessWithMetadata> {
     const metadata = data.description ? JSON.stringify({ description: data.description }) : '';
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 9e091b2 (Bugs Fixed)
     const createData: CreateProcessInput = {
       userId,
       title: data.title,
