@@ -3,26 +3,31 @@ import jwt from 'jsonwebtoken';
 import { config } from '@/config/environment';
 import { UserRepository } from '@/repositories/UserRepository';
 import { ActivityLogRepository } from '@/repositories/ActivityLogRepository';
+import { UserSessionRepository } from '@/repositories/UserSessionRepository';
 import { 
   AuthUser, 
   AuthResponse, 
   LoginRequest, 
   RegisterRequest, 
   JwtPayload,
-  UserRole 
+  UserRole,
+  UserSession 
 } from '@/types';
 import { CustomError, ErrorType } from '@/middleware/errorHandler';
 
 export class AuthService {
   private userRepository: UserRepository;
   private activityLogRepository: ActivityLogRepository;
+  private userSessionRepository: UserSessionRepository;
 
   constructor(
     userRepository: UserRepository,
-    activityLogRepository: ActivityLogRepository
+    activityLogRepository: ActivityLogRepository,
+    userSessionRepository: UserSessionRepository
   ) {
     this.userRepository = userRepository;
     this.activityLogRepository = activityLogRepository;
+    this.userSessionRepository = userSessionRepository;
   }
 
   /**
@@ -77,9 +82,9 @@ export class AuthService {
   }
 
   /**
-   * Login user
+   * Login user with session tracking
    */
-  async login(data: LoginRequest): Promise<AuthResponse> {
+  async login(data: LoginRequest, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     const { email, password } = data;
 
     // Find user by email
@@ -92,6 +97,24 @@ export class AuthService {
       );
     }
 
+    // Check if user is blocked
+    if (user.status === 'BLOCKED') {
+      // Log blocked user login attempt
+      await this.activityLogRepository.create({
+        userId: user.id,
+        action: 'LOGIN_BLOCKED',
+        details: JSON.stringify({ email, reason: 'user_blocked' }),
+        ipAddress: ipAddress || '',
+        userAgent: userAgent || '',
+      });
+
+      throw new CustomError(
+        ErrorType.AUTHORIZATION_ERROR,
+        'Account has been blocked. Please contact an administrator.',
+        403
+      );
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
@@ -100,6 +123,8 @@ export class AuthService {
         userId: user.id,
         action: 'LOGIN_FAILED',
         details: JSON.stringify({ email, reason: 'invalid_password' }),
+        ipAddress: ipAddress || '',
+        userAgent: userAgent || '',
       });
 
       throw new CustomError(
@@ -109,18 +134,30 @@ export class AuthService {
       );
     }
 
-    // Log successful login
-    await this.activityLogRepository.create({
-      userId: user.id,
-      action: 'LOGIN_SUCCESS',
-      details: JSON.stringify({ email }),
-    });
-
     // Generate token
     const token = this.generateToken({
       userId: user.id,
       email: user.email,
       role: user.role as UserRole,
+    });
+
+    // Create session record
+    const expiresAt = new Date(Date.now() + this.parseExpiresIn(config.jwt.expiresIn));
+    await this.userSessionRepository.create({
+      userId: user.id,
+      token,
+      ipAddress: ipAddress || '',
+      userAgent: userAgent || '',
+      expiresAt,
+    });
+
+    // Log successful login
+    await this.activityLogRepository.create({
+      userId: user.id,
+      action: 'LOGIN_SUCCESS',
+      details: JSON.stringify({ email }),
+      ipAddress: ipAddress || '',
+      userAgent: userAgent || '',
     });
 
     return {
@@ -135,21 +172,47 @@ export class AuthService {
   }
 
   /**
-   * Verify JWT token
+   * Verify JWT token with session validation
    */
   async verifyToken(token: string): Promise<AuthUser> {
     try {
       const decoded = jwt.verify(token, config.jwt.secret) as JwtPayload;
       
-      // Verify user still exists
+      // Check if session exists and is active
+      const session = await this.userSessionRepository.findByToken(token);
+      if (!session || !session.isActive || session.expiresAt < new Date()) {
+        throw new CustomError(
+          ErrorType.AUTHENTICATION_ERROR,
+          'Session expired or invalid',
+          401
+        );
+      }
+
+      // Verify user still exists and is not blocked
       const user = await this.userRepository.findById(decoded.userId);
       if (!user) {
+        // Deactivate session if user no longer exists
+        await this.userSessionRepository.deactivate(token);
         throw new CustomError(
           ErrorType.AUTHENTICATION_ERROR,
           'User not found',
           401
         );
       }
+
+      // Check if user is blocked
+      if (user.status === 'BLOCKED') {
+        // Deactivate all sessions for blocked user
+        await this.userSessionRepository.deactivateAllForUser(user.id);
+        throw new CustomError(
+          ErrorType.AUTHORIZATION_ERROR,
+          'Account has been blocked. Please contact an administrator.',
+          403
+        );
+      }
+
+      // Update session last used time
+      await this.userSessionRepository.updateLastUsed(token);
 
       return {
         id: user.id,
@@ -165,6 +228,12 @@ export class AuthService {
         );
       }
       if (error instanceof jwt.TokenExpiredError) {
+        // Deactivate expired session
+        try {
+          await this.userSessionRepository.deactivate(token);
+        } catch (deactivateError) {
+          // Ignore deactivation errors for expired tokens
+        }
         throw new CustomError(
           ErrorType.AUTHENTICATION_ERROR,
           'Token expired',
@@ -197,5 +266,78 @@ export class AuthService {
    */
   async verifyPassword(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash);
+  }
+
+  /**
+   * Logout user by deactivating session
+   */
+  async logout(token: string, userId?: string): Promise<void> {
+    try {
+      await this.userSessionRepository.deactivate(token);
+      
+      if (userId) {
+        await this.activityLogRepository.create({
+          userId,
+          action: 'LOGOUT',
+          details: JSON.stringify({ method: 'explicit' }),
+        });
+      }
+    } catch (error) {
+      // Log error but don't throw - logout should always succeed
+      console.error('Error during logout:', error);
+    }
+  }
+
+  /**
+   * Logout all sessions for a user
+   */
+  async logoutAllSessions(userId: string, performedBy?: string): Promise<void> {
+    await this.userSessionRepository.deactivateAllForUser(userId);
+    
+    await this.activityLogRepository.create({
+      userId: performedBy || userId,
+      action: 'LOGOUT_ALL_SESSIONS',
+      details: JSON.stringify({ 
+        targetUserId: userId,
+        performedBy: performedBy || userId,
+      }),
+      resourceType: 'user',
+      resourceId: userId,
+    });
+  }
+
+  /**
+   * Get active sessions for a user
+   */
+  async getActiveSessions(userId: string): Promise<UserSession[]> {
+    return this.userSessionRepository.findActiveByUserId(userId);
+  }
+
+  /**
+   * Clean up expired sessions
+   */
+  async cleanupExpiredSessions(): Promise<number> {
+    return this.userSessionRepository.cleanupExpired();
+  }
+
+  /**
+   * Parse expires in string to milliseconds
+   */
+  private parseExpiresIn(expiresIn: string): number {
+    const match = expiresIn.match(/^(\d+)([smhd])$/);
+    if (!match) {
+      throw new Error('Invalid expiresIn format');
+    }
+
+    const value = parseInt(match[1]!, 10);
+    const unit = match[2];
+
+    switch (unit) {
+      case 's': return value * 1000;
+      case 'm': return value * 60 * 1000;
+      case 'h': return value * 60 * 60 * 1000;
+      case 'd': return value * 24 * 60 * 60 * 1000;
+      default: throw new Error('Invalid time unit');
+    }
   }
 }

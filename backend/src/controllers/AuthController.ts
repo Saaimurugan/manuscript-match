@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '@/services/AuthService';
 import { UserRepository } from '@/repositories/UserRepository';
 import { ActivityLogRepository } from '@/repositories/ActivityLogRepository';
+import { UserSessionRepository } from '@/repositories/UserSessionRepository';
 import { prisma } from '@/config/database';
 import { 
   LoginRequest, 
   RegisterRequest, 
   ApiResponse, 
   AuthResponse,
-  AuthUser 
+  AuthUser
 } from '@/types';
 import { validateData } from '@/validation';
 import { loginSchema, registerSchema, changePasswordSchema } from '@/validation/schemas';
@@ -20,7 +21,8 @@ export class AuthController {
   constructor() {
     const userRepository = new UserRepository(prisma);
     const activityLogRepository = new ActivityLogRepository(prisma);
-    this.authService = new AuthService(userRepository, activityLogRepository);
+    const userSessionRepository = new UserSessionRepository(prisma);
+    this.authService = new AuthService(userRepository, activityLogRepository, userSessionRepository);
   }
 
   /**
@@ -44,13 +46,18 @@ export class AuthController {
   };
 
   /**
-   * Login user
+   * Login user with session tracking
    */
   login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const validatedData = validateData(loginSchema, req.body) as LoginRequest;
       
-      const result = await this.authService.login(validatedData);
+      // Extract client info for session tracking
+      const clientInfo = (req as any).clientInfo || {};
+      const ipAddress = clientInfo.ipAddress || req.ip;
+      const userAgent = clientInfo.userAgent || req.get('User-Agent');
+      
+      const result = await this.authService.login(validatedData, ipAddress, userAgent);
       
       const response: ApiResponse<AuthResponse> = {
         success: true,
@@ -88,19 +95,86 @@ export class AuthController {
   };
 
   /**
-   * Logout user (client-side token removal)
+   * Logout user with session cleanup
    */
   logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Since we're using stateless JWT tokens, logout is handled client-side
-      // We just log the activity for audit purposes
-      if (req.user) {
-        // Activity logging is handled by the requestLogger middleware
+      const authHeader = req.headers.authorization;
+      if (authHeader) {
+        const token = authHeader.startsWith('Bearer ')
+          ? authHeader.slice(7)
+          : authHeader;
+
+        if (token) {
+          await this.authService.logout(token, req.user?.id);
+        }
       }
 
       const response: ApiResponse<{ message: string }> = {
         success: true,
         data: { message: 'Logged out successfully' },
+      };
+      
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Logout all sessions for current user
+   */
+  logoutAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new CustomError(
+          ErrorType.AUTHENTICATION_ERROR,
+          'Authentication required',
+          401
+        );
+      }
+
+      await this.authService.logoutAllSessions(req.user.id);
+
+      const response: ApiResponse<{ message: string }> = {
+        success: true,
+        data: { message: 'All sessions logged out successfully' },
+      };
+      
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get active sessions for current user
+   */
+  getSessions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new CustomError(
+          ErrorType.AUTHENTICATION_ERROR,
+          'Authentication required',
+          401
+        );
+      }
+
+      const sessions = await this.authService.getActiveSessions(req.user.id);
+
+      // Remove sensitive token information from response
+      const safeSessions = sessions.map(session => ({
+        id: session.id,
+        ipAddress: session.ipAddress,
+        userAgent: session.userAgent,
+        createdAt: session.createdAt,
+        lastUsedAt: session.lastUsedAt,
+        expiresAt: session.expiresAt,
+      }));
+
+      const response: ApiResponse<typeof safeSessions> = {
+        success: true,
+        data: safeSessions,
       };
       
       res.status(200).json(response);

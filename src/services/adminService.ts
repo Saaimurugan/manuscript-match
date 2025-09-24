@@ -11,7 +11,8 @@ import type {
   AdminProcess,
   ActivityLog,
   ActivityLogFilters,
-  UserProfile
+  UserProfile,
+  ProcessTemplate
 } from '../types/api';
 
 export interface AdminUserDetails extends UserProfile {
@@ -312,6 +313,217 @@ export class AdminService {
       await apiService.delete(`/api/admin/processes/${processId}`);
     } catch (error) {
       console.error('Failed to delete process:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create process as admin
+   */
+  async createProcess(data: {
+    title: string;
+    description: string;
+    templateId?: string;
+    userId?: string;
+  }): Promise<AdminProcess> {
+    try {
+      const response = await apiService.post<AdminProcess>('/api/admin/processes', data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create admin process:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update process as admin
+   */
+  async updateProcess(processId: string, data: {
+    title?: string;
+    description?: string;
+    currentStep?: string;
+    status?: string;
+  }): Promise<AdminProcess> {
+    try {
+      const response = await apiService.put<AdminProcess>(`/api/admin/processes/${processId}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update admin process:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset process stage (admin only)
+   */
+  async resetProcessStage(processId: string, data: {
+    targetStep: string;
+    reason?: string;
+  }): Promise<AdminProcess> {
+    try {
+      const response = await apiService.put<AdminProcess>(`/api/admin/processes/${processId}/reset-stage`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to reset process stage:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get process templates
+   */
+  async getProcessTemplates(): Promise<ProcessTemplate[]> {
+    try {
+      const response = await apiService.get<ProcessTemplate[]>('/api/admin/process-templates');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get process templates:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all available permissions
+   */
+  async getPermissions(): Promise<Array<{
+    id: string;
+    name: string;
+    description: string;
+    resource: string;
+    action: string;
+    createdAt: string;
+  }>> {
+    try {
+      const response = await apiService.get('/api/admin/permissions');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get permissions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get role permissions for a specific role
+   */
+  async getRolePermissions(role: string): Promise<Array<{
+    id: string;
+    role: string;
+    permissionId: string;
+    permission: {
+      id: string;
+      name: string;
+      description: string;
+      resource: string;
+      action: string;
+    };
+  }>> {
+    try {
+      const response = await apiService.get(`/api/admin/roles/${role}/permissions`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get role permissions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update role permissions
+   */
+  async updateRolePermissions(role: string, permissionNames: string[]): Promise<void> {
+    try {
+      await apiService.put(`/api/admin/roles/${role}/permissions`, { permissions: permissionNames });
+    } catch (error) {
+      console.error('Failed to update role permissions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user custom permissions
+   */
+  async getUserPermissions(userId: string): Promise<Array<{
+    id: string;
+    userId: string;
+    permissionId: string;
+    grantedBy: string;
+    grantedAt: string;
+    permission: {
+      id: string;
+      name: string;
+      description: string;
+      resource: string;
+      action: string;
+    };
+    granter: {
+      id: string;
+      email: string;
+      role: string;
+    };
+  }>> {
+    try {
+      const response = await apiService.get(`/api/admin/users/${userId}/permissions`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get user permissions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign custom permission to user
+   */
+  async assignUserPermission(userId: string, permissionName: string): Promise<void> {
+    try {
+      await apiService.post(`/api/admin/users/${userId}/permissions`, { permission: permissionName });
+    } catch (error) {
+      console.error('Failed to assign user permission:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Revoke custom permission from user
+   */
+  async revokeUserPermission(userId: string, permissionName: string): Promise<void> {
+    try {
+      await apiService.delete(`/api/admin/users/${userId}/permissions/${permissionName}`);
+    } catch (error) {
+      console.error('Failed to revoke user permission:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get effective permissions for a user (role + custom)
+   */
+  async getUserEffectivePermissions(userId: string): Promise<{
+    rolePermissions: Array<{
+      id: string;
+      name: string;
+      description: string;
+      resource: string;
+      action: string;
+    }>;
+    customPermissions: Array<{
+      id: string;
+      name: string;
+      description: string;
+      resource: string;
+      action: string;
+    }>;
+    allPermissions: Array<{
+      id: string;
+      name: string;
+      description: string;
+      resource: string;
+      action: string;
+    }>;
+  }> {
+    try {
+      const response = await apiService.get(`/api/admin/users/${userId}/effective-permissions`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get user effective permissions:', error);
       throw error;
     }
   }

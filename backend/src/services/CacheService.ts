@@ -9,13 +9,15 @@ export interface CacheOptions {
 // In-memory cache fallback when Redis is not available
 class MemoryCache {
   private cache = new Map<string, { value: any; expires: number }>();
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
-    // Clean up expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    // Clean up expired entries every 5 minutes (skip in test environment)
+    if (process.env['NODE_ENV'] !== 'test') {
+      this.cleanupInterval = setInterval(() => {
+        this.cleanup();
+      }, 5 * 60 * 1000);
+    }
   }
 
   private cleanup() {
@@ -66,7 +68,9 @@ class MemoryCache {
   }
 
   disconnect() {
-    clearInterval(this.cleanupInterval);
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     this.cache.clear();
   }
 }
@@ -80,6 +84,13 @@ export class CacheService {
 
   constructor() {
     this.memoryCache = new MemoryCache();
+
+    // Skip Redis in test environment or if explicitly disabled
+    if (process.env['NODE_ENV'] === 'test' || process.env['DISABLE_REDIS'] === 'true') {
+      console.log('🔄 Redis disabled for test environment, using in-memory cache');
+      this.useRedis = false;
+      return;
+    }
 
     // Try to connect to Redis, but fall back to memory cache if it fails
     try {

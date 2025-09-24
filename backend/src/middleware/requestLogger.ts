@@ -1,176 +1,208 @@
 import { Request, Response, NextFunction } from 'express';
-import { ActivityLogRepository } from '@/repositories/ActivityLogRepository';
-import { prisma } from '@/config/database';
+import { ActivityLogService } from '@/services/ActivityLogService';
+import { getClientIP } from './security';
 
-// Create activity log repository instance
-const activityLogRepository = new ActivityLogRepository(prisma);
+interface RequestLoggerOptions {
+  logAllRequests?: boolean;
+  logOnlyErrors?: boolean;
+  excludePaths?: string[];
+  includeBody?: boolean;
+  includeHeaders?: boolean;
+  maxBodySize?: number;
+}
 
 /**
- * Request logging middleware for audit trails
+ * Enhanced request logging middleware for security monitoring
  */
-export const requestLogger = (options: {
-  logAllRequests?: boolean;
-  loggedActions?: string[];
-  excludePaths?: string[];
-} = {}) => {
+export function requestLogger(options: RequestLoggerOptions = {}) {
   const {
     logAllRequests = false,
-    loggedActions = ['POST', 'PUT', 'DELETE'],
-    excludePaths = ['/health', '/api/auth/verify']
+    logOnlyErrors = false,
+    excludePaths = [],
+    includeBody = false,
+    includeHeaders = false,
+    maxBodySize = 1000
   } = options;
 
-  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    try {
-      // Skip logging for excluded paths
-      if (excludePaths.some(path => req.path.startsWith(path))) {
-        return next();
-      }
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const startTime = Date.now();
+    const ip = getClientIP(req);
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    
+    // Skip excluded paths
+    if (excludePaths.some(path => req.path.includes(path))) {
+      return next();
+    }
 
-      // Skip if user is not authenticated and we're not logging all requests
-      if (!req.user && !logAllRequests) {
-        return next();
-      }
+    // Capture original end function
+    const originalEnd = res.end;
+    let responseBody = '';
 
-      // Check if we should log this request
-      const shouldLog = logAllRequests || loggedActions.includes(req.method);
-      
+    // Override res.end to capture response
+    res.end = function(this: any, chunk?: any, encoding?: any, cb?: any) {
+      if (chunk) {
+        responseBody = chunk.toString();
+      }
+      return originalEnd.call(this, chunk, encoding, cb);
+    } as any;
+
+    // Log request completion
+    res.on('finish', async () => {
+      const responseTime = Date.now() - startTime;
+      const shouldLog = logAllRequests || 
+                       (logOnlyErrors && res.statusCode >= 400) ||
+                       res.statusCode >= 400;
+
       if (shouldLog) {
-        // Extract process ID from URL if present
-        const processIdMatch = req.path.match(/\/processes\/([a-f0-9-]+)/);
-        const processId = processIdMatch ? processIdMatch[1] : undefined;
-
-        // Determine action based on method and path
-        const action = determineAction(req.method, req.path);
-        
-        // Prepare log details
-        const details = {
-          method: req.method,
-          path: req.path,
-          userAgent: req.get('User-Agent'),
-          ip: req.ip,
-          requestId: req.requestId,
-          body: sanitizeBody(req.body),
-          query: req.query,
-        };
-
-        // Log the activity
-        if (req.user) {
+        try {
+          const { prisma } = await import('@/config/database');
+          const activityLogService = new ActivityLogService(prisma);
+          
           const logData: any = {
-            userId: req.user.id,
-            action,
-            details: JSON.stringify(details),
+            userId: req.user?.id || null,
+            processId: null,
+            action: 'HTTP_REQUEST',
+            resourceType: 'api',
+            resourceId: req.path,
+            details: {
+              method: req.method,
+              path: req.path,
+              statusCode: res.statusCode,
+              responseTime,
+              ip,
+              userAgent,
+              timestamp: new Date().toISOString(),
+              query: Object.keys(req.query).length > 0 ? req.query : undefined,
+              params: Object.keys(req.params).length > 0 ? req.params : undefined
+            },
+            ipAddress: ip,
+            userAgent
           };
-          
-          if (processId) {
-            logData.processId = processId;
+
+          // Include request body if enabled and not too large
+          if (includeBody && req.body) {
+            const bodyStr = JSON.stringify(req.body);
+            if (bodyStr.length <= maxBodySize) {
+              logData.details.requestBody = req.body;
+            } else {
+              logData.details.requestBodyTruncated = bodyStr.substring(0, maxBodySize) + '...';
+            }
           }
+
+          // Include relevant headers if enabled
+          if (includeHeaders) {
+            const relevantHeaders = {
+              'content-type': req.headers['content-type'],
+              'authorization': req.headers.authorization ? '[REDACTED]' : undefined,
+              'x-forwarded-for': req.headers['x-forwarded-for'],
+              'x-real-ip': req.headers['x-real-ip'],
+              'referer': req.headers.referer,
+              'origin': req.headers.origin
+            };
+            
+            logData.details.headers = Object.fromEntries(
+              Object.entries(relevantHeaders).filter(([_, value]) => value !== undefined)
+            );
+          }
+
+          // Include response body for errors (truncated)
+          if (res.statusCode >= 400 && responseBody) {
+            const truncatedResponse = responseBody.length > 500 
+              ? responseBody.substring(0, 500) + '...'
+              : responseBody;
+            logData.details.responseBody = truncatedResponse;
+          }
+
+          await activityLogService.logActivity(logData);
+        } catch (error) {
+          console.error('Failed to log request:', error);
+        }
+      }
+    });
+
+    next();
+  };
+}
+
+/**
+ * Activity logging decorator for specific actions
+ */
+export function logActivity(action: string, options: { 
+  includeBody?: boolean;
+  includeParams?: boolean;
+} = {}) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Store action for later logging
+    req.logAction = action;
+    req.logOptions = options;
+    
+    // Log the action completion
+    res.on('finish', async () => {
+      if (res.statusCode < 400) { // Only log successful actions
+        try {
+          const { prisma } = await import('@/config/database');
+          const activityLogService = new ActivityLogService(prisma);
+          const ip = getClientIP(req);
+          const userAgent = req.headers['user-agent'] || 'unknown';
           
-          await activityLogRepository.create(logData);
+          const logData: any = {
+            userId: req.user?.id || null,
+            processId: req.params['processId'] || req.body?.processId || null,
+            action,
+            resourceType: getResourceTypeFromPath(req.path),
+            resourceId: req.params['id'] || req.params['userId'] || req.params['processId'] || null,
+            details: {
+              method: req.method,
+              path: req.path,
+              statusCode: res.statusCode,
+              timestamp: new Date().toISOString()
+            },
+            ipAddress: ip,
+            userAgent
+          };
+
+          // Include request body if specified
+          if (options.includeBody && req.body) {
+            logData.details.requestData = req.body;
+          }
+
+          // Include params if specified
+          if (options.includeParams && Object.keys(req.params).length > 0) {
+            logData.details.params = req.params;
+          }
+
+          await activityLogService.logActivity(logData);
+        } catch (error) {
+          console.error('Failed to log activity:', error);
         }
       }
+    });
 
-      next();
-    } catch (error) {
-      // Don't fail the request if logging fails
-      console.error('Request logging failed:', error);
-      next();
-    }
+    next();
   };
-};
-
-/**
- * Determine action name based on HTTP method and path
- */
-function determineAction(method: string, path: string): string {
-  // Authentication actions
-  if (path.includes('/auth/login')) return 'LOGIN_ATTEMPT';
-  if (path.includes('/auth/register')) return 'REGISTER_ATTEMPT';
-  if (path.includes('/auth/logout')) return 'LOGOUT';
-
-  // Process actions
-  if (path.includes('/processes')) {
-    if (method === 'POST' && !path.includes('/')) return 'PROCESS_CREATED';
-    if (method === 'PUT' && path.includes('/step')) return 'PROCESS_STEP_UPDATED';
-    if (method === 'DELETE') return 'PROCESS_DELETED';
-    if (method === 'POST' && path.includes('/upload')) return 'MANUSCRIPT_UPLOADED';
-    if (method === 'PUT' && path.includes('/metadata')) return 'METADATA_UPDATED';
-    if (method === 'POST' && path.includes('/search')) return 'DATABASE_SEARCH_INITIATED';
-    if (method === 'POST' && path.includes('/validate')) return 'AUTHOR_VALIDATION_RUN';
-    if (method === 'POST' && path.includes('/shortlist')) return 'SHORTLIST_CREATED';
-    if (method === 'GET' && path.includes('/export')) return 'SHORTLIST_EXPORTED';
-  }
-
-  // Admin actions
-  if (path.includes('/admin')) {
-    if (method === 'GET' && path.includes('/processes')) return 'ADMIN_PROCESSES_VIEWED';
-    if (method === 'GET' && path.includes('/logs')) return 'ADMIN_LOGS_VIEWED';
-  }
-
-  // Generic actions
-  return `${method}_${path.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}`;
 }
 
 /**
- * Sanitize request body for logging (remove sensitive data)
+ * Extract resource type from request path
  */
-function sanitizeBody(body: any): any {
-  if (!body || typeof body !== 'object') {
-    return body;
-  }
-
-  const sanitized = { ...body };
-  
-  // Remove sensitive fields
-  const sensitiveFields = ['password', 'passwordHash', 'token', 'authorization'];
-  
-  for (const field of sensitiveFields) {
-    if (sanitized[field]) {
-      sanitized[field] = '[REDACTED]';
-    }
-  }
-
-  return sanitized;
+function getResourceTypeFromPath(path: string): string {
+  if (path.includes('/users')) return 'user';
+  if (path.includes('/processes')) return 'process';
+  if (path.includes('/permissions')) return 'permission';
+  if (path.includes('/logs')) return 'activity_log';
+  if (path.includes('/admin')) return 'admin';
+  return 'api';
 }
 
-/**
- * Activity logging middleware for specific actions
- */
-export const logActivity = (action: string, getDetails?: (req: Request) => any) => {
-  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    try {
-      if (req.user) {
-        // Extract process ID from URL if present
-        const processIdMatch = req.path.match(/\/processes\/([a-f0-9-]+)/);
-        const processId = processIdMatch ? processIdMatch[1] : undefined;
-
-        // Get custom details if provided
-        const customDetails = getDetails ? getDetails(req) : {};
-        
-        const details = {
-          method: req.method,
-          path: req.path,
-          requestId: req.requestId,
-          ...customDetails,
-        };
-
-        const logData: any = {
-          userId: req.user.id,
-          action,
-          details: JSON.stringify(details),
-        };
-        
-        if (processId) {
-          logData.processId = processId;
-        }
-        
-        await activityLogRepository.create(logData);
-      }
-
-      next();
-    } catch (error) {
-      // Don't fail the request if logging fails
-      console.error('Activity logging failed:', error);
-      next();
+// Extend Request interface to include logging properties
+declare global {
+  namespace Express {
+    interface Request {
+      logAction?: string;
+      logOptions?: {
+        includeBody?: boolean;
+        includeParams?: boolean;
+      };
     }
-  };
-};
+  }
+}

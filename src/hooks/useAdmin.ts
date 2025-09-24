@@ -11,7 +11,8 @@ import type {
   AdminProcess,
   ActivityLog,
   PaginatedResponse,
-  UserProfile
+  UserProfile,
+  ProcessTemplate
 } from '../types/api';
 
 /**
@@ -312,6 +313,96 @@ export const useDeleteAdminProcess = () => {
 };
 
 /**
+ * Hook for creating process as admin
+ */
+export const useCreateAdminProcess = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: (data: {
+      title: string;
+      description: string;
+      templateId?: string;
+      userId?: string;
+    }) => adminService.createProcess(data),
+    onSuccess: () => {
+      showSuccess('Process created successfully');
+      // Invalidate related queries
+      queryClient.invalidateQueries(['admin', 'processes']);
+      queryClient.invalidateQueries(['admin', 'stats']);
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for updating process as admin
+ */
+export const useUpdateAdminProcess = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: ({ processId, data }: {
+      processId: string;
+      data: {
+        title?: string;
+        description?: string;
+        currentStep?: string;
+        status?: string;
+      };
+    }) => adminService.updateProcess(processId, data),
+    onSuccess: (data, variables) => {
+      showSuccess('Process updated successfully');
+      // Invalidate related queries
+      queryClient.invalidateQueries(['admin', 'processes']);
+      queryClient.invalidateQueries(['admin', 'process', variables.processId]);
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for resetting process stage
+ */
+export const useResetProcessStage = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: ({ processId, data }: {
+      processId: string;
+      data: {
+        targetStep: string;
+        reason?: string;
+      };
+    }) => adminService.resetProcessStage(processId, data),
+    onSuccess: (data, variables) => {
+      showSuccess('Process stage reset successfully');
+      // Invalidate related queries
+      queryClient.invalidateQueries(['admin', 'processes']);
+      queryClient.invalidateQueries(['admin', 'process', variables.processId]);
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for fetching process templates
+ */
+export const useProcessTemplates = () => {
+  const { handleError } = useErrorHandling();
+
+  return useQuery({
+    queryKey: ['admin', 'process-templates'],
+    queryFn: () => adminService.getProcessTemplates(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    onError: handleError,
+  });
+};
+
+/**
  * Hook for refreshing admin data
  */
 export const useRefreshAdminData = () => {
@@ -323,5 +414,211 @@ export const useRefreshAdminData = () => {
     refreshLogs: () => queryClient.invalidateQueries(['admin', 'logs']),
     refreshUsers: () => queryClient.invalidateQueries(['admin', 'users']),
     refreshAll: () => queryClient.invalidateQueries(['admin']),
+  };
+};
+
+/**
+ * Hook for fetching all available permissions
+ */
+export const useAdminAllPermissions = () => {
+  const { handleError } = useErrorHandling();
+
+  return useQuery({
+    queryKey: ['admin', 'permissions'],
+    queryFn: () => adminService.getPermissions(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for fetching role permissions
+ */
+export const useAdminRolePermissions = (role: string) => {
+  const { handleError } = useErrorHandling();
+
+  return useQuery({
+    queryKey: ['admin', 'role-permissions', role],
+    queryFn: () => adminService.getRolePermissions(role),
+    enabled: !!role,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for updating role permissions
+ */
+export const useUpdateRolePermissions = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: ({ role, permissions }: { role: string; permissions: string[] }) =>
+      adminService.updateRolePermissions(role, permissions),
+    onSuccess: (data, variables) => {
+      showSuccess(`${variables.role} role permissions updated successfully`);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'role-permissions', variables.role] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for fetching user custom permissions
+ */
+export const useAdminUserPermissions = (userId: string) => {
+  const { handleError } = useErrorHandling();
+
+  return useQuery({
+    queryKey: ['admin', 'user-permissions', userId],
+    queryFn: () => adminService.getUserPermissions(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for assigning custom permission to user
+ */
+export const useAssignUserPermission = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: ({ userId, permission }: { userId: string; permission: string }) =>
+      adminService.assignUserPermission(userId, permission),
+    onSuccess: (data, variables) => {
+      showSuccess(`Permission ${variables.permission} assigned successfully`);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.userId] });
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for revoking custom permission from user
+ */
+export const useRevokeUserPermission = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: ({ userId, permission }: { userId: string; permission: string }) =>
+      adminService.revokeUserPermission(userId, permission),
+    onSuccess: (data, variables) => {
+      showSuccess(`Permission ${variables.permission} revoked successfully`);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.userId] });
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for fetching user effective permissions
+ */
+export const useAdminUserEffectivePermissions = (userId: string) => {
+  const { handleError } = useErrorHandling();
+
+  return useQuery({
+    queryKey: ['admin', 'user-effective-permissions', userId],
+    queryFn: () => adminService.getUserEffectivePermissions(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for bulk permission operations
+ */
+export const useBulkPermissionOperations = () => {
+  const queryClient = useQueryClient();
+  const { handleError, showSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: async ({ 
+      operation, 
+      userIds, 
+      permissions 
+    }: { 
+      operation: 'assign' | 'revoke'; 
+      userIds: string[]; 
+      permissions: string[] 
+    }) => {
+      const promises = userIds.flatMap(userId =>
+        permissions.map(permission =>
+          operation === 'assign'
+            ? adminService.assignUserPermission(userId, permission)
+            : adminService.revokeUserPermission(userId, permission)
+        )
+      );
+      
+      await Promise.all(promises);
+      return { operation, userIds, permissions };
+    },
+    onSuccess: (data) => {
+      const { operation, userIds, permissions } = data;
+      showSuccess(
+        `${operation === 'assign' ? 'Assigned' : 'Revoked'} ${permissions.length} permission(s) for ${userIds.length} user(s)`
+      );
+      
+      // Invalidate related queries
+      userIds.forEach(userId => {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions', userId] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId] });
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    onError: handleError,
+  });
+};
+
+/**
+ * Hook for refreshing all admin permission data
+ */
+export const useRefreshAdminPermissionData = () => {
+  const queryClient = useQueryClient();
+
+  return {
+    refreshAll: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'role-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user-effective-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+    refreshPermissions: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'permissions'] });
+    },
+    refreshRolePermissions: (role?: string) => {
+      if (role) {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'role-permissions', role] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'role-permissions'] });
+      }
+    },
+    refreshUserPermissions: (userId?: string) => {
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions', userId] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'user-effective-permissions', userId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'user-effective-permissions'] });
+      }
+    },
   };
 };

@@ -81,7 +81,7 @@ export const errorHandler = (
     details = error.details;
   }
   // Handle rate limit errors specifically
-  else if (error.name === 'TooManyRequestsError' || type === ErrorType.RATE_LIMIT_ERROR) {
+  else if (error.name === 'TooManyRequestsError') {
     statusCode = 429;
     type = ErrorType.RATE_LIMIT_ERROR;
     message = 'Rate limit exceeded';

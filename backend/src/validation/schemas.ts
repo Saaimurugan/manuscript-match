@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { ProcessStatus, ProcessStep, AuthorRole, DatabaseType } from '../types';
+import { ProcessStatus, ProcessStep, AuthorRole, DatabaseType, UserRole, UserStatus } from '../types';
 
 // Base validation schemas
 export const uuidSchema = Joi.string().uuid().required();
@@ -287,6 +287,36 @@ export const activityLogSearchSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
 });
 
+// Admin activity log filtering schema
+export const adminActivityLogFiltersSchema = Joi.object({
+  userId: uuidSchema.optional(),
+  processId: uuidSchema.optional(),
+  action: Joi.string().min(1).optional(),
+  resourceType: Joi.string().valid('user', 'process', 'permission', 'system').optional(),
+  resourceId: uuidSchema.optional(),
+  ipAddress: Joi.string().ip().optional(),
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+  search: Joi.string().min(1).max(100).optional(),
+  sortBy: Joi.string().valid('timestamp', 'action', 'userId', 'resourceType').default('timestamp'),
+  sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(50),
+});
+
+// Activity log export schema
+export const activityLogExportSchema = Joi.object({
+  format: Joi.string().valid('json', 'csv', 'pdf').default('json'),
+  userId: uuidSchema.optional(),
+  processId: uuidSchema.optional(),
+  action: Joi.string().min(1).optional(),
+  resourceType: Joi.string().valid('user', 'process', 'permission', 'system').optional(),
+  resourceId: uuidSchema.optional(),
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
+  search: Joi.string().min(1).max(100).optional(),
+});
+
 // Recommendation filtering schemas
 export const recommendationFiltersSchema = Joi.object({
   minPublications: Joi.number().integer().min(0).optional(),
@@ -366,11 +396,11 @@ export const validateEmail = (email: string): void => {
   // Additional checks for common edge cases
   const [localPart, domain] = trimmedEmail.split('@');
   
-  if (localPart.length > 64) {
+  if (localPart && localPart.length > 64) {
     throw new Error('Email local part is too long (maximum 64 characters)');
   }
   
-  if (domain.length > 253) {
+  if (domain && domain.length > 253) {
     throw new Error('Email domain is too long (maximum 253 characters)');
   }
   
@@ -380,7 +410,7 @@ export const validateEmail = (email: string): void => {
   }
   
   // Check for dots at the beginning or end of local part
-  if (localPart.startsWith('.') || localPart.endsWith('.')) {
+  if (localPart && (localPart.startsWith('.') || localPart.endsWith('.'))) {
     throw new Error('Email local part cannot start or end with a dot');
   }
 };
@@ -455,3 +485,47 @@ export const validateDateRange = (dateRange: { startDate?: string; endDate?: str
   }
   return value;
 };
+
+// Admin user management validation schemas
+export const inviteUserSchema = Joi.object({
+  email: emailSchema,
+  role: Joi.string().valid(...Object.values(UserRole)).required(),
+});
+
+export const adminUpdateUserSchema = Joi.object({
+  email: emailSchema.optional(),
+  role: Joi.string().valid(...Object.values(UserRole)).optional(),
+  status: Joi.string().valid(...Object.values(UserStatus)).optional(),
+}).min(1);
+
+export const blockUserSchema = Joi.object({
+  reason: Joi.string().max(500).optional(),
+});
+
+export const assignPermissionsSchema = Joi.object({
+  permissions: Joi.array().items(uuidSchema).min(1).required(),
+});
+
+export const updateRolePermissionsSchema = Joi.object({
+  permissions: Joi.array().items(uuidSchema).min(1).required(),
+});
+
+// Admin process management validation schemas
+export const adminCreateProcessSchema = Joi.object({
+  userId: uuidSchema,
+  title: Joi.string().min(1).max(500).required(),
+  templateId: Joi.string().optional(),
+  description: Joi.string().min(1).max(1000).optional(),
+});
+
+export const adminUpdateProcessSchema = Joi.object({
+  title: Joi.string().min(1).max(500).optional(),
+  description: Joi.string().min(1).max(1000).optional(),
+  status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
+  currentStep: Joi.string().valid(...Object.values(ProcessStep)).optional(),
+  metadata: Joi.object().optional(),
+}).min(1);
+
+export const adminResetProcessStageSchema = Joi.object({
+  targetStep: Joi.string().valid(...Object.values(ProcessStep)).required(),
+});

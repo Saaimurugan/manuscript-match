@@ -47,6 +47,7 @@ export class UserRepository extends BaseRepository<User, CreateUserInput, Update
   async findMany(options?: {
     skip?: number;
     take?: number;
+    where?: any;
     orderBy?: any;
   }): Promise<User[]> {
     const query: any = {
@@ -59,6 +60,10 @@ export class UserRepository extends BaseRepository<User, CreateUserInput, Update
     
     if (options?.take !== undefined) {
       query.take = options.take;
+    }
+
+    if (options?.where !== undefined) {
+      query.where = options.where;
     }
     
     return this.prisma.user.findMany(query);
@@ -91,7 +96,7 @@ export class UserRepository extends BaseRepository<User, CreateUserInput, Update
     });
   }
 
-  async count(): Promise<number> {
-    return this.prisma.user.count();
+  async count(where?: any): Promise<number> {
+    return this.prisma.user.count({ where });
   }
 }

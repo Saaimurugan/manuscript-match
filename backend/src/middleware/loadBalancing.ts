@@ -221,7 +221,7 @@ export const loadBalancingMiddleware = (req: Request, res: Response, next: NextF
 /**
  * Health check endpoint for load balancer
  */
-export const loadBalancerHealthCheck = (req: Request, res: Response) => {
+export const loadBalancerHealthCheck = (_req: Request, res: Response) => {
   const stats = loadBalancingService.getLoadStats();
   const isHealthy = loadBalancingService.isHealthy();
 

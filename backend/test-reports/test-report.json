@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-09-23T14:23:29.233Z",
+  "buildInfo": {
+    "name": "scholarfinder-backend",
+    "version": "1.0.0",
+    "timestamp": "2025-09-23T14:23:29.472Z",
+    "git": {
+      "commit": "9e091b2d8d122eaeaa360c3b5c410821d3ec3364",
+      "branch": "main",
+      "author": "Saai Murugan Purushothaman"
+    }
+  },
+  "testResults": {
+    "summary": {
+      "totalTests": 0,
+      "passedTests": 0,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "passRate": 0,
+      "executionTime": 0
+    },
+    "testSuites": [],
+    "overallResult": "NO_TESTS"
+  },
+  "coverage": null,
+  "environment": {
+    "ci": false,
+    "nodeVersion": "v20.17.0",
+    "platform": "win32"
+  }
+}

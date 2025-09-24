@@ -36,7 +36,7 @@ app.use(helmet({
 
 // CORS debugging middleware (development only)
 if (config.env === 'development') {
-  app.use((req, res, next) => {
+  app.use((req, _res, next) => {
     console.log(`CORS Debug - Origin: ${req.headers.origin}, Method: ${req.method}, Path: ${req.path}`);
     next();
   });

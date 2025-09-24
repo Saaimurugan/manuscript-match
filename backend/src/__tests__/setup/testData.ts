@@ -92,7 +92,7 @@ export async function createTestAuthor(
   return prisma.author.create({
     data: {
       name: data.name,
-      email: data.email,
+      email: data.email || null,
       publicationCount: data.publicationCount || 0,
       clinicalTrials: data.clinicalTrials || 0,
       retractions: data.retractions || 0,
@@ -114,7 +114,7 @@ export async function createTestAffiliation(
   return prisma.affiliation.create({
     data: {
       institutionName: data.institutionName,
-      department: data.department,
+      department: data.department || null,
       address: data.address || 'Test Address',
       country: data.country || 'Test Country',
     },
@@ -135,7 +135,7 @@ export async function createTestProcessAuthor(
       processId: data.processId,
       authorId: data.authorId,
       role: data.role,
-      validationStatus: data.validationStatus,
+      validationStatus: data.validationStatus || null,
     },
   });
 }

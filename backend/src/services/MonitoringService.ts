@@ -57,16 +57,18 @@ export class MonitoringService extends EventEmitter {
   private circuitBreakerStats: Map<string, any> = new Map();
   private startTime: Date;
   private metricsRetentionPeriod = 24 * 60 * 60 * 1000; // 24 hours
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupInterval?: NodeJS.Timeout;
 
   private constructor() {
     super();
     this.startTime = new Date();
     
-    // Clean up old metrics every hour
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupOldMetrics();
-    }, 60 * 60 * 1000);
+    // Clean up old metrics every hour (skip in test environment)
+    if (process.env['NODE_ENV'] !== 'test') {
+      this.cleanupInterval = setInterval(() => {
+        this.cleanupOldMetrics();
+      }, 60 * 60 * 1000);
+    }
   }
 
   static getInstance(): MonitoringService {
@@ -326,8 +328,10 @@ export class MonitoringService extends EventEmitter {
       }
     };
     
-    // Check alerts every minute
-    setInterval(checkAlerts, 60 * 1000);
+    // Check alerts every minute (skip in test environment)
+    if (process.env['NODE_ENV'] !== 'test') {
+      setInterval(checkAlerts, 60 * 1000);
+    }
     
     // Set up alert handlers
     this.setupAlertHandlers();

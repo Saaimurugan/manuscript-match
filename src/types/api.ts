@@ -60,7 +60,7 @@ export interface ResetPasswordRequest {
 export interface UserProfile {
   id: string;
   email: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'QC' | 'MANAGER' | 'ADMIN';
   createdAt: string;
   updatedAt: string;
 }
@@ -74,6 +74,47 @@ export interface Process {
   status: 'CREATED' | 'UPLOADING' | 'PROCESSING' | 'SEARCHING' | 'VALIDATING' | 'COMPLETED' | 'ERROR';
   createdAt: string;
   updatedAt: string;
+}
+
+// Admin Process Management Types
+export interface AdminProcess extends Process {
+  userId: string;
+  userEmail: string;
+  templateId?: string;
+  templateName?: string;
+}
+
+export interface ProcessTemplate {
+  id: string;
+  name: string;
+  description: string;
+  steps: string[];
+  defaultSettings: {
+    maxResults?: number;
+    autoValidation?: boolean;
+    [key: string]: any;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAdminProcessRequest {
+  title: string;
+  description: string;
+  templateId?: string;
+  userId?: string;
+}
+
+export interface UpdateAdminProcessRequest {
+  title?: string;
+  description?: string;
+  currentStep?: Process['currentStep'];
+  status?: Process['status'];
+}
+
+export interface ResetProcessStageRequest {
+  targetStep: Process['currentStep'];
+  reason?: string;
 }
 
 export interface CreateProcessRequest {

@@ -6,6 +6,8 @@ export { AffiliationRepository } from './AffiliationRepository';
 export { ProcessAuthorRepository } from './ProcessAuthorRepository';
 export { ShortlistRepository } from './ShortlistRepository';
 export { ActivityLogRepository } from './ActivityLogRepository';
+export { PermissionRepository } from './PermissionRepository';
+export { UserInvitationRepository } from './UserInvitationRepository';
 
 export type {
   CreateUserInput,
@@ -50,3 +52,19 @@ export type {
   ActivityLogWithRelations,
   ActivityLogSearchOptions,
 } from './ActivityLogRepository';
+
+export type {
+  CreatePermissionInput,
+  UpdatePermissionInput,
+  CreateUserPermissionInput,
+  CreateRolePermissionInput,
+  PermissionWithRelations,
+  UserPermissionWithRelations,
+  RolePermissionWithRelations,
+} from './PermissionRepository';
+
+export type {
+  CreateUserInvitationInput,
+  UpdateUserInvitationInput,
+  UserInvitationWithInviter,
+} from './UserInvitationRepository';

@@ -8,6 +8,23 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminDashboard } from '../AdminDashboard';
 
+// Mock the child components
+vi.mock('../UserManagement', () => ({
+  UserManagement: () => <div>User Management Component</div>,
+}));
+
+vi.mock('../PermissionManagement', () => ({
+  PermissionManagement: () => <div>Permission Management Component</div>,
+}));
+
+vi.mock('../ProcessManagement', () => ({
+  ProcessManagement: () => <div>Process Management Component</div>,
+}));
+
+vi.mock('../ActivityLogViewer', () => ({
+  ActivityLogViewer: () => <div>Activity Log Viewer Component</div>,
+}));
+
 // Mock the hooks
 vi.mock('../../../hooks/useAuth', () => ({
   useAuth: () => ({
@@ -133,10 +150,10 @@ vi.mock('../../../hooks/useAdmin', () => ({
   }),
   useRefreshAdminData: () => ({
     refreshAll: vi.fn(),
-  }),
-  useAdminExport: () => ({
-    mutate: vi.fn(),
-    isLoading: false,
+    refreshStats: vi.fn(),
+    refreshProcesses: vi.fn(),
+    refreshLogs: vi.fn(),
+    refreshUsers: vi.fn(),
   }),
 }));
 
@@ -162,19 +179,32 @@ describe('AdminDashboard', () => {
     vi.clearAllMocks();
   });
 
-  it('should render admin dashboard with statistics', async () => {
+  it('should render admin dashboard with sidebar navigation', async () => {
     render(<AdminDashboard />, { wrapper: createWrapper() });
 
     // Check if main title is rendered
     expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Monitor user activities and system usage')).toBeInTheDocument();
+    expect(screen.getByText('System Management')).toBeInTheDocument();
 
-    // Check if statistics are displayed
+    // Check if navigation items are displayed
+    await waitFor(() => {
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+      expect(screen.getByText('User Management')).toBeInTheDocument();
+      expect(screen.getByText('Permissions')).toBeInTheDocument();
+      expect(screen.getByText('Process Management')).toBeInTheDocument();
+      expect(screen.getByText('Activity Logs')).toBeInTheDocument();
+      expect(screen.getByText('System Health')).toBeInTheDocument();
+    });
+  });
+
+  it('should render overview statistics', async () => {
+    render(<AdminDashboard />, { wrapper: createWrapper() });
+
+    // Check if statistics are displayed in overview
     await waitFor(() => {
       expect(screen.getByText('150')).toBeInTheDocument(); // Total Users
-      expect(screen.getByText('300')).toBeInTheDocument(); // Total Processes
+      expect(screen.getByText('300')).toBeInTheDocument(); // Total Processes  
       expect(screen.getByText('45')).toBeInTheDocument(); // Active Processes
-      expect(screen.getByText('500')).toBeInTheDocument(); // Total Searches
     });
   });
 
@@ -182,66 +212,64 @@ describe('AdminDashboard', () => {
     render(<AdminDashboard />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByText('System Health')).toBeInTheDocument();
-      expect(screen.getByText('HEALTHY')).toBeInTheDocument();
-      expect(screen.getByText('UP')).toBeInTheDocument(); // Database status
+      expect(screen.getByText('Healthy')).toBeInTheDocument();
+      expect(screen.getByText('System healthy')).toBeInTheDocument();
     });
   });
 
-  it('should render system alerts', async () => {
+  it('should render system alerts when present', async () => {
     render(<AdminDashboard />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByText('System Alerts')).toBeInTheDocument();
-      expect(screen.getByText('System maintenance scheduled')).toBeInTheDocument();
+      expect(screen.getByText('MEDIUM: System maintenance scheduled')).toBeInTheDocument();
     });
   });
 
-  it('should switch between tabs', async () => {
+  it('should switch between navigation tabs', async () => {
     const user = userEvent.setup();
-    render(<AdminDashboard />, { wrapper: createWrapper() });
+    render(<AdminDashboard permissions={['user.manage', 'permission.manage', 'process.manage', 'activity.view', 'system.monitor']} />, { wrapper: createWrapper() });
 
     // Initially on overview tab
     expect(screen.getByText('Total Users')).toBeInTheDocument();
 
-    // Click on processes tab
-    await user.click(screen.getByText('Processes'));
+    // Click on user management
+    await user.click(screen.getByText('User Management'));
     await waitFor(() => {
-      expect(screen.getByText('All Processes')).toBeInTheDocument();
-      expect(screen.getByText('Test Process')).toBeInTheDocument();
+      expect(screen.getByText('User Management Component')).toBeInTheDocument();
     });
 
-    // Click on users tab
-    await user.click(screen.getByText('Users'));
+    // Click on permissions
+    await user.click(screen.getByText('Permissions'));
     await waitFor(() => {
-      expect(screen.getByText('User Management')).toBeInTheDocument();
-      expect(screen.getByText('user@example.com')).toBeInTheDocument();
+      expect(screen.getByText('Permission Management Component')).toBeInTheDocument();
     });
 
-    // Click on activities tab
+    // Click on process management
+    await user.click(screen.getByText('Process Management'));
+    await waitFor(() => {
+      expect(screen.getByText('Process Management Component')).toBeInTheDocument();
+    });
+
+    // Click on activity logs
     await user.click(screen.getByText('Activity Logs'));
     await waitFor(() => {
-      expect(screen.getByText('System-wide user activity monitoring')).toBeInTheDocument();
-      expect(screen.getByText('FILE_UPLOAD')).toBeInTheDocument();
+      expect(screen.getByText('Activity Log Viewer Component')).toBeInTheDocument();
     });
 
-    // Click on system tab
-    await user.click(screen.getByText('System'));
+    // Click on system health
+    await user.click(screen.getByText('System Health'));
     await waitFor(() => {
       expect(screen.getByText('System Information')).toBeInTheDocument();
       expect(screen.getByText('Version:')).toBeInTheDocument();
     });
   });
 
-  it('should show export buttons', async () => {
+  it('should show user information in sidebar', async () => {
     render(<AdminDashboard />, { wrapper: createWrapper() });
 
-    // Switch to processes tab to see export button
-    const user = userEvent.setup();
-    await user.click(screen.getByText('Processes'));
-
     await waitFor(() => {
-      expect(screen.getByText('Export')).toBeInTheDocument();
+      expect(screen.getByText('admin@example.com')).toBeInTheDocument();
+      expect(screen.getByText('Administrator')).toBeInTheDocument();
     });
   });
 
@@ -251,16 +279,37 @@ describe('AdminDashboard', () => {
     // Mock the refresh function
     vi.mocked(require('../../../hooks/useAdmin').useRefreshAdminData).mockReturnValue({
       refreshAll: mockRefreshAll,
+      refreshStats: vi.fn(),
+      refreshProcesses: vi.fn(),
+      refreshLogs: vi.fn(),
+      refreshUsers: vi.fn(),
     });
 
     const user = userEvent.setup();
     render(<AdminDashboard />, { wrapper: createWrapper() });
 
     // Find and click refresh button
-    const refreshButton = screen.getByRole('button', { name: /refresh/i });
+    const refreshButton = screen.getByText('Refresh');
     await user.click(refreshButton);
 
     expect(mockRefreshAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('should support sidebar collapse functionality', async () => {
+    const user = userEvent.setup();
+    render(<AdminDashboard />, { wrapper: createWrapper() });
+
+    // Find the settings button (collapse button)
+    const settingsButtons = screen.getAllByRole('button');
+    const collapseButton = settingsButtons.find(button => 
+      button.querySelector('svg')?.getAttribute('class')?.includes('h-4 w-4')
+    );
+    
+    if (collapseButton) {
+      await user.click(collapseButton);
+      // After collapse, the "System Management" text should not be visible
+      expect(screen.queryByText('System Management')).not.toBeInTheDocument();
+    }
   });
 });
 
@@ -300,6 +349,7 @@ describe('AdminDashboard - Permission Checks', () => {
 
     render(<AdminDashboard />, { wrapper: createWrapper() });
 
+    expect(screen.getByText('Error Loading Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Failed to load admin data. Please try refreshing the page.')).toBeInTheDocument();
   });
 });

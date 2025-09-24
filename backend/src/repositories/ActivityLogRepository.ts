@@ -2,15 +2,23 @@ import { PrismaClient, ActivityLog } from '@prisma/client';
 import { BaseRepository } from './BaseRepository';
 
 export interface CreateActivityLogInput {
-  userId: string;
+  userId?: string; // Made optional for system logs
   processId?: string;
   action: string;
   details?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  resourceType?: string;
+  resourceId?: string;
+  signature?: string;
+  previousHash?: string;
 }
 
 export interface UpdateActivityLogInput {
   action?: string;
   details?: string;
+  signature?: string;
+  previousHash?: string;
 }
 
 export interface ActivityLogWithRelations extends ActivityLog {
@@ -22,6 +30,10 @@ export interface ActivityLogSearchOptions {
   userId?: string;
   processId?: string;
   action?: string;
+  resourceType?: string;
+  resourceId?: string;
+  ipAddress?: string;
+  userAgent?: string;
   startDate?: Date;
   endDate?: Date;
   skip?: number;
@@ -124,6 +136,26 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog, CreateAct
       };
     }
 
+    if (options.resourceType) {
+      where.resourceType = options.resourceType;
+    }
+
+    if (options.resourceId) {
+      where.resourceId = options.resourceId;
+    }
+
+    if (options.ipAddress) {
+      where.ipAddress = {
+        contains: options.ipAddress,
+      };
+    }
+
+    if (options.userAgent) {
+      where.userAgent = {
+        contains: options.userAgent,
+      };
+    }
+
     if (options.startDate || options.endDate) {
       where.timestamp = {};
       if (options.startDate) {
@@ -213,7 +245,7 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog, CreateAct
 
   async bulkCreate(logs: CreateActivityLogInput[]): Promise<number> {
     const result = await this.prisma.activityLog.createMany({
-      data: logs,
+      data: logs as any, // Type assertion to handle Prisma strict typing
     });
     return result.count;
   }
@@ -230,5 +262,30 @@ export class ActivityLogRepository extends BaseRepository<ActivityLog, CreateAct
     return this.prisma.activityLog.count({
       where: { processId },
     });
+  }
+
+  async findByProcessAndAction(
+    processId: string,
+    action: string,
+    options?: {
+      limit?: number;
+      orderBy?: any;
+    }
+  ): Promise<ActivityLog[]> {
+    this.validateId(processId);
+
+    const query: any = {
+      where: { 
+        processId,
+        action 
+      },
+      orderBy: options?.orderBy || { timestamp: 'desc' },
+    };
+    
+    if (options?.limit !== undefined) {
+      query.take = options.limit;
+    }
+
+    return this.prisma.activityLog.findMany(query);
   }
 }

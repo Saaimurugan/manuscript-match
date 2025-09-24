@@ -9,16 +9,6 @@ export const prisma = new PrismaClient({
       url: config.database.url,
     },
   },
-  // Add connection pool configuration for better concurrent handling
-  __internal: {
-    engine: {
-      // Increase connection pool size for SQLite
-      connectionLimit: 25, // Increased from default 10
-      poolTimeout: 30000, // 30 seconds timeout
-      // Enable WAL mode for better concurrent access
-      engineType: 'binary',
-    },
-  },
 });
 
 // Connection pool management

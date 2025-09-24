@@ -50,11 +50,14 @@ export class PerformanceMonitoringService {
   private readonly metricsRetentionHours = 24;
 
   constructor() {
-    // Start periodic system metrics collection
-    this.startSystemMetricsCollection();
-    
-    // Cleanup old metrics periodically
-    setInterval(() => this.cleanupOldMetrics(), 60 * 60 * 1000); // Every hour
+    // Skip periodic tasks in test environment
+    if (process.env['NODE_ENV'] !== 'test') {
+      // Start periodic system metrics collection
+      this.startSystemMetricsCollection();
+      
+      // Cleanup old metrics periodically
+      setInterval(() => this.cleanupOldMetrics(), 60 * 60 * 1000); // Every hour
+    }
   }
 
   /**
@@ -366,6 +369,9 @@ export class PerformanceMonitoringService {
   }
 
   private startSystemMetricsCollection() {
+    // Skip in test environment
+    if (process.env['NODE_ENV'] === 'test') return;
+    
     // Collect system metrics every 30 seconds
     setInterval(async () => {
       try {

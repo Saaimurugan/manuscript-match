@@ -140,7 +140,23 @@ export interface AuthUser {
 
 export enum UserRole {
   USER = 'USER',
+  QC = 'QC',
+  MANAGER = 'MANAGER',
   ADMIN = 'ADMIN',
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  BLOCKED = 'BLOCKED',
+  PENDING = 'PENDING',
+  INVITED = 'INVITED',
+}
+
+export enum InvitationStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  EXPIRED = 'EXPIRED',
+  REVOKED = 'REVOKED',
 }
 
 export interface LoginRequest {
@@ -171,6 +187,7 @@ export interface JwtPayload {
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
+  message?: string;
   error?: {
     type: string;
     message: string;
@@ -203,4 +220,126 @@ export interface ValidationError {
   field: string;
   message: string;
   value?: any;
+}
+
+// Admin Management System Types
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  resource: string; // users, processes, system
+  action: string; // create, read, update, delete, manage
+  createdAt: Date;
+}
+
+export interface UserPermission {
+  id: string;
+  userId: string;
+  permissionId: string;
+  grantedBy: string;
+  grantedAt: Date;
+  user?: AuthUser;
+  permission?: Permission;
+  granter?: AuthUser;
+}
+
+export interface RolePermission {
+  id: string;
+  role: UserRole;
+  permissionId: string;
+  permission?: Permission;
+}
+
+export interface UserInvitation {
+  id: string;
+  email: string;
+  role: UserRole;
+  token: string;
+  invitedBy: string;
+  invitedAt: Date;
+  expiresAt: Date;
+  acceptedAt?: Date | null;
+  status: InvitationStatus;
+  inviter?: AuthUser;
+}
+
+export interface ExtendedUser extends AuthUser {
+  status: UserStatus;
+  blockedAt?: Date;
+  blockedBy?: string;
+  invitedBy?: string;
+  invitationToken?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  customPermissions?: UserPermission[];
+  invitedUsers?: ExtendedUser[];
+  inviter?: ExtendedUser;
+  blockedByUser?: ExtendedUser;
+  blockedUsers?: ExtendedUser[];
+  sentInvitations?: UserInvitation[];
+  grantedPermissions?: UserPermission[];
+}
+
+export interface ExtendedActivityLog {
+  id: string;
+  userId: string;
+  processId?: string;
+  action: string;
+  details?: any;
+  ipAddress?: string;
+  userAgent?: string;
+  resourceType?: string;
+  resourceId?: string;
+  timestamp: Date;
+  user?: AuthUser;
+  process?: any;
+}
+
+// Process Management Types
+export interface ProcessTemplate {
+  id: string;
+  name: string;
+  description: string;
+  defaultMetadata: any;
+  defaultStep: ProcessStep;
+  defaultStatus: ProcessStatus;
+}
+
+export interface ProcessMetrics {
+  totalProcesses: number;
+  activeProcesses: number;
+  completedProcesses: number;
+  errorProcesses: number;
+  recentActivity: number;
+  byStatus: Record<ProcessStatus, number>;
+  byStep: Record<ProcessStep, number>;
+  averageCompletionTime: number;
+  processingTrends: {
+    daily: number;
+    weekly: number;
+  };
+}
+
+export interface ActiveProcess {
+  id: string;
+  userId: string;
+  title: string;
+  status: ProcessStatus;
+  currentStep: ProcessStep;
+  duration: number; // in minutes
+  lastActivity: Date;
+  createdAt: Date;
+}
+
+export interface UserSession {
+  id: string;
+  userId: string;
+  token: string;
+  ipAddress?: string;
+  userAgent?: string;
+  isActive: boolean;
+  createdAt: Date;
+  expiresAt: Date;
+  lastUsedAt: Date;
+  user?: AuthUser;
 }

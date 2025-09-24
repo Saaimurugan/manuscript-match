@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '@/controllers/AuthController';
-import { authenticate } from '@/middleware/auth';
+import { authenticate, extractClientInfo } from '@/middleware/auth';
 import { authRateLimiter } from '@/middleware/rateLimiter';
 import { requestLogger, logActivity } from '@/middleware/requestLogger';
 
@@ -119,6 +119,7 @@ router.post('/register',
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/login', 
+  extractClientInfo,
   logActivity('USER_LOGIN_ATTEMPT'),
   authController.login
 );
@@ -163,6 +164,27 @@ router.put('/change-password',
 router.get('/profile', 
   authenticate,
   authController.profile
+);
+
+/**
+ * @route   POST /api/auth/logout-all
+ * @desc    Logout all sessions for current user
+ * @access  Private
+ */
+router.post('/logout-all', 
+  authenticate,
+  logActivity('USER_LOGOUT_ALL_SESSIONS'),
+  authController.logoutAll
+);
+
+/**
+ * @route   GET /api/auth/sessions
+ * @desc    Get active sessions for current user
+ * @access  Private
+ */
+router.get('/sessions', 
+  authenticate,
+  authController.getSessions
 );
 
 export default router;
