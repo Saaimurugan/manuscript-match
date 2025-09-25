@@ -86,7 +86,6 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
     } = useAdminLogs({
         page: currentPage,
         limit: pageSize,
-        search: searchTerm || undefined,
         action: actionFilter !== "all" ? actionFilter : undefined,
         userId: userFilter !== "all" ? userFilter : undefined,
         dateFrom: dateFrom?.toISOString(),
@@ -148,7 +147,7 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
             processId: log.processId,
             details: log.details
         };
-        
+
         navigator.clipboard.writeText(JSON.stringify(logDetails, null, 2))
             .then(() => {
                 // Could show a toast notification here
@@ -169,7 +168,7 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
     const handleExport = useCallback(async () => {
         setIsExporting(true);
         setExportProgress(0);
-        
+
         try {
             // Simulate progress for better UX
             const progressInterval = setInterval(() => {
@@ -196,7 +195,7 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
 
             clearInterval(progressInterval);
             setExportProgress(100);
-            
+
             // Reset after a short delay
             setTimeout(() => {
                 setExportProgress(0);
@@ -213,14 +212,14 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
     // Real-time streaming functionality
     const startStreaming = useCallback(() => {
         if (streamingIntervalRef.current) return;
-        
+
         setIsStreaming(true);
         setConnectionStatus('connecting');
-        
+
         // Simulate connection delay
         setTimeout(() => {
             setConnectionStatus('connected');
-            
+
             // Poll for new logs every 5 seconds
             streamingIntervalRef.current = setInterval(() => {
                 // In a real implementation, this would use WebSocket or Server-Sent Events
@@ -228,7 +227,7 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                 refetchLogs().then((result) => {
                     if (result.data?.data) {
                         const latestLog = result.data.data[0];
-                        if (latestLog && lastLogTimestampRef.current && 
+                        if (latestLog && lastLogTimestampRef.current &&
                             new Date(latestLog.timestamp) > new Date(lastLogTimestampRef.current)) {
                             setNewLogsCount(prev => prev + 1);
                         }
@@ -414,12 +413,12 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                                     )}
                                 </Button>
                             </div>
-                            
+
                             <Separator orientation="vertical" className="h-6" />
-                            
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
+
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
                                     refetchLogs();
                                     clearNewLogsNotification();
@@ -720,18 +719,18 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                    disabled={currentPage === 1}
+                                    disabled={!pagination?.hasPreviousPage}
                                 >
                                     Previous
                                 </Button>
-                                <span className="text-sm">
+                                <span className="text-sm text-gray-600">
                                     Page {currentPage} of {pagination.totalPages}
                                 </span>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                                    disabled={currentPage === pagination.totalPages}
+                                    disabled={!pagination?.hasNextPage}
                                 >
                                     Next
                                 </Button>
@@ -741,6 +740,186 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                 </Card>
             )}
 
+            {/* Log Details Modal */}
+            <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Activity className="h-5 w-5" />
+                            Activity Log Details
+                            {selectedLog && (
+                                <Badge className={cn("text-xs", getActionColor(selectedLog.action))}>
+                                    {selectedLog.action.replace(/_/g, ' ')}
+                                </Badge>
+                            )}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Detailed information about this activity log entry
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedLog && (
+                        <div className="space-y-6">
+                            {/* Basic Information */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-600">Timestamp</Label>
+                                    <p className="text-sm mt-1">
+                                        {format(new Date(selectedLog.timestamp), 'PPpp')}
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-600">Action</Label>
+                                    <p className="text-sm mt-1 font-mono">
+                                        {selectedLog.action}
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                                    <p className="text-sm mt-1 font-mono">
+                                        {selectedLog.userId}
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-600">Process ID</Label>
+                                    <p className="text-sm mt-1 font-mono">
+                                        {selectedLog.processId || 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Details */}
+                            <div>
+                                <Label className="text-sm font-medium text-gray-600">Details</Label>
+                                <ScrollArea className="h-40 mt-2 p-3 bg-gray-50 rounded-md">
+                                    <pre className="text-xs whitespace-pre-wrap">
+                                        {formatLogDetails(selectedLog.details)}
+                                    </pre>
+                                </ScrollArea>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCopyLogDetails(selectedLog)}
+                                >
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy Details
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowDetailsModal(false)}
+                                >
+                                    Close
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Export Modal */}
+            <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Download className="h-5 w-5" />
+                            Export Activity Logs
+                        </DialogTitle>
+                        <DialogDescription>
+                            Export activity logs with current filters applied
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {/* Export Format */}
+                        <div>
+                            <Label className="text-sm font-medium">Export Format</Label>
+                            <Select value={exportFormat} onValueChange={(value: "json" | "csv" | "pdf") => setExportFormat(value)}>
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="csv">CSV (Comma Separated Values)</SelectItem>
+                                    <SelectItem value="json">JSON (JavaScript Object Notation)</SelectItem>
+                                    <SelectItem value="pdf">PDF (Portable Document Format)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Export Summary */}
+                        <div className="p-3 bg-gray-50 rounded-md">
+                            <h4 className="text-sm font-medium mb-2">Export Summary</h4>
+                            <div className="text-xs text-gray-600 space-y-1">
+                                <div>Total logs: {pagination?.total || 0}</div>
+                                <div>Date range: {
+                                    [
+                                        dateFrom ? format(dateFrom, 'MMM dd, yyyy') : null,
+                                        dateTo ? format(dateTo, 'MMM dd, yyyy') : null
+                                    ].filter(Boolean).join(' - ') || 'All dates'
+                                }</div>
+                                <div>Filters: {
+                                    [
+                                        actionFilter !== 'all' ? `Action: ${actionFilter}` : null,
+                                        userFilter !== 'all' ? `User: ${userFilter}` : null,
+                                        searchTerm ? `Search: "${searchTerm}"` : null
+                                    ].filter(Boolean).join(', ') || 'None'
+                                }</div>
+                            </div>
+                        </div>
+
+                        {/* Export Progress */}
+                        {isExporting && (
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>Exporting logs...</span>
+                                    <span>{exportProgress}%</span>
+                                </div>
+                                <Progress value={exportProgress} className="h-2" />
+                            </div>
+                        )}
+
+                        <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                                {exportFormat === 'pdf'
+                                    ? 'PDF export is not yet available. The export will be generated as JSON format instead.'
+                                    : `Export will include all logs matching your current filters (${pagination?.total || 0} entries).`
+                                }
+                            </AlertDescription>
+                        </Alert>
+
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowExportModal(false)}
+                                disabled={isExporting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleExport}
+                                disabled={isExporting || (pagination?.total || 0) === 0}
+                            >
+                                {isExporting ? (
+                                    <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Exporting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Export Logs
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
             {/* Log Details Modal */}
             <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
                 <DialogContent className="max-w-6xl max-h-[90vh]">
@@ -834,7 +1013,7 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                                                     const diffMins = Math.floor(diffMs / 60000);
                                                     const diffHours = Math.floor(diffMins / 60);
                                                     const diffDays = Math.floor(diffHours / 24);
-                                                    
+
                                                     if (diffDays > 0) return `${diffDays} day(s) ago`;
                                                     if (diffHours > 0) return `${diffHours} hour(s) ago`;
                                                     if (diffMins > 0) return `${diffMins} minute(s) ago`;
@@ -938,8 +1117,8 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                     <div className="space-y-4">
                         <div>
                             <label className="text-sm font-medium">Export Format</label>
-                            <Select 
-                                value={exportFormat} 
+                            <Select
+                                value={exportFormat}
                                 onValueChange={(value: "json" | "csv" | "pdf") => setExportFormat(value)}
                                 disabled={isExporting}
                             >
@@ -980,11 +1159,11 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                                 <div className="flex justify-between">
                                     <span>Date range:</span>
                                     <span className="font-medium">
-                                        {dateFrom && dateTo 
+                                        {dateFrom && dateTo
                                             ? `${format(dateFrom, 'MMM dd')} - ${format(dateTo, 'MMM dd')}`
-                                            : dateFrom 
+                                            : dateFrom
                                                 ? `From ${format(dateFrom, 'MMM dd')}`
-                                                : dateTo 
+                                                : dateTo
                                                     ? `Until ${format(dateTo, 'MMM dd')}`
                                                     : 'All time'
                                         }
@@ -1017,7 +1196,7 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                         <Alert>
                             <Info className="h-4 w-4" />
                             <AlertDescription>
-                                {exportFormat === 'pdf' 
+                                {exportFormat === 'pdf'
                                     ? 'PDF export is not yet available. The export will be generated as JSON format instead.'
                                     : `Export will include all logs matching your current filters (${pagination?.total || 0} entries).`
                                 }
@@ -1025,14 +1204,14 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
                         </Alert>
 
                         <div className="flex justify-end gap-2">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => setShowExportModal(false)}
                                 disabled={isExporting}
                             >
                                 Cancel
                             </Button>
-                            <Button 
+                            <Button
                                 onClick={handleExport}
                                 disabled={isExporting || (pagination?.total || 0) === 0}
                             >

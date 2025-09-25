@@ -12,8 +12,8 @@ import { PermissionRepository } from '@/repositories/PermissionRepository';
 import { prisma } from '@/config/database';
 import { ApiResponse, PaginatedResponse, UserRole, UserStatus, Permission } from '@/types';
 import { CustomError, ErrorType } from '@/middleware/errorHandler';
-import { 
-  validatePaginationParams, 
+import {
+  validatePaginationParams,
   validateDateRange,
   inviteUserSchema,
   adminUpdateUserSchema,
@@ -30,6 +30,7 @@ import { AdminExportFilters } from '@/services/AdminService';
 import { AdminLogFilters } from '@/services/AdminService';
 import { AdminProcessFilters } from '@/services/AdminService';
 
+
 export class AdminController {
   private adminService: AdminService;
   private userService: UserService;
@@ -43,7 +44,7 @@ export class AdminController {
     const userRepository = new UserRepository(prisma);
     const userInvitationRepository = new UserInvitationRepository(prisma);
     const permissionRepository = new PermissionRepository(prisma);
-    
+
     // Initialize services with their dependencies
     this.permissionService = new PermissionService(
       permissionRepository,
@@ -51,19 +52,19 @@ export class AdminController {
       activityLogRepository
     );
     const emailService = new EmailService();
-    
+
     this.adminService = new AdminService(
       processRepository,
       activityLogRepository,
       userRepository
     );
-    
+
     this.userService = new UserService(
       userRepository,
       activityLogRepository,
       this.permissionService
     );
-    
+
     this.invitationService = new InvitationService({
       userInvitationRepository,
       userRepository,
@@ -84,7 +85,7 @@ export class AdminController {
     try {
       // Validate pagination parameters
       const { page = 1, limit = 20 } = validatePaginationParams(req.query);
-      
+
       // Extract filter parameters
       const {
         userId,
@@ -148,7 +149,7 @@ export class AdminController {
     try {
       // Validate pagination parameters
       const { page = 1, limit = 50 } = validatePaginationParams(req.query);
-      
+
       // Extract filter parameters
       const {
         userId,
@@ -236,7 +237,7 @@ export class AdminController {
   ): Promise<void> => {
     try {
       const { userId } = req.params;
-      
+
       if (!userId) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
@@ -277,7 +278,7 @@ export class AdminController {
   ): Promise<void> => {
     try {
       const { processId } = req.params;
-      
+
       if (!processId) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
@@ -372,7 +373,7 @@ export class AdminController {
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -502,11 +503,11 @@ export class AdminController {
     try {
       const { id } = req.params;
       const { error, value } = adminUpdateUserSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -550,11 +551,11 @@ export class AdminController {
     try {
       const { id } = req.params;
       const { error, value } = blockUserSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -648,7 +649,7 @@ export class AdminController {
   ): Promise<void> => {
     try {
       const { page = 1, limit = 20 } = validatePaginationParams(req.query);
-      
+
       const {
         role,
         status,
@@ -700,7 +701,7 @@ export class AdminController {
     try {
       const { id } = req.params;
       const { error, value } = assignPermissionsSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
@@ -783,7 +784,7 @@ export class AdminController {
     try {
       const { role } = req.params;
       const { error, value } = updateRolePermissionsSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
@@ -806,7 +807,7 @@ export class AdminController {
       // Validate that all permission IDs exist and convert to names
       const permissionNames: string[] = [];
       const allPermissions = await this.permissionService.getAllPermissions();
-      
+
       for (const permissionId of permissions) {
         const foundPermission = allPermissions.find(p => p.id === permissionId);
         if (!foundPermission) {
@@ -936,11 +937,11 @@ export class AdminController {
     try {
       const { id } = req.params;
       const { error, value } = adminResetProcessStageSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -992,11 +993,11 @@ export class AdminController {
     try {
       const { id } = req.params;
       const { error, value } = adminUpdateProcessSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -1047,11 +1048,11 @@ export class AdminController {
   ): Promise<void> => {
     try {
       const { error, value } = adminCreateProcessSchema.validate(req.body);
-      
+
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -1123,9 +1124,9 @@ export class AdminController {
     try {
       const { AuditVerificationUtils } = await import('@/utils/auditVerification');
       const auditUtils = new AuditVerificationUtils();
-      
+
       const result = await auditUtils.verifyFullAuditTrail();
-      
+
       const response: ApiResponse<any> = {
         success: result.isValid,
         message: result.summary,
@@ -1146,9 +1147,9 @@ export class AdminController {
     try {
       const { AuditVerificationUtils } = await import('@/utils/auditVerification');
       const auditUtils = new AuditVerificationUtils();
-      
+
       const result = await auditUtils.getAuditStatistics();
-      
+
       const response: ApiResponse<any> = {
         success: true,
         message: result.summary,
@@ -1169,9 +1170,9 @@ export class AdminController {
     try {
       const { AuditVerificationUtils } = await import('@/utils/auditVerification');
       const auditUtils = new AuditVerificationUtils();
-      
+
       const result = await auditUtils.performLogRotation();
-      
+
       const response: ApiResponse<any> = {
         success: result.success,
         message: result.summary,
@@ -1192,9 +1193,9 @@ export class AdminController {
     try {
       const { AuditVerificationUtils } = await import('@/utils/auditVerification');
       const auditUtils = new AuditVerificationUtils();
-      
+
       const result = await auditUtils.cleanupOldArchives();
-      
+
       const response: ApiResponse<any> = {
         success: result.success,
         message: result.summary,
@@ -1215,9 +1216,9 @@ export class AdminController {
     try {
       const { AuditVerificationUtils } = await import('@/utils/auditVerification');
       const auditUtils = new AuditVerificationUtils();
-      
+
       const result = await auditUtils.runHealthCheck();
-      
+
       const response: ApiResponse<any> = {
         success: result.overallHealth !== 'critical',
         message: result.summary,
@@ -1227,8 +1228,8 @@ export class AdminController {
         }
       };
 
-      const statusCode = result.overallHealth === 'critical' ? 500 : 
-                        result.overallHealth === 'warning' ? 422 : 200;
+      const statusCode = result.overallHealth === 'critical' ? 500 :
+        result.overallHealth === 'warning' ? 422 : 200;
 
       res.status(statusCode).json(response);
       await auditUtils.close();
@@ -1249,18 +1250,9 @@ export class AdminController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { error, value } = adminActivityLogFiltersSchema.validate(req.query);
-      if (error) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
-          400
-        );
-      }
+      const { page = 1, limit = 50 } = validatePaginationParams(req.query);
 
       const {
-        page,
-        limit,
         userId,
         processId,
         action,
@@ -1270,25 +1262,27 @@ export class AdminController {
         startDate,
         endDate,
         search,
-        sortBy,
-        sortOrder
-      } = value;
+        sortBy = 'timestamp',
+        sortOrder = 'desc'
+      } = req.query;
 
-      const filters = {
-        userId,
-        processId,
-        action,
-        resourceType,
-        resourceId,
-        ipAddress,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate: endDate ? new Date(endDate) : undefined,
-        search,
-        sortBy,
-        sortOrder
+      // Validate date range if provided
+      if (startDate || endDate) {
+        validateDateRange({ startDate: startDate as string, endDate: endDate as string });
+      }
+
+      const filters: AdminLogFilters = {
+        userId: userId as string,
+        processId: processId as string,
+        action: action as string,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        search: search as string,
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc'
       };
 
-      const result = await this.adminService.getActivityLogs(page, limit, filters);
+      const result = await this.adminService.getAllLogs(page, limit, filters);
 
       const response: PaginatedResponse<any> = {
         success: true,
@@ -1309,6 +1303,10 @@ export class AdminController {
     }
   };
 
+
+
+
+
   /**
    * Export activity logs in various formats
    * GET /api/admin/activity-logs/export
@@ -1323,7 +1321,7 @@ export class AdminController {
       if (error) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
-          error.details[0].message,
+          error.details?.[0]?.message || 'Validation error',
           400
         );
       }
@@ -1373,7 +1371,7 @@ export class AdminController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR,
@@ -1384,7 +1382,7 @@ export class AdminController {
 
       // Validate pagination and filter parameters
       const { page = 1, limit = 20 } = validatePaginationParams(req.query);
-      
+
       const {
         processId,
         action,
@@ -1401,11 +1399,10 @@ export class AdminController {
         validateDateRange({ startDate: startDate as string, endDate: endDate as string });
       }
 
-      const filters = {
+      const filters: AdminLogFilters = {
         userId: id,
         processId: processId as string,
         action: action as string,
-        resourceType: resourceType as string,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
         search: search as string,
@@ -1413,22 +1410,11 @@ export class AdminController {
         sortOrder: sortOrder as 'asc' | 'desc'
       };
 
-      const result = await this.adminService.getUserActivityLogs(id, page, limit, filters);
-
-      if (!result.user) {
-        throw new CustomError(
-          ErrorType.NOT_FOUND,
-          'User not found',
-          404
-        );
-      }
+      const result = await this.adminService.getAllLogs(page, limit, filters);
 
       const response: PaginatedResponse<any> = {
         success: true,
-        data: {
-          user: result.user,
-          logs: result.logs
-        },
+        data: result.logs,
         pagination: {
           page,
           limit,
