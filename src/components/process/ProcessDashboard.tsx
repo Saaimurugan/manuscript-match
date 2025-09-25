@@ -3,7 +3,7 @@
  * Displays list of user processes with creation and management capabilities
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, FileText, Calendar, Clock, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,29 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
   const { toast } = useToast();
 
   const { data: processes, isLoading, error } = useProcesses();
+
+  // Add debugging and safety checks
+  useEffect(() => {
+    console.log('ProcessDashboard - processes data:', processes);
+    console.log('ProcessDashboard - isLoading:', isLoading);
+    console.log('ProcessDashboard - error:', error);
+    
+    // Check authentication status
+    const token = localStorage.getItem('scholarfinder_token');
+    console.log('ProcessDashboard - auth token present:', !!token);
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('ProcessDashboard - token payload:', payload);
+        console.log('ProcessDashboard - token expired:', payload.exp * 1000 < Date.now());
+      } catch (e) {
+        console.log('ProcessDashboard - invalid token format');
+      }
+    }
+  }, [processes, isLoading, error]);
+
+  // Ensure processes is always an array
+  const safeProcesses = Array.isArray(processes) ? processes : [];
   const deleteProcessMutation = useDeleteProcess();
 
   const handleDeleteProcess = async (processId: string, processTitle: string) => {
@@ -120,20 +143,37 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
       </div>
 
       {/* Process Grid */}
-      {processes && processes.length > 0 ? (
+      {safeProcesses && safeProcesses.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {processes.map((process) => (
-            <Card key={process.id} className="hover:shadow-md transition-shadow cursor-pointer">
+          {safeProcesses
+            .filter(process => {
+              // More comprehensive validation
+              if (!process) {
+                console.warn('Filtered out null/undefined process');
+                return false;
+              }
+              if (!process.id) {
+                console.warn('Filtered out process without id:', process);
+                return false;
+              }
+              if (!process.title) {
+                console.warn('Filtered out process without title:', process);
+                return false;
+              }
+              return true;
+            })
+            .map((process, index) => (
+            <Card key={process.id || `process-${index}`} className="hover:shadow-md transition-shadow cursor-pointer">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-2">{process.title}</CardTitle>
+                    <CardTitle className="text-lg line-clamp-2">{process.title || 'Untitled Process'}</CardTitle>
                     <CardDescription className="line-clamp-2 mt-1">
-                      {process.description}
+                      {process.description || 'No description available'}
                     </CardDescription>
                   </div>
-                  <Badge className={getStatusColor(process.status)}>
-                    {process.status.replace('_', ' ')}
+                  <Badge className={getStatusColor(process.status || 'CREATED')}>
+                    {(process.status || 'CREATED').replace('_', ' ')}
                   </Badge>
                 </div>
               </CardHeader>
@@ -142,13 +182,13 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
                 {/* Progress */}
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Step {getStepOrder(process.currentStep)} of 9</span>
-                    <span>{Math.round(getStepProgress(process.currentStep))}%</span>
+                    <span>Step {getStepOrder(process.currentStep || 'UPLOAD')} of 9</span>
+                    <span>{Math.round(getStepProgress(process.currentStep || 'UPLOAD'))}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${getStepProgress(process.currentStep)}%` }}
+                      style={{ width: `${getStepProgress(process.currentStep || 'UPLOAD')}%` }}
                     />
                   </div>
                 </div>
@@ -157,11 +197,11 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
                 <div className="flex items-center text-sm text-muted-foreground space-x-4">
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {new Date(process.createdAt).toLocaleDateString()}
+                    {process.createdAt ? new Date(process.createdAt).toLocaleDateString() : 'Unknown'}
                   </div>
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
-                    {new Date(process.updatedAt).toLocaleDateString()}
+                    {process.updatedAt ? new Date(process.updatedAt).toLocaleDateString() : 'Unknown'}
                   </div>
                 </div>
 

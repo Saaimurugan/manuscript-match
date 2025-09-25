@@ -47,10 +47,21 @@ export const useCreateProcess = () => {
     mutationFn: (data: CreateProcessRequest): Promise<Process> => 
       processService.createProcess(data),
     onSuccess: (newProcess) => {
+      console.log('useCreateProcess - onSuccess called with:', newProcess); // Debug logging
+      
+      // Validate the new process before caching
+      if (!newProcess || !newProcess.id) {
+        console.error('Invalid process returned from createProcess:', newProcess);
+        return;
+      }
+      
       // Add new process to the processes list cache
       queryClient.setQueryData<Process[]>(
         queryKeys.processes.list(),
-        (oldData) => oldData ? [newProcess, ...oldData] : [newProcess]
+        (oldData) => {
+          console.log('Updating processes cache, oldData:', oldData);
+          return oldData ? [newProcess, ...oldData] : [newProcess];
+        }
       );
       
       // Cache the new process details

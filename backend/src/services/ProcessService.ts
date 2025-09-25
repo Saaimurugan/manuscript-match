@@ -33,15 +33,17 @@ export class ProcessService {
   }
 
   async createProcess(userId: string, data: { title: string; description?: string }): Promise<ProcessWithMetadata> {
-    const metadata = data.description ? JSON.stringify({ description: data.description }) : '';
-<<<<<<< HEAD
-<<<<<<< HEAD
+    // Validate input parameters
+    if (!userId) {
+      throw new Error('User ID is required for process creation');
+    }
+    if (!data || !data.title) {
+      throw new Error('Process title is required');
+    }
 
-=======
-=======
->>>>>>> 9e091b2 (Bugs Fixed)
-    
->>>>>>> 9e091b2 (Bugs Fixed)
+    console.log('ProcessService.createProcess called with:', { userId, data }); // Debug logging
+
+    const metadata = data.description ? JSON.stringify({ description: data.description }) : '';
     const createData: CreateProcessInput = {
       userId,
       title: data.title,
@@ -50,7 +52,15 @@ export class ProcessService {
       metadata,
     };
 
+    console.log('Creating process with data:', createData); // Debug logging
+
     const process = await this.processRepository.create(createData);
+    console.log('Process created by repository:', process); // Debug logging
+
+    // Validate the created process
+    if (!process || !process.id) {
+      throw new Error('Failed to create process - invalid result from repository');
+    }
 
     // Log the activity
     await this.activityLogRepository.create({
@@ -60,7 +70,10 @@ export class ProcessService {
       details: JSON.stringify({ title: data.title, description: data.description }),
     });
 
-    return this.formatProcess(process);
+    const formattedProcess = this.formatProcess(process);
+    console.log('Formatted process:', formattedProcess); // Debug logging
+
+    return formattedProcess;
   }
 
   async getProcessById(processId: string, userId: string): Promise<ProcessWithMetadata | null> {
@@ -120,7 +133,18 @@ export class ProcessService {
 
     const processes = await this.processRepository.findMany(findManyOptions);
 
-    const formattedProcesses = processes.map(process => this.formatProcess(process));
+    // Filter out any null/undefined processes and format the valid ones
+    const formattedProcesses = processes
+      .filter(process => process != null) // Remove null/undefined processes
+      .map(process => {
+        try {
+          return this.formatProcess(process);
+        } catch (error) {
+          console.error('Error formatting process:', error, 'Process data:', process);
+          return null; // Return null for invalid processes
+        }
+      })
+      .filter(process => process != null); // Remove any processes that failed formatting
 
     return {
       processes: formattedProcesses,
@@ -268,6 +292,22 @@ export class ProcessService {
   }
 
   private formatProcess(process: any): ProcessWithMetadata {
+    // Add defensive check for null/undefined process
+    if (!process) {
+      throw new Error('Process data is null or undefined');
+    }
+
+    // Add defensive checks for required fields
+    if (!process.id) {
+      throw new Error('Process is missing required field: id');
+    }
+    if (!process.title) {
+      throw new Error('Process is missing required field: title');
+    }
+    if (!process.userId) {
+      throw new Error('Process is missing required field: userId');
+    }
+
     const metadata = process.metadata ? JSON.parse(process.metadata) : null;
     const description = metadata?.description || undefined;
 

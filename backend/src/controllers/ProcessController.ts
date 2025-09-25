@@ -76,8 +76,40 @@ export class ProcessController {
         return;
       }
 
-      const userId = req.user!.id;
+      // Check if user is authenticated
+      if (!req.user || !req.user.id) {
+        res.status(401).json({
+          success: false,
+          error: {
+            type: 'AUTHENTICATION_ERROR',
+            message: 'User not authenticated',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      const userId = req.user.id;
+      console.log('Creating process for user:', userId); // Debug logging
+      
       const process = await this.processService.createProcess(userId, value);
+      console.log('Created process:', process); // Debug logging
+
+      // Validate the created process
+      if (!process || !process.id) {
+        console.error('Invalid process created:', process);
+        res.status(500).json({
+          success: false,
+          error: {
+            type: 'INTERNAL_ERROR',
+            message: 'Failed to create valid process',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
 
       const response: ApiResponse = {
         success: true,
@@ -116,10 +148,49 @@ export class ProcessController {
         return;
       }
 
-      const userId = req.user!.id;
-      const result = await this.processService.getUserProcesses(userId, value);
+      // Check if user is authenticated
+      if (!req.user || !req.user.id) {
+        res.status(401).json({
+          success: false,
+          error: {
+            type: 'AUTHENTICATION_ERROR',
+            message: 'User not authenticated',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
 
-      res.json(result);
+      const userId = req.user.id;
+      console.log('Getting processes for user:', userId); // Debug logging
+      
+      const result = await this.processService.getUserProcesses(userId, value);
+      console.log('ProcessService returned:', result); // Debug logging
+
+      // Validate the result structure
+      if (!result || !Array.isArray(result.processes)) {
+        console.error('Invalid result from ProcessService:', result);
+        res.status(500).json({
+          success: false,
+          error: {
+            type: 'INTERNAL_ERROR',
+            message: 'Invalid data structure from process service',
+            requestId: req.requestId || 'unknown',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      // Format response to match frontend expectations
+      const response: ApiResponse = {
+        success: true,
+        data: result.processes || [], // Ensure it's always an array
+        pagination: result.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 } // Provide default pagination
+      };
+
+      res.json(response);
     } catch (error) {
       console.error('Error fetching processes:', error);
       res.status(500).json({

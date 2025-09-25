@@ -17,15 +17,7 @@ export const apiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => config.env === 'test', // Skip rate limiting in test environment
-<<<<<<< HEAD
-<<<<<<< HEAD
   handler: (_req, _res, next) => {
-=======
-  handler: (req, res, next) => {
->>>>>>> 9e091b2 (Bugs Fixed)
-=======
-  handler: (req, res, next) => {
->>>>>>> 9e091b2 (Bugs Fixed)
     const error = new CustomError(
       ErrorType.RATE_LIMIT_ERROR,
       'Rate limit exceeded',
@@ -51,15 +43,7 @@ export const authRateLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   skip: () => config.env === 'test', // Skip rate limiting in test environment
-<<<<<<< HEAD
-<<<<<<< HEAD
   handler: (_req, _res, next) => {
-=======
-  handler: (req, res, next) => {
->>>>>>> 9e091b2 (Bugs Fixed)
-=======
-  handler: (req, res, next) => {
->>>>>>> 9e091b2 (Bugs Fixed)
     const error = new CustomError(
       ErrorType.RATE_LIMIT_ERROR,
       'Too many authentication attempts, please try again later.',
@@ -83,15 +67,7 @@ export const uploadRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-<<<<<<< HEAD
-<<<<<<< HEAD
   handler: (_req, _res, next) => {
-=======
-  handler: (req, res, next) => {
->>>>>>> 9e091b2 (Bugs Fixed)
-=======
-  handler: (req, res, next) => {
->>>>>>> 9e091b2 (Bugs Fixed)
     const error = new CustomError(
       ErrorType.RATE_LIMIT_ERROR,
       'Too many file uploads, please try again later.',
