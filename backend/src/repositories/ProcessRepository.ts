@@ -171,4 +171,10 @@ export class ProcessRepository extends BaseRepository<Process, CreateProcessInpu
       where: { status },
     });
   }
+
+  async count(where?: any): Promise<number> {
+    return this.prisma.process.count({
+      where,
+    });
+  }
 }
