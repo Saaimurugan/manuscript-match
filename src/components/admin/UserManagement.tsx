@@ -12,14 +12,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Shield, 
+import {
+  Users,
+  UserPlus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Shield,
   UserX,
   Mail,
   Download,
@@ -30,14 +30,17 @@ import {
   XCircle
 } from "lucide-react";
 import { format } from "date-fns";
-import { 
-  useAdminUsers, 
-  useUpdateUserRole, 
-  useUpdateUserStatus, 
-  useDeleteUser 
+import {
+  useAdminUsers,
+  useUpdateUserRole,
+  useUpdateUserStatus,
+  useDeleteUser,
+  useInviteUser
 } from "@/hooks/useAdmin";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { AdminUserDetails } from "@/services/adminService";
+import type { PaginatedResponse } from "@/types/api";
 
 interface UserManagementProps {
   className?: string;
@@ -62,17 +65,18 @@ interface UserDetailsModalData extends AdminUserDetails {
 }
 
 export const UserManagement: React.FC<UserManagementProps> = ({ className }) => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  
+
   // Modal states
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
+
   // Form data states
   const [inviteData, setInviteData] = useState<InviteUserData>({
     email: "",
@@ -96,27 +100,43 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   const [pageSize] = useState(20);
 
   // Fetch users with filters
-  const { 
-    data: usersData, 
-    isLoading: usersLoading, 
-    error: usersError,
-    refetch: refetchUsers
-  } = useAdminUsers({
+  const queryParams = {
     page: currentPage,
     limit: pageSize,
     search: searchTerm || undefined,
-    role: roleFilter !== "all" ? (roleFilter as UserRole) : undefined,
+    role: roleFilter !== "all" && (roleFilter === "USER" || roleFilter === "ADMIN")
+      ? (roleFilter as "USER" | "ADMIN")
+      : undefined,
     sortBy: 'createdAt',
-    sortOrder: 'desc'
-  });
+    sortOrder: 'desc' as const
+  };
+
+  console.log('UserManagement - Query params:', queryParams);
+  console.log('UserManagement - Search term:', searchTerm);
+  console.log('UserManagement - Role filter:', roleFilter);
+  console.log('UserManagement - Status filter:', statusFilter);
+
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    error: usersError,
+    refetch: refetchUsers
+  } = useAdminUsers(queryParams);
 
   // Mutations
-  const updateRoleMutation = useUpdateUserRole();
+  const updateRoleMutation = useUpdateUserRole() as any;
   const updateStatusMutation = useUpdateUserStatus();
   const deleteUserMutation = useDeleteUser();
+  const inviteUserMutation = useInviteUser();
 
-  const users = usersData?.data || [];
-  const pagination = usersData?.pagination;
+  const users = (usersData as PaginatedResponse<AdminUserDetails>)?.data || [];
+  const pagination = (usersData as PaginatedResponse<AdminUserDetails>)?.pagination;
+
+  // Debug logging
+  console.log('UserManagement - usersData:', usersData);
+  console.log('UserManagement - users:', users);
+  console.log('UserManagement - usersLoading:', usersLoading);
+  console.log('UserManagement - usersError:', usersError);
 
   // Filter users by status (client-side filtering since API doesn't support status filter yet)
   const filteredUsers = useMemo(() => {
@@ -131,52 +151,55 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   // Form validation functions
   const validateInviteForm = (data: InviteUserData): Record<string, string> => {
     const errors: Record<string, string> = {};
-    
+
     if (!data.email) {
       errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
       errors.email = "Please enter a valid email address";
     }
-    
+
     if (!data.role) {
       errors.role = "Role is required";
     }
-    
+
     return errors;
   };
 
   const validateEditForm = (data: EditUserData): Record<string, string> => {
     const errors: Record<string, string> = {};
-    
+
     if (!data.email) {
       errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
       errors.email = "Please enter a valid email address";
     }
-    
+
     if (!data.role) {
       errors.role = "Role is required";
     }
-    
+
     if (!data.status) {
       errors.status = "Status is required";
     }
-    
+
     return errors;
   };
 
   // Event handlers
   const handleSearch = (value: string) => {
+    console.log('Search triggered with value:', value);
     setSearchTerm(value);
     setCurrentPage(1);
   };
 
   const handleRoleFilter = (value: string) => {
+    console.log('Role filter changed to:', value);
     setRoleFilter(value);
     setCurrentPage(1);
   };
 
   const handleStatusFilter = (value: string) => {
+    console.log('Status filter changed to:', value);
     setStatusFilter(value);
     setCurrentPage(1);
   };
@@ -198,19 +221,24 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   };
 
   const handlePromoteUser = async (userId: string, newRole: UserRole) => {
-    try {
-      await updateRoleMutation.mutateAsync({ userId, role: newRole as "USER" | "ADMIN" });
-      refetchUsers();
-    } catch (error) {
-      console.error('Failed to update user role:', error);
-    }
+    updateRoleMutation.mutate({
+      userId,
+      role: newRole as "USER" | "ADMIN"
+    }, {
+      onSuccess: () => {
+        refetchUsers();
+      },
+      onError: (error: any) => {
+        console.error('Failed to update user role:', error);
+      }
+    });
   };
 
   const handleBlockUser = async (userId: string, block: boolean) => {
     try {
-      await updateStatusMutation.mutateAsync({ 
-        userId, 
-        status: block ? 'suspended' : 'active' 
+      await updateStatusMutation.mutateAsync({
+        userId,
+        status: block ? 'suspended' : 'active'
       });
       refetchUsers();
     } catch (error) {
@@ -248,54 +276,95 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   const handleInviteUser = async () => {
     const errors = validateInviteForm(inviteData);
     setInviteErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       return;
     }
 
-    try {
-      // TODO: Implement actual invitation API call
-      console.log('Inviting user:', inviteData);
-      
-      // Reset form and close modal
-      setInviteData({ email: "", role: "USER" });
-      setInviteErrors({});
-      setShowInviteModal(false);
-      refetchUsers();
-    } catch (error) {
-      console.error('Failed to invite user:', error);
-    }
+    // Use mutate instead of mutateAsync to let the hook handle success/error
+    inviteUserMutation.mutate({
+      email: inviteData.email,
+      role: inviteData.role as 'USER' | 'ADMIN'
+    }, {
+      onSuccess: () => {
+        // Reset form and close modal on success
+        setInviteData({ email: "", role: "USER" });
+        setInviteErrors({});
+        setShowInviteModal(false);
+        refetchUsers();
+
+        // Show success message
+        toast({
+          title: "Success",
+          description: `Invitation sent to ${inviteData.email}`,
+          variant: "default",
+        });
+      },
+      onError: (error: any) => {
+        console.log('Component onError - Full error object:', error);
+        console.log('Component onError - error.response:', error?.response);
+        console.log('Component onError - error.response.data:', error?.response?.data);
+
+        // Extract and show the specific error message
+        let errorMessage = 'Failed to invite user';
+
+        if (error?.response?.data?.error) {
+          errorMessage = error.response.data.error;
+          console.log('Using error.response.data.error:', errorMessage);
+        } else if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+          console.log('Using error.response.data.message:', errorMessage);
+        } else if (error?.message) {
+          errorMessage = error.message;
+          console.log('Using error.message:', errorMessage);
+        }
+
+        console.log('Final error message to show:', errorMessage);
+
+        // Show error message directly
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const handleUpdateUser = async () => {
     if (!editingUser) return;
-    
+
     const errors = validateEditForm(editData);
     setEditErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       return;
     }
 
-    try {
-      // Update role if changed
-      if (editData.role !== editingUser.role) {
-        await updateRoleMutation.mutateAsync({ 
-          userId: editingUser.id, 
-          role: editData.role as "USER" | "ADMIN" 
-        });
-      }
-
-      // TODO: Update email and status when API supports it
-      
-      // Reset form and close modal
+    // Update role if changed
+    if (editData.role !== editingUser.role) {
+      updateRoleMutation.mutate({
+        userId: editingUser.id,
+        role: editData.role as "USER" | "ADMIN"
+      }, {
+        onSuccess: () => {
+          // Reset form and close modal
+          setEditingUser(null);
+          setEditData({ email: "", role: "USER", status: "ACTIVE" });
+          setEditErrors({});
+          setShowEditModal(false);
+          refetchUsers();
+        },
+        onError: (error: any) => {
+          console.error('Failed to update user:', error);
+        }
+      });
+    } else {
+      // No role change, just close modal
       setEditingUser(null);
       setEditData({ email: "", role: "USER", status: "ACTIVE" });
       setEditErrors({});
       setShowEditModal(false);
-      refetchUsers();
-    } catch (error) {
-      console.error('Failed to update user:', error);
     }
   };
 
@@ -566,40 +635,40 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-2">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 className="w-full justify-start"
                                 onClick={() => handleViewUserDetails(user)}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 className="w-full justify-start"
                                 onClick={() => handleEditUser(user)}
                               >
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit User
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 className="w-full justify-start"
                                 onClick={() => handlePromoteUser(user.id, user.role === 'ADMIN' ? 'USER' : 'ADMIN')}
                               >
                                 <Shield className="h-4 w-4 mr-2" />
                                 {user.role === 'ADMIN' ? 'Remove Admin' : 'Make Admin'}
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 className="w-full justify-start"
                                 onClick={() => handleBlockUser(user.id, true)}
                               >
                                 <UserX className="h-4 w-4 mr-2" />
                                 Block User
                               </Button>
-                              <Button 
-                                variant="destructive" 
+                              <Button
+                                variant="destructive"
                                 className="w-full justify-start"
                                 onClick={() => handleConfirmDelete(user)}
                               >
@@ -690,8 +759,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
             </div>
             <div>
               <Label htmlFor="invite-role">Role</Label>
-              <Select 
-                value={inviteData.role} 
+              <Select
+                value={inviteData.role}
                 onValueChange={(value) => {
                   setInviteData(prev => ({ ...prev, role: value as UserRole }));
                   if (inviteErrors.role) {
@@ -714,8 +783,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
               )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setShowInviteModal(false);
                   setInviteData({ email: "", role: "USER" });
@@ -724,8 +793,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
               >
                 Cancel
               </Button>
-              <Button onClick={handleInviteUser} disabled={updateRoleMutation.isLoading}>
-                {updateRoleMutation.isLoading ? "Sending..." : "Send Invitation"}
+              <Button onClick={handleInviteUser} disabled={inviteUserMutation.isPending}>
+                {inviteUserMutation.isPending ? "Sending..." : "Send Invitation"}
               </Button>
             </div>
           </div>
@@ -763,8 +832,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
             </div>
             <div>
               <Label htmlFor="edit-role">Role</Label>
-              <Select 
-                value={editData.role} 
+              <Select
+                value={editData.role}
                 onValueChange={(value) => {
                   setEditData(prev => ({ ...prev, role: value as UserRole }));
                   if (editErrors.role) {
@@ -788,8 +857,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
             </div>
             <div>
               <Label htmlFor="edit-status">Status</Label>
-              <Select 
-                value={editData.status} 
+              <Select
+                value={editData.status}
                 onValueChange={(value) => {
                   setEditData(prev => ({ ...prev, status: value as UserStatus }));
                   if (editErrors.status) {
@@ -812,8 +881,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
               )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingUser(null);
@@ -823,8 +892,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
               >
                 Cancel
               </Button>
-              <Button onClick={handleUpdateUser} disabled={updateRoleMutation.isLoading}>
-                {updateRoleMutation.isLoading ? "Updating..." : "Update User"}
+              <Button onClick={handleUpdateUser} disabled={updateRoleMutation.isPending}>
+                {updateRoleMutation.isPending ? "Updating..." : "Update User"}
               </Button>
             </div>
           </div>
@@ -871,14 +940,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Last Login</Label>
                   <p className="text-sm">
-                    {detailsUser.lastLoginAt 
-                      ? format(new Date(detailsUser.lastLoginAt), 'PPp') 
+                    {detailsUser.lastLoginAt
+                      ? format(new Date(detailsUser.lastLoginAt), 'PPp')
                       : 'Never'
                     }
                   </p>
                 </div>
               </div>
-              
+
               <div className="border-t pt-4">
                 <Label className="text-sm font-medium text-gray-500">Activity Summary</Label>
                 <div className="grid grid-cols-2 gap-4 mt-2">
@@ -938,10 +1007,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                   <strong>Activities:</strong> {userToDelete.activityCount || 0}
                 </p>
               </div>
-              
+
               <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setShowDeleteConfirm(false);
                     setUserToDelete(null);
@@ -949,12 +1018,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                 >
                   Cancel
                 </Button>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   onClick={() => handleDeleteUser(userToDelete.id)}
-                  disabled={deleteUserMutation.isLoading}
+                  disabled={deleteUserMutation.isPending}
                 >
-                  {deleteUserMutation.isLoading ? "Deleting..." : "Delete User"}
+                  {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
                 </Button>
               </div>
             </div>

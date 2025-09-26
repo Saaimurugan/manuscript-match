@@ -4,8 +4,8 @@
  */
 
 import { apiService } from './apiService';
-import type { 
-  ApiResponse, 
+import type {
+  ApiResponse,
   PaginatedResponse,
   AdminStats,
   AdminProcess,
@@ -38,8 +38,15 @@ export class AdminService {
    */
   async getStats(): Promise<AdminStats> {
     try {
-      const response = await apiService.get<AdminStats>('/api/admin/stats');
-      return response.data;
+      const backendResponse = await apiService.get<AdminStats>('/api/admin/stats');
+
+      console.log('Admin stats response:', backendResponse); // Debug logging
+
+      if (!backendResponse || (backendResponse as any).success === false) {
+        throw new Error((backendResponse as any)?.error?.message || 'Failed to fetch stats');
+      }
+
+      return backendResponse.data;
     } catch (error) {
       console.error('Failed to get admin stats:', error);
       throw error;
@@ -132,8 +139,28 @@ export class AdminService {
     dateTo?: string;
   }): Promise<PaginatedResponse<AdminUserDetails>> {
     try {
-      const response = await apiService.get<PaginatedResponse<AdminUserDetails>>('/api/admin/users', params);
-      return response.data;
+      // The apiService returns the backend response directly
+      const backendResponse = await apiService.get('/api/admin/users', params) as any;
+
+      console.log('Admin users response:', backendResponse); // Debug logging
+
+      // Validate response structure
+      if (!backendResponse || backendResponse.success === false) {
+        throw new Error(backendResponse?.error?.message || 'Failed to fetch users');
+      }
+
+      // Return the data in the expected format
+      return {
+        data: backendResponse.data || [],
+        pagination: backendResponse.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false
+        }
+      };
     } catch (error) {
       console.error('Failed to get admin users:', error);
       throw error;
@@ -272,8 +299,14 @@ export class AdminService {
    */
   async updateUserRole(userId: string, role: 'USER' | 'ADMIN'): Promise<UserProfile> {
     try {
-      const response = await apiService.put<UserProfile>(`/api/admin/users/${userId}/role`, { role });
-      return response.data;
+      // Use the correct backend endpoint for updating user
+      const backendResponse = await apiService.put(`/api/admin/users/${userId}`, { role });
+
+      if (!backendResponse || backendResponse.success === false) {
+        throw new Error(backendResponse?.error?.message || 'Failed to update user role');
+      }
+
+      return backendResponse.data;
     } catch (error) {
       console.error('Failed to update user role:', error);
       throw error;
@@ -281,12 +314,24 @@ export class AdminService {
   }
 
   /**
-   * Suspend or activate user account (admin only)
+   * Block or unblock user account (admin only)
    */
   async updateUserStatus(userId: string, status: 'active' | 'suspended'): Promise<UserProfile> {
     try {
-      const response = await apiService.put<UserProfile>(`/api/admin/users/${userId}/status`, { status });
-      return response.data;
+      // Use block/unblock endpoints based on status
+      const endpoint = status === 'suspended'
+        ? `/api/admin/users/${userId}/block`
+        : `/api/admin/users/${userId}/unblock`;
+
+      const body = status === 'suspended' ? { reason: 'Suspended by admin' } : {};
+
+      const backendResponse = await apiService.put(endpoint, body);
+
+      if (!backendResponse || backendResponse.success === false) {
+        throw new Error(backendResponse?.error?.message || 'Failed to update user status');
+      }
+
+      return backendResponse.data;
     } catch (error) {
       console.error('Failed to update user status:', error);
       throw error;
@@ -298,10 +343,52 @@ export class AdminService {
    */
   async deleteUser(userId: string): Promise<void> {
     try {
-      await apiService.delete(`/api/admin/users/${userId}`);
+      const backendResponse = await apiService.delete(`/api/admin/users/${userId}`);
+
+      if (!backendResponse || backendResponse.success === false) {
+        throw new Error(backendResponse?.error?.message || 'Failed to delete user');
+      }
     } catch (error) {
       console.error('Failed to delete user:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Invite a new user to the system (admin only)
+   */
+  async inviteUser(email: string, role: 'USER' | 'ADMIN'): Promise<any> {
+    try {
+      const backendResponse = await apiService.post('/api/admin/users/invite', { email, role });
+
+      if (!backendResponse || backendResponse.success === false) {
+        throw new Error(backendResponse?.error?.message || 'Failed to invite user');
+      }
+
+      return backendResponse.data;
+    } catch (error: any) {
+      console.error('Failed to invite user:', error);
+
+      // Extract the specific error message from the response
+      let specificMessage = 'Failed to invite user';
+
+      if (error?.response?.data?.error) {
+        specificMessage = error.response.data.error;
+      } else if (error?.response?.data?.message) {
+        specificMessage = error.response.data.message;
+      } else if (error?.data?.error) {
+        specificMessage = error.data.error;
+      } else if (error?.data?.message) {
+        specificMessage = error.data.message;
+      } else if (error?.message) {
+        specificMessage = error.message;
+      }
+
+      // Create a new error with the specific message
+      const specificError = new Error(specificMessage);
+      (specificError as any).response = error.response;
+      (specificError as any).data = error.data;
+      throw specificError;
     }
   }
 

@@ -1008,6 +1008,8 @@ export class UserService implements UserLifecycleService, UserPermissionService 
       sortOrder?: 'asc' | 'desc';
     }
   ): Promise<{ users: ExtendedUser[]; total: number }> {
+    console.log('UserService.getAllUsers called with filters:', filters);
+    
     const skip = (page - 1) * limit;
     
     // Build where clause for filtering
@@ -1024,11 +1026,13 @@ export class UserService implements UserLifecycleService, UserPermissionService 
     }
     
     if (filters.search) {
-      where.OR = [
-        { email: { contains: filters.search, mode: 'insensitive' } },
-        // Add other searchable fields as needed
-      ];
+      console.log('Adding search filter for:', filters.search);
+      where.email = { 
+        contains: filters.search
+      };
     }
+    
+    console.log('Final where clause:', JSON.stringify(where, null, 2));
 
     // Build orderBy clause
     const orderBy: any = {};
@@ -1038,20 +1042,31 @@ export class UserService implements UserLifecycleService, UserPermissionService 
       orderBy.createdAt = 'desc';
     }
 
-    // Get users with pagination
-    const users = await this.userRepository.findMany({
-      skip,
-      take: limit,
-      where,
-      orderBy,
-    });
+    try {
+      console.log('Executing user query with params:', { skip, limit, where, orderBy });
+      
+      // Get users with pagination
+      const users = await this.userRepository.findMany({
+        skip,
+        take: limit,
+        where,
+        orderBy,
+      });
 
-    // Get total count for pagination
-    const total = await this.userRepository.count(where);
+      console.log('Users query successful, found:', users.length, 'users');
 
-    return {
-      users: users as ExtendedUser[],
-      total,
-    };
+      // Get total count for pagination
+      const total = await this.userRepository.count(where);
+
+      console.log('Total count:', total);
+
+      return {
+        users: users as ExtendedUser[],
+        total,
+      };
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      throw error;
+    }
   }
 }

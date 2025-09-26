@@ -126,10 +126,15 @@ export class ErrorHandler {
     }
 
     // Validation errors
-    if (status === 400) {
+    if (status === 400 || status === 409) {
+      console.log('Validation error - status:', status);
+      console.log('Validation error - data:', data);
+      console.log('Validation error - data.message:', data?.message);
+      console.log('Validation error - data.error:', data?.error);
+      
       return {
         type: 'VALIDATION_ERROR',
-        message: data?.message || 'Invalid request data. Please check your input and try again.',
+        message: data?.message || data?.error || 'Invalid request data. Please check your input and try again.',
         details: data?.details
       };
     }
@@ -295,8 +300,8 @@ export class ApiService {
   private setupRequestInterceptors(): void {
     this.axiosInstance.interceptors.request.use(
       async (requestConfig) => {
-        // Add timestamp to prevent caching
-        if (requestConfig.method === 'get') {
+        // Add timestamp to prevent caching (but not for admin endpoints which might have issues)
+        if (requestConfig.method === 'get' && !requestConfig.url?.includes('/admin/')) {
           requestConfig.params = {
             ...requestConfig.params,
             _t: Date.now()

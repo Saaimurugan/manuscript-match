@@ -430,6 +430,7 @@ export const adminPaginationSchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
   userId: uuidSchema.optional(),
+  role: Joi.string().valid('USER', 'QC', 'MANAGER', 'ADMIN').optional(),
   status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
   startDate: Joi.date().optional(),
   endDate: Joi.date().optional(),

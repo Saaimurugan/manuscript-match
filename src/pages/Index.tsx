@@ -102,7 +102,16 @@ const Index = () => {
 
           {user?.role === "ADMIN" && (
             <TabsContent value="admin">
-              <AdminDashboard />
+              <AdminDashboard 
+                currentUser={user}
+                permissions={[
+                  'user.manage',
+                  'permission.manage', 
+                  'process.manage',
+                  'activity.view',
+                  'system.monitor'
+                ]}
+              />
             </TabsContent>
           )}
         </Tabs>

@@ -43,6 +43,7 @@ import { UserManagement } from "./UserManagement";
 import { PermissionManagement } from "./PermissionManagement";
 import { ProcessManagement } from "./ProcessManagement";
 import { ActivityLogViewer } from "./ActivityLogViewer";
+import { AdminDebug } from "../debug/AdminDebug";
 
 interface AdminDashboardProps {
   currentUser?: any;
@@ -87,6 +88,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       label: "Overview",
       icon: BarChart3,
       description: "System metrics and health",
+      requiredPermissions: []
+    },
+    {
+      id: "debug",
+      label: "Debug",
+      icon: Settings,
+      description: "Debug information",
       requiredPermissions: []
     },
     {
@@ -519,6 +527,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </Card>
                 </div>
               </div>
+            )}
+
+            {activeTab === "debug" && (
+              <AdminDebug />
             )}
 
             {activeTab === "users" && (

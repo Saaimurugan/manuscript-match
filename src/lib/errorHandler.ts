@@ -177,7 +177,7 @@ export class EnhancedErrorHandler {
 
     switch (status) {
       case 400:
-        return data?.message || 'Invalid request. Please check your input and try again.';
+        return data?.message || data?.error || 'Invalid request. Please check your input and try again.';
       case 401:
         return 'Your session has expired. Please log in again.';
       case 403:
@@ -185,9 +185,9 @@ export class EnhancedErrorHandler {
       case 404:
         return 'The requested resource was not found.';
       case 409:
-        return data?.message || 'This action conflicts with the current state. Please refresh and try again.';
+        return data?.message || data?.error || 'This action conflicts with the current state. Please refresh and try again.';
       case 422:
-        return data?.message || 'The provided data is invalid. Please check your input.';
+        return data?.message || data?.error || 'The provided data is invalid. Please check your input.';
       case 429:
         const retryAfter = parseInt(error.response.headers['retry-after'] || '60');
         return `Too many requests. Please wait ${retryAfter} seconds before trying again.`;

@@ -124,7 +124,7 @@ export const useAdminUsers = (params?: {
 }) => {
   const { handleError } = useErrorHandling();
 
-  return useQuery({
+  return useQuery<PaginatedResponse<AdminUserDetails>, Error>({
     queryKey: ['admin', 'users', params],
     queryFn: () => adminService.getUsers(params),
     keepPreviousData: true,
@@ -222,12 +222,12 @@ export const useAdminSystemAlerts = (params?: {
  * Hook for exporting admin data
  */
 export const useAdminExport = () => {
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: (request: AdminExportRequest) => adminService.exportData(request),
     onSuccess: () => {
-      showSuccess('Data export started successfully');
+      handleSuccess('Data export started successfully');
     },
     onError: handleError,
   });
@@ -238,13 +238,13 @@ export const useAdminExport = () => {
  */
 export const useUpdateUserRole = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: 'USER' | 'ADMIN' }) =>
       adminService.updateUserRole(userId, role),
     onSuccess: (data, variables) => {
-      showSuccess(`User role updated to ${variables.role}`);
+      handleSuccess(`User role updated to ${variables.role}`);
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'users']);
       queryClient.invalidateQueries(['admin', 'user', variables.userId]);
@@ -258,13 +258,13 @@ export const useUpdateUserRole = () => {
  */
 export const useUpdateUserStatus = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ userId, status }: { userId: string; status: 'active' | 'suspended' }) =>
       adminService.updateUserStatus(userId, status),
     onSuccess: (data, variables) => {
-      showSuccess(`User ${variables.status === 'active' ? 'activated' : 'suspended'} successfully`);
+      handleSuccess(`User ${variables.status === 'active' ? 'activated' : 'suspended'} successfully`);
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'users']);
       queryClient.invalidateQueries(['admin', 'user', variables.userId]);
@@ -278,12 +278,12 @@ export const useUpdateUserStatus = () => {
  */
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: (userId: string) => adminService.deleteUser(userId),
     onSuccess: (data, userId) => {
-      showSuccess('User deleted successfully');
+      handleSuccess('User deleted successfully');
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'users']);
       queryClient.removeQueries(['admin', 'user', userId]);
@@ -293,16 +293,35 @@ export const useDeleteUser = () => {
 };
 
 /**
+ * Hook for inviting user
+ */
+export const useInviteUser = () => {
+  const queryClient = useQueryClient();
+  const { handleError, handleSuccess } = useErrorHandling();
+
+  return useMutation({
+    mutationFn: ({ email, role }: { email: string; role: 'USER' | 'ADMIN' }) => 
+      adminService.inviteUser(email, role),
+    onSuccess: (data, variables) => {
+      handleSuccess(`Invitation sent to ${variables.email}`);
+      // Invalidate users query to refresh the list
+      queryClient.invalidateQueries(['admin', 'users']);
+    },
+    // Error handling is done in the component
+  });
+};
+
+/**
  * Hook for deleting process (admin)
  */
 export const useDeleteAdminProcess = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: (processId: string) => adminService.deleteProcess(processId),
     onSuccess: (data, processId) => {
-      showSuccess('Process deleted successfully');
+      handleSuccess('Process deleted successfully');
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'processes']);
       queryClient.removeQueries(['admin', 'process', processId]);
@@ -317,7 +336,7 @@ export const useDeleteAdminProcess = () => {
  */
 export const useCreateAdminProcess = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: (data: {
@@ -327,7 +346,7 @@ export const useCreateAdminProcess = () => {
       userId?: string;
     }) => adminService.createProcess(data),
     onSuccess: () => {
-      showSuccess('Process created successfully');
+      handleSuccess('Process created successfully');
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'processes']);
       queryClient.invalidateQueries(['admin', 'stats']);
@@ -341,7 +360,7 @@ export const useCreateAdminProcess = () => {
  */
 export const useUpdateAdminProcess = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ processId, data }: {
@@ -354,7 +373,7 @@ export const useUpdateAdminProcess = () => {
       };
     }) => adminService.updateProcess(processId, data),
     onSuccess: (data, variables) => {
-      showSuccess('Process updated successfully');
+      handleSuccess('Process updated successfully');
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'processes']);
       queryClient.invalidateQueries(['admin', 'process', variables.processId]);
@@ -368,7 +387,7 @@ export const useUpdateAdminProcess = () => {
  */
 export const useResetProcessStage = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ processId, data }: {
@@ -379,7 +398,7 @@ export const useResetProcessStage = () => {
       };
     }) => adminService.resetProcessStage(processId, data),
     onSuccess: (data, variables) => {
-      showSuccess('Process stage reset successfully');
+      handleSuccess('Process stage reset successfully');
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'processes']);
       queryClient.invalidateQueries(['admin', 'process', variables.processId]);
@@ -451,13 +470,13 @@ export const useAdminRolePermissions = (role: string) => {
  */
 export const useUpdateRolePermissions = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ role, permissions }: { role: string; permissions: string[] }) =>
       adminService.updateRolePermissions(role, permissions),
     onSuccess: (data, variables) => {
-      showSuccess(`${variables.role} role permissions updated successfully`);
+      handleSuccess(`${variables.role} role permissions updated successfully`);
       
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['admin', 'role-permissions', variables.role] });
@@ -488,13 +507,13 @@ export const useAdminUserPermissions = (userId: string) => {
  */
 export const useAssignUserPermission = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ userId, permission }: { userId: string; permission: string }) =>
       adminService.assignUserPermission(userId, permission),
     onSuccess: (data, variables) => {
-      showSuccess(`Permission ${variables.permission} assigned successfully`);
+      handleSuccess(`Permission ${variables.permission} assigned successfully`);
       
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions', variables.userId] });
@@ -510,13 +529,13 @@ export const useAssignUserPermission = () => {
  */
 export const useRevokeUserPermission = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: ({ userId, permission }: { userId: string; permission: string }) =>
       adminService.revokeUserPermission(userId, permission),
     onSuccess: (data, variables) => {
-      showSuccess(`Permission ${variables.permission} revoked successfully`);
+      handleSuccess(`Permission ${variables.permission} revoked successfully`);
       
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['admin', 'user-permissions', variables.userId] });
@@ -547,7 +566,7 @@ export const useAdminUserEffectivePermissions = (userId: string) => {
  */
 export const useBulkPermissionOperations = () => {
   const queryClient = useQueryClient();
-  const { handleError, showSuccess } = useErrorHandling();
+  const { handleError, handleSuccess } = useErrorHandling();
 
   return useMutation({
     mutationFn: async ({ 
@@ -572,7 +591,7 @@ export const useBulkPermissionOperations = () => {
     },
     onSuccess: (data) => {
       const { operation, userIds, permissions } = data;
-      showSuccess(
+      handleSuccess(
         `${operation === 'assign' ? 'Assigned' : 'Revoked'} ${permissions.length} permission(s) for ${userIds.length} user(s)`
       );
       
