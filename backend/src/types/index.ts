@@ -295,41 +295,7 @@ export interface ExtendedActivityLog {
   process?: any;
 }
 
-// Process Management Types
-export interface ProcessTemplate {
-  id: string;
-  name: string;
-  description: string;
-  defaultMetadata: any;
-  defaultStep: ProcessStep;
-  defaultStatus: ProcessStatus;
-}
 
-export interface ProcessMetrics {
-  totalProcesses: number;
-  activeProcesses: number;
-  completedProcesses: number;
-  errorProcesses: number;
-  recentActivity: number;
-  byStatus: Record<ProcessStatus, number>;
-  byStep: Record<ProcessStep, number>;
-  averageCompletionTime: number;
-  processingTrends: {
-    daily: number;
-    weekly: number;
-  };
-}
-
-export interface ActiveProcess {
-  id: string;
-  userId: string;
-  title: string;
-  status: ProcessStatus;
-  currentStep: ProcessStep;
-  duration: number; // in minutes
-  lastActivity: Date;
-  createdAt: Date;
-}
 
 export interface UserSession {
   id: string;

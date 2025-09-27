@@ -223,28 +223,7 @@ export class ActivityLogService {
     );
   }
 
-  /**
-   * Log process management actions automatically
-   */
-  async logProcessManagementAction(
-    action: 'PROCESS_CREATED' | 'PROCESS_UPDATED' | 'PROCESS_DELETED' | 'PROCESS_STAGE_RESET' | 'PROCESS_TEMPLATE_APPLIED',
-    performedBy: string,
-    processId: string,
-    context: UserActionContext,
-    details?: any
-  ): Promise<ActivityLog> {
-    return this.logUserAction(
-      action,
-      { ...context, userId: performedBy },
-      {
-        processId,
-        performedBy,
-        ...details,
-      },
-      'process',
-      processId
-    );
-  }
+
 
   /**
    * Log permission management actions automatically

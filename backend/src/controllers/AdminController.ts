@@ -20,9 +20,7 @@ import {
   blockUserSchema,
   assignPermissionsSchema,
   updateRolePermissionsSchema,
-  adminCreateProcessSchema,
-  adminUpdateProcessSchema,
-  adminResetProcessStageSchema,
+
   adminActivityLogFiltersSchema,
   activityLogExportSchema
 } from '@/validation/schemas';
@@ -73,69 +71,7 @@ export class AdminController {
     });
   }
 
-  /**
-   * Get all user processes with pagination and filtering
-   * GET /api/admin/processes
-   */
-  getAllProcesses = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      // Validate pagination parameters
-      const { page = 1, limit = 20 } = validatePaginationParams(req.query);
 
-      // Extract filter parameters
-      const {
-        userId,
-        status,
-        startDate,
-        endDate,
-        search,
-        sortBy = 'createdAt',
-        sortOrder = 'desc'
-      } = req.query;
-
-      // Validate date range if provided
-      if (startDate || endDate) {
-        validateDateRange({ startDate: startDate as string, endDate: endDate as string });
-      }
-
-      const filters: AdminProcessFilters = {
-        userId: userId as string,
-        status: status as string,
-        startDate: startDate ? new Date(startDate as string) : undefined,
-        endDate: endDate ? new Date(endDate as string) : undefined,
-        search: search as string,
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
-      };
-
-      const result = await this.adminService.getAllProcesses(
-        page,
-        limit,
-        filters
-      );
-
-      const response: PaginatedResponse<any> = {
-        success: true,
-        data: result.processes,
-        pagination: {
-          page,
-          limit,
-          total: result.total,
-          totalPages: Math.ceil(result.total / limit),
-          hasNext: page * limit < result.total,
-          hasPrev: page > 1
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
 
   /**
    * Get comprehensive user activity logs for administrators
@@ -267,46 +203,7 @@ export class AdminController {
     }
   };
 
-  /**
-   * Get process details with full audit trail
-   * GET /api/admin/processes/:processId
-   */
-  getProcessDetails = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { processId } = req.params;
 
-      if (!processId) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          'Process ID is required',
-          400
-        );
-      }
-
-      const processDetails = await this.adminService.getProcessDetails(processId);
-
-      if (!processDetails) {
-        throw new CustomError(
-          ErrorType.NOT_FOUND,
-          'Process not found',
-          404
-        );
-      }
-
-      const response: ApiResponse<any> = {
-        success: true,
-        data: processDetails
-      };
-
-      res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
 
   /**
    * Export admin data in various formats
@@ -880,240 +777,7 @@ export class AdminController {
     }
   };
 
-  // Process Management Methods
 
-  /**
-   * Delete a process from the system
-   * DELETE /api/admin/processes/:id
-   */
-  deleteProcess = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { id } = req.params;
-      const deletedBy = req.user!.id;
-
-      if (!id) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          'Process ID is required',
-          400
-        );
-      }
-
-      const result = await this.adminService.deleteProcess(id, deletedBy);
-
-      if (!result.success) {
-        const statusCode = result.activeInstances ? 422 : 404;
-        throw new CustomError(
-          result.activeInstances ? ErrorType.BUSINESS_LOGIC_ERROR : ErrorType.NOT_FOUND,
-          result.message || 'Failed to delete process',
-          statusCode
-        );
-      }
-
-      const response: ApiResponse<any> = {
-        success: true,
-        data: { message: result.message }
-      };
-
-      res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Reset process stage
-   * PUT /api/admin/processes/:id/reset-stage
-   */
-  resetProcessStage = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { id } = req.params;
-      const { error, value } = adminResetProcessStageSchema.validate(req.body);
-
-      if (error) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          error.details?.[0]?.message || 'Validation error',
-          400
-        );
-      }
-
-      if (!id) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          'Process ID is required',
-          400
-        );
-      }
-
-      const { targetStep } = value;
-      const resetBy = req.user!.id;
-
-      const result = await this.adminService.resetProcessStage(id, targetStep, resetBy);
-
-      if (!result.success) {
-        throw new CustomError(
-          ErrorType.NOT_FOUND,
-          result.message || 'Failed to reset process stage',
-          404
-        );
-      }
-
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
-          process: result.process,
-          message: result.message
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Update process information
-   * PUT /api/admin/processes/:id
-   */
-  updateProcess = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { id } = req.params;
-      const { error, value } = adminUpdateProcessSchema.validate(req.body);
-
-      if (error) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          error.details?.[0]?.message || 'Validation error',
-          400
-        );
-      }
-
-      if (!id) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          'Process ID is required',
-          400
-        );
-      }
-
-      const updatedBy = req.user!.id;
-
-      const result = await this.adminService.updateProcess(id, value, updatedBy);
-
-      if (!result.success) {
-        throw new CustomError(
-          ErrorType.NOT_FOUND,
-          result.message || 'Failed to update process',
-          404
-        );
-      }
-
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
-          process: result.process,
-          version: result.version,
-          message: result.message
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Create new process with template
-   * POST /api/admin/processes
-   */
-  createProcess = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { error, value } = adminCreateProcessSchema.validate(req.body);
-
-      if (error) {
-        throw new CustomError(
-          ErrorType.VALIDATION_ERROR,
-          error.details?.[0]?.message || 'Validation error',
-          400
-        );
-      }
-
-      const { userId, title, templateId, description } = value;
-      const createdBy = req.user!.id;
-
-      const result = await this.adminService.createProcess({
-        userId,
-        title,
-        templateId,
-        description
-      }, createdBy);
-
-      if (!result.success) {
-        throw new CustomError(
-          ErrorType.BUSINESS_LOGIC_ERROR,
-          result.message || 'Failed to create process',
-          422
-        );
-      }
-
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
-          process: result.process,
-          message: result.message
-        }
-      };
-
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * Get process templates
-   * GET /api/admin/processes/templates
-   */
-  getProcessTemplates = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const templates = await this.adminService.getProcessTemplates();
-
-      const response: ApiResponse<any> = {
-        success: true,
-        data: {
-          templates,
-          total: templates.length
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      next(error);
-    }
-  };
 
   // Audit Management Methods
 
@@ -1338,7 +1002,14 @@ export class AdminController {
         search
       } = value;
 
-      const filters = {
+      // Helper function to remove undefined properties
+      const removeUndefined = <T extends Record<string, any>>(obj: T): Partial<T> => {
+        return Object.fromEntries(
+          Object.entries(obj).filter(([_, value]) => value !== undefined)
+        ) as Partial<T>;
+      };
+
+      const filters = removeUndefined({
         userId,
         processId,
         action,
@@ -1347,7 +1018,7 @@ export class AdminController {
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
         search
-      };
+      });
 
       const exportResult = await this.adminService.exportActivityLogs(filters, format);
 

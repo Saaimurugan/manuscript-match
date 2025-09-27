@@ -17,9 +17,7 @@ vi.mock('../PermissionManagement', () => ({
   PermissionManagement: () => <div>Permission Management Component</div>,
 }));
 
-vi.mock('../ProcessManagement', () => ({
-  ProcessManagement: () => <div>Process Management Component</div>,
-}));
+
 
 vi.mock('../ActivityLogViewer', () => ({
   ActivityLogViewer: () => <div>Activity Log Viewer Component</div>,
@@ -36,11 +34,13 @@ vi.mock('../../../hooks/useAdmin', () => ({
   useAdminStats: () => ({
     data: {
       totalUsers: 150,
-      totalProcesses: 300,
-      activeProcesses: 45,
-      completedProcesses: 200,
-      totalSearches: 500,
-      totalReviewers: 1200,
+      totalLogs: 500,
+      recentActivity: {
+        last24Hours: 25,
+        last7Days: 150,
+        last30Days: 400
+      },
+      topUsers: []
     },
     isLoading: false,
     error: null,
@@ -191,7 +191,7 @@ describe('AdminDashboard', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
       expect(screen.getByText('User Management')).toBeInTheDocument();
       expect(screen.getByText('Permissions')).toBeInTheDocument();
-      expect(screen.getByText('Process Management')).toBeInTheDocument();
+
       expect(screen.getByText('Activity Logs')).toBeInTheDocument();
       expect(screen.getByText('System Health')).toBeInTheDocument();
     });
@@ -203,8 +203,7 @@ describe('AdminDashboard', () => {
     // Check if statistics are displayed in overview
     await waitFor(() => {
       expect(screen.getByText('150')).toBeInTheDocument(); // Total Users
-      expect(screen.getByText('300')).toBeInTheDocument(); // Total Processes  
-      expect(screen.getByText('45')).toBeInTheDocument(); // Active Processes
+      expect(screen.getByText('500')).toBeInTheDocument(); // Total Logs
     });
   });
 
@@ -227,7 +226,7 @@ describe('AdminDashboard', () => {
 
   it('should switch between navigation tabs', async () => {
     const user = userEvent.setup();
-    render(<AdminDashboard permissions={['user.manage', 'permission.manage', 'process.manage', 'activity.view', 'system.monitor']} />, { wrapper: createWrapper() });
+    render(<AdminDashboard permissions={['user.manage', 'permission.manage', 'activity.view', 'system.monitor']} />, { wrapper: createWrapper() });
 
     // Initially on overview tab
     expect(screen.getByText('Total Users')).toBeInTheDocument();
@@ -244,11 +243,7 @@ describe('AdminDashboard', () => {
       expect(screen.getByText('Permission Management Component')).toBeInTheDocument();
     });
 
-    // Click on process management
-    await user.click(screen.getByText('Process Management'));
-    await waitFor(() => {
-      expect(screen.getByText('Process Management Component')).toBeInTheDocument();
-    });
+
 
     // Click on activity logs
     await user.click(screen.getByText('Activity Logs'));

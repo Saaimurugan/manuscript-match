@@ -511,22 +511,3 @@ export const updateRolePermissionsSchema = Joi.object({
   permissions: Joi.array().items(uuidSchema).min(1).required(),
 });
 
-// Admin process management validation schemas
-export const adminCreateProcessSchema = Joi.object({
-  userId: uuidSchema,
-  title: Joi.string().min(1).max(500).required(),
-  templateId: Joi.string().optional(),
-  description: Joi.string().min(1).max(1000).optional(),
-});
-
-export const adminUpdateProcessSchema = Joi.object({
-  title: Joi.string().min(1).max(500).optional(),
-  description: Joi.string().min(1).max(1000).optional(),
-  status: Joi.string().valid(...Object.values(ProcessStatus)).optional(),
-  currentStep: Joi.string().valid(...Object.values(ProcessStep)).optional(),
-  metadata: Joi.object().optional(),
-}).min(1);
-
-export const adminResetProcessStageSchema = Joi.object({
-  targetStep: Joi.string().valid(...Object.values(ProcessStep)).required(),
-});

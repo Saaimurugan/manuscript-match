@@ -307,7 +307,7 @@ export const useInviteUser = () => {
       // Invalidate users query to refresh the list
       queryClient.invalidateQueries(['admin', 'users']);
     },
-    // Error handling is done in the component
+    onError: handleError,
   });
 };
 

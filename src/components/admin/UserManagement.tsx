@@ -40,6 +40,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { AdminUserDetails } from "@/services/adminService";
+import { adminService } from "@/services/adminService";
 import type { PaginatedResponse } from "@/types/api";
 
 interface UserManagementProps {
@@ -124,7 +125,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   } = useAdminUsers(queryParams);
 
   // Mutations
-  const updateRoleMutation = useUpdateUserRole() as any;
+  const updateRoleMutation = useUpdateUserRole();
   const updateStatusMutation = useUpdateUserStatus();
   const deleteUserMutation = useDeleteUser();
   const inviteUserMutation = useInviteUser();
@@ -221,40 +222,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   };
 
   const handlePromoteUser = async (userId: string, newRole: UserRole) => {
-    updateRoleMutation.mutate({
-      userId,
+    const roleData: { userId: string; role: "USER" | "ADMIN" } = {
+      userId: userId,
       role: newRole as "USER" | "ADMIN"
-    }, {
-      onSuccess: () => {
-        refetchUsers();
-      },
-      onError: (error: any) => {
-        console.error('Failed to update user role:', error);
-      }
-    });
+    };
+    updateRoleMutation.mutate(roleData);
   };
 
   const handleBlockUser = async (userId: string, block: boolean) => {
-    try {
-      await updateStatusMutation.mutateAsync({
-        userId,
-        status: block ? 'suspended' : 'active'
-      });
-      refetchUsers();
-    } catch (error) {
-      console.error('Failed to update user status:', error);
-    }
+    const statusData: { userId: string; status: 'active' | 'suspended' } = {
+      userId: userId,
+      status: block ? 'suspended' : 'active'
+    };
+    updateStatusMutation.mutate(statusData);
   };
 
   const handleDeleteUser = async (userId: string) => {
-    try {
-      await deleteUserMutation.mutateAsync(userId);
-      refetchUsers();
-      setShowDeleteConfirm(false);
-      setUserToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
+    deleteUserMutation.mutate(userId);
+    setShowDeleteConfirm(false);
+    setUserToDelete(null);
   };
 
   const handleEditUser = (user: AdminUserDetails) => {
@@ -281,7 +267,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
       return;
     }
 
-    // Use mutate instead of mutateAsync to let the hook handle success/error
+    // Let the hook handle success/error with its built-in error handling
     inviteUserMutation.mutate({
       email: inviteData.email,
       role: inviteData.role as 'USER' | 'ADMIN'
@@ -292,41 +278,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
         setInviteErrors({});
         setShowInviteModal(false);
         refetchUsers();
-
-        // Show success message
-        toast({
-          title: "Success",
-          description: `Invitation sent to ${inviteData.email}`,
-          variant: "default",
-        });
-      },
-      onError: (error: any) => {
-        console.log('Component onError - Full error object:', error);
-        console.log('Component onError - error.response:', error?.response);
-        console.log('Component onError - error.response.data:', error?.response?.data);
-
-        // Extract and show the specific error message
-        let errorMessage = 'Failed to invite user';
-
-        if (error?.response?.data?.error) {
-          errorMessage = error.response.data.error;
-          console.log('Using error.response.data.error:', errorMessage);
-        } else if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
-          console.log('Using error.response.data.message:', errorMessage);
-        } else if (error?.message) {
-          errorMessage = error.message;
-          console.log('Using error.message:', errorMessage);
-        }
-
-        console.log('Final error message to show:', errorMessage);
-
-        // Show error message directly
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
       }
     });
   };
@@ -343,57 +294,71 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
 
     // Update role if changed
     if (editData.role !== editingUser.role) {
-      updateRoleMutation.mutate({
+      const roleData: { userId: string; role: "USER" | "ADMIN" } = {
         userId: editingUser.id,
         role: editData.role as "USER" | "ADMIN"
-      }, {
-        onSuccess: () => {
-          // Reset form and close modal
-          setEditingUser(null);
-          setEditData({ email: "", role: "USER", status: "ACTIVE" });
-          setEditErrors({});
-          setShowEditModal(false);
-          refetchUsers();
-        },
-        onError: (error: any) => {
-          console.error('Failed to update user:', error);
-        }
-      });
-    } else {
-      // No role change, just close modal
-      setEditingUser(null);
-      setEditData({ email: "", role: "USER", status: "ACTIVE" });
-      setEditErrors({});
-      setShowEditModal(false);
+      };
+      updateRoleMutation.mutate(roleData);
     }
+
+    // Reset form and close modal
+    setEditingUser(null);
+    setEditData({ email: "", role: "USER", status: "ACTIVE" });
+    setEditErrors({});
+    setShowEditModal(false);
   };
 
   const handleBulkAction = async (action: string) => {
     if (selectedUsers.length === 0) return;
 
-    try {
-      switch (action) {
-        case 'promote':
-          // TODO: Implement bulk promotion
-          console.log('Bulk promote users:', selectedUsers);
-          break;
-        case 'block':
-          // TODO: Implement bulk blocking
-          console.log('Bulk block users:', selectedUsers);
-          break;
-        case 'delete':
-          if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`)) {
-            // TODO: Implement bulk deletion
-            console.log('Bulk delete users:', selectedUsers);
+    switch (action) {
+      case 'promote':
+        // Bulk promote users to admin
+        for (const userId of selectedUsers) {
+          const roleData: { userId: string; role: "USER" | "ADMIN" } = {
+            userId: userId,
+            role: 'ADMIN'
+          };
+          updateRoleMutation.mutate(roleData);
+        }
+        setSelectedUsers([]);
+        break;
+      case 'block':
+        // Bulk block users
+        for (const userId of selectedUsers) {
+          const statusData: { userId: string; status: 'active' | 'suspended' } = {
+            userId: userId,
+            status: 'suspended'
+          };
+          updateStatusMutation.mutate(statusData);
+        }
+        setSelectedUsers([]);
+        break;
+      case 'delete':
+        if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`)) {
+          for (const userId of selectedUsers) {
+            deleteUserMutation.mutate(userId);
           }
-          break;
-        case 'export':
-          // TODO: Implement user export
-          console.log('Export users:', selectedUsers);
-          break;
-      }
-    } catch (error) {
-      console.error('Failed to perform bulk action:', error);
+          setSelectedUsers([]);
+        }
+        break;
+      case 'export':
+        // Export selected users
+        try {
+          await adminService.exportUsers(selectedUsers, 'csv');
+          toast({
+            title: "Success",
+            description: `Exported ${selectedUsers.length} users`,
+            variant: "default",
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to export users",
+            variant: "destructive",
+          });
+        }
+        break;
     }
   };
 
@@ -571,7 +536,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Activity</TableHead>
+
                     <TableHead>Joined</TableHead>
                     <TableHead>Last Login</TableHead>
                     <TableHead className="w-12">Actions</TableHead>
@@ -608,12 +573,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                           Active
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{user.processCount || 0} processes</div>
-                          <div className="text-gray-500">{user.activityCount || 0} activities</div>
-                        </div>
-                      </TableCell>
+
                       <TableCell className="text-sm text-gray-500">
                         {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                       </TableCell>

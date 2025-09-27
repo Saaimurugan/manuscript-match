@@ -6,7 +6,7 @@ import { LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
-import { ActivityLog } from "@/components/activity/ActivityLog";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import type { Process } from "@/types/api";
@@ -75,9 +75,8 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Content with Process Management */}
         <Tabs defaultValue="processes" className="space-y-4">
-          <TabsList className={`grid w-full ${user?.role === "ADMIN" ? "grid-cols-3" : "grid-cols-2"} max-w-md`}>
+          <TabsList className={`grid w-full ${user?.role === "ADMIN" ? "grid-cols-2" : "grid-cols-1"} max-w-md`}>
             <TabsTrigger value="processes">Processes</TabsTrigger>
-            <TabsTrigger value="activity">Activity Log</TabsTrigger>
             {user?.role === "ADMIN" && (
               <TabsTrigger value="admin">Admin</TabsTrigger>
             )}
@@ -96,9 +95,7 @@ const Index = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="activity">
-            <ActivityLog userId={user?.id} currentUser={user?.id} />
-          </TabsContent>
+
 
           {user?.role === "ADMIN" && (
             <TabsContent value="admin">
@@ -107,7 +104,6 @@ const Index = () => {
                 permissions={[
                   'user.manage',
                   'permission.manage', 
-                  'process.manage',
                   'activity.view',
                   'system.monitor'
                 ]}

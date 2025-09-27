@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   Users, 
-  Activity, 
   FileText, 
   RefreshCw, 
   AlertTriangle, 
@@ -23,7 +22,8 @@ import {
   UserX,
   Workflow,
   Eye,
-  Download
+  Download,
+  Activity
 } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,8 +41,8 @@ import { cn } from "@/lib/utils";
 // Import the new admin components
 import { UserManagement } from "./UserManagement";
 import { PermissionManagement } from "./PermissionManagement";
-import { ProcessManagement } from "./ProcessManagement";
 import { ActivityLogViewer } from "./ActivityLogViewer";
+
 import { AdminDebug } from "../debug/AdminDebug";
 
 interface AdminDashboardProps {
@@ -91,13 +91,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       requiredPermissions: []
     },
     {
-      id: "debug",
-      label: "Debug",
-      icon: Settings,
-      description: "Debug information",
-      requiredPermissions: []
-    },
-    {
       id: "users",
       label: "User Management",
       icon: Users,
@@ -111,19 +104,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       description: "Manage permissions and access",
       requiredPermissions: ["permission.manage"]
     },
-    {
-      id: "processes",
-      label: "Process Management",
-      icon: Workflow,
-      description: "Manage system processes",
-      requiredPermissions: ["process.manage"]
-    },
+
     {
       id: "activity",
-      label: "Activity Logs",
+      label: "Activity Log",
       icon: Activity,
-      description: "View system activity",
-      requiredPermissions: ["activity.view"]
+      description: "View system activity logs",
+      requiredPermissions: []
     },
     {
       id: "system",
@@ -131,6 +118,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       icon: Server,
       description: "Monitor system status",
       requiredPermissions: ["system.monitor"]
+    },
+    {
+      id: "debug",
+      label: "Debug",
+      icon: Settings,
+      description: "Debug information",
+      requiredPermissions: []
     }
   ];
 
@@ -366,7 +360,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {activeTab === "overview" && (
               <div className="space-y-6">
                 {/* Key Metrics */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
@@ -384,31 +378,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-gray-600">Active Processes</CardTitle>
-                      <TrendingUp className="h-5 w-5 text-green-600" />
+                      <CardTitle className="text-sm font-medium text-gray-600">Activity Logs</CardTitle>
+                      <Activity className="h-5 w-5 text-green-600" />
                     </CardHeader>
                     <CardContent>
                       {statsLoading ? (
                         <Skeleton className="h-8 w-16" />
                       ) : (
-                        <div className="text-3xl font-bold text-gray-900">{stats?.activeProcesses || 0}</div>
+                        <div className="text-3xl font-bold text-gray-900">{stats?.totalLogs || 0}</div>
                       )}
-                      <p className="text-xs text-gray-500 mt-1">Currently running</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-gray-600">Total Processes</CardTitle>
-                      <Workflow className="h-5 w-5 text-purple-600" />
-                    </CardHeader>
-                    <CardContent>
-                      {statsLoading ? (
-                        <Skeleton className="h-8 w-16" />
-                      ) : (
-                        <div className="text-3xl font-bold text-gray-900">{stats?.totalProcesses || 0}</div>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">All time</p>
+                      <p className="text-xs text-gray-500 mt-1">Total activity logs</p>
                     </CardContent>
                   </Card>
                   
@@ -492,7 +471,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Clock className="h-5 w-5" />
-                        Recent Activity
+                        System Events
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -541,9 +520,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <PermissionManagement />
             )}
 
-            {activeTab === "processes" && (
-              <ProcessManagement />
-            )}
+
 
             {activeTab === "activity" && (
               <ActivityLogViewer />

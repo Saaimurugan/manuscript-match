@@ -174,20 +174,44 @@ export class EnhancedErrorHandler {
     }
 
     const { status, data } = error.response;
+    
+    // Extract message from backend error format: { success: false, error: { message: "..." } }
+    const extractMessage = (fallback: string) => {
+      // Debug: Log the actual error structure
+      console.log('🔍 Error Response Debug:', {
+        status,
+        data,
+        'data.error': data?.error,
+        'data.error.message': data?.error?.message,
+        'data.message': data?.message
+      });
+      
+      // Try multiple extraction paths
+      const message = data?.error?.message || 
+                     data?.message || 
+                     data?.error || 
+                     (typeof data === 'string' ? data : fallback);
+      
+      console.log('📝 Extracted message:', message);
+      return message;
+    };
 
     switch (status) {
       case 400:
-        return data?.message || data?.error || 'Invalid request. Please check your input and try again.';
+        return extractMessage('Invalid request. Please check your input and try again.');
       case 401:
+        // Clear any invalid tokens
+        localStorage.removeItem('scholarfinder_token');
+        localStorage.removeItem('scholarfinder_refresh_token');
         return 'Your session has expired. Please log in again.';
       case 403:
-        return 'You don\'t have permission to perform this action.';
+        return extractMessage('You don\'t have permission to perform this action.');
       case 404:
         return 'The requested resource was not found.';
       case 409:
-        return data?.message || data?.error || 'This action conflicts with the current state. Please refresh and try again.';
+        return extractMessage('This action conflicts with the current state. Please refresh and try again.');
       case 422:
-        return data?.message || data?.error || 'The provided data is invalid. Please check your input.';
+        return extractMessage('The provided data is invalid. Please check your input.');
       case 429:
         const retryAfter = parseInt(error.response.headers['retry-after'] || '60');
         return `Too many requests. Please wait ${retryAfter} seconds before trying again.`;
@@ -200,7 +224,7 @@ export class EnhancedErrorHandler {
       case 504:
         return 'The request timed out. Please try again.';
       default:
-        return data?.message || 'An unexpected error occurred. Please try again.';
+        return extractMessage('An unexpected error occurred. Please try again.');
     }
   }
 

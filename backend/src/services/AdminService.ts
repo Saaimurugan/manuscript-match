@@ -4,15 +4,7 @@ import { UserRepository } from '@/repositories/UserRepository';
 import { ProcessStatus, ProcessStep } from '@/types';
 import { CustomError, ErrorType } from '@/middleware/errorHandler';
 
-export interface AdminProcessFilters {
-  userId?: string;
-  status?: string;
-  startDate?: Date | undefined;
-  endDate?: Date | undefined;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
+
 
 export interface AdminLogFilters {
   userId?: string;
@@ -32,10 +24,7 @@ export interface AdminExportFilters {
 
 export interface AdminStats {
   totalUsers: number;
-  totalProcesses: number;
   totalLogs: number;
-  processStatusBreakdown: Record<ProcessStatus, number>;
-  processStepBreakdown: Record<ProcessStep, number>;
   recentActivity: {
     last24Hours: number;
     last7Days: number;
@@ -44,7 +33,7 @@ export interface AdminStats {
   topUsers: Array<{
     userId: string;
     email: string;
-    processCount: number;
+    activityCount: number;
     lastActivity: Date;
   }>;
 }
@@ -62,91 +51,7 @@ export class AdminService {
     private userRepository: UserRepository
   ) { }
 
-  /**
-   * Get all user processes with filtering and pagination
-   */
-  async getAllProcesses(
-    page: number,
-    limit: number,
-    filters: AdminProcessFilters
-  ): Promise<{ processes: any[]; total: number }> {
-    try {
-      const skip = (page - 1) * limit;
 
-      // Build query options
-      const queryOptions: any = {
-        skip,
-        take: limit,
-        orderBy: {}
-      };
-
-      // Set sort order
-      if (filters.sortBy) {
-        queryOptions.orderBy[filters.sortBy] = filters.sortOrder || 'desc';
-      } else {
-        queryOptions.orderBy.createdAt = 'desc';
-      }
-
-      // Apply filters
-      if (filters.userId) {
-        queryOptions.userId = filters.userId;
-      }
-
-      if (filters.status && Object.values(ProcessStatus).includes(filters.status as ProcessStatus)) {
-        queryOptions.status = filters.status as ProcessStatus;
-      }
-
-      // Get processes with user information (sanitized)
-      const processes = await this.processRepository.findMany(queryOptions);
-
-      // Get total count for pagination
-      const totalQueryOptions: any = {};
-      if (filters.userId) totalQueryOptions.userId = filters.userId;
-      if (filters.status) totalQueryOptions.status = filters.status as ProcessStatus;
-
-      const total = await this.processRepository.getPrismaClient().process.count({
-        where: totalQueryOptions
-      });
-
-      // Sanitize and enrich process data for admin view
-      const sanitizedProcesses = await Promise.all(
-        processes.map(async (process) => {
-          // Get user info (sanitized)
-          const user = await this.userRepository.findById(process.userId);
-
-          // Get process statistics
-          const logCount = await this.activityLogRepository.countByProcessId(process.id);
-
-          return {
-            id: process.id,
-            title: process.title,
-            status: process.status,
-            currentStep: process.currentStep,
-            createdAt: process.createdAt,
-            updatedAt: process.updatedAt,
-            user: user ? {
-              id: user.id,
-              email: this.sanitizeEmail(user.email), // Partially hide email for privacy
-              role: user.role
-            } : null,
-            metadata: process.metadata ? JSON.parse(process.metadata) : null,
-            activityLogCount: logCount
-          };
-        })
-      );
-
-      return {
-        processes: sanitizedProcesses,
-        total
-      };
-    } catch (error) {
-      throw new CustomError(
-        ErrorType.DATABASE_ERROR,
-        `Failed to fetch admin processes: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        500
-      );
-    }
-  }
 
   /**
    * Get all user activity logs with filtering and pagination
@@ -249,23 +154,7 @@ export class AdminService {
     try {
       // Get basic counts
       const totalUsers = await this.userRepository.count();
-      const totalProcesses = await this.processRepository.getPrismaClient().process.count();
       const totalLogs = await this.activityLogRepository.getPrismaClient().activityLog.count();
-
-      // Get process status breakdown
-      const processStatusBreakdown: Record<ProcessStatus, number> = {} as Record<ProcessStatus, number>;
-      for (const status of Object.values(ProcessStatus)) {
-        processStatusBreakdown[status as ProcessStatus] = await this.processRepository.countByStatus(status as ProcessStatus);
-      }
-
-      // Get process step breakdown
-      const processStepBreakdown: Record<ProcessStep, number> = {} as Record<ProcessStep, number>;
-      for (const step of Object.values(ProcessStep)) {
-        const count = await this.processRepository.getPrismaClient().process.count({
-          where: { currentStep: step as ProcessStep }
-        });
-        processStepBreakdown[step as ProcessStep] = count;
-      }
 
       // Get recent activity stats
       const now = new Date();
@@ -285,26 +174,27 @@ export class AdminService {
         })
       };
 
-      // Get top users by process count
-      const topUsersData = await this.processRepository.getPrismaClient().process.groupBy({
+      // Get top users by activity count
+      const topUsersData = await this.activityLogRepository.getPrismaClient().activityLog.groupBy({
         by: ['userId'],
         _count: { id: true },
         orderBy: { _count: { id: 'desc' } },
-        take: 10
+        take: 10,
+        where: { userId: { not: null } }
       });
 
       const topUsers = await Promise.all(
         topUsersData.map(async (userData) => {
-          const user = await this.userRepository.findById(userData.userId);
+          const user = await this.userRepository.findById(userData.userId!);
           const lastActivity = await this.activityLogRepository.getPrismaClient().activityLog.findFirst({
             where: { userId: userData.userId },
             orderBy: { timestamp: 'desc' }
           });
 
           return {
-            userId: userData.userId,
+            userId: userData.userId!,
             email: user ? this.sanitizeEmail(user.email) : 'Unknown',
-            processCount: userData._count.id,
+            activityCount: userData._count.id,
             lastActivity: lastActivity?.timestamp || new Date(0)
           };
         })
@@ -312,10 +202,7 @@ export class AdminService {
 
       return {
         totalUsers,
-        totalProcesses,
         totalLogs,
-        processStatusBreakdown,
-        processStepBreakdown,
         recentActivity,
         topUsers
       };
@@ -391,53 +278,7 @@ export class AdminService {
     }
   }
 
-  /**
-   * Get process details with full audit trail
-   */
-  async getProcessDetails(processId: string): Promise<any> {
-    try {
-      const process = await this.processRepository.findByIdWithRelations(processId);
-      if (!process) {
-        return null;
-      }
 
-      // Get all activity logs for this process
-      const logs = await this.activityLogRepository.findByProcessId(processId);
-
-      return {
-        process: {
-          id: process.id,
-          title: process.title,
-          status: process.status,
-          currentStep: process.currentStep,
-          createdAt: process.createdAt,
-          updatedAt: process.updatedAt,
-          metadata: process.metadata ? JSON.parse(process.metadata) : null
-        },
-        user: (process as any).user ? {
-          id: (process as any).user.id,
-          email: (process as any).user.email,
-          role: (process as any).user.role
-        } : null,
-        activityLogs: logs.map(log => ({
-          id: log.id,
-          action: log.action,
-          details: log.details,
-          timestamp: log.timestamp
-        })),
-        statistics: {
-          totalLogs: logs.length,
-          duration: process.updatedAt.getTime() - process.createdAt.getTime()
-        }
-      };
-    } catch (error) {
-      throw new CustomError(
-        ErrorType.DATABASE_ERROR,
-        `Failed to fetch process details: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        500
-      );
-    }
-  }
 
   /**
    * Export admin data in various formats
@@ -651,527 +492,7 @@ export class AdminService {
     return this.convertToCSV(data);
   }
 
-  // Process Management Methods
 
-  /**
-   * Delete a process with validation for active instances
-   */
-  async deleteProcess(processId: string, deletedBy: string): Promise<{
-    success: boolean;
-    message?: string;
-    activeInstances?: number;
-  }> {
-    try {
-      const process = await this.processRepository.findById(processId);
-
-      if (!process) {
-        return {
-          success: false,
-          message: 'Process not found',
-        };
-      }
-
-      // Check if process has active status that prevents deletion
-      const activeStatuses = [ProcessStatus.PROCESSING, ProcessStatus.SEARCHING, ProcessStatus.VALIDATING];
-      if (activeStatuses.includes(process.status as ProcessStatus)) {
-        return {
-          success: false,
-          message: `Cannot delete process with active status: ${process.status}`,
-          activeInstances: 1,
-        };
-      }
-
-      // Log the activity before deletion
-      await this.activityLogRepository.create({
-        userId: deletedBy,
-        processId,
-        action: 'ADMIN_PROCESS_DELETED',
-        details: JSON.stringify({
-          title: process.title,
-          status: process.status,
-          step: process.currentStep,
-          originalUserId: process.userId,
-        }),
-      });
-
-      // Delete the process
-      await this.processRepository.delete(processId);
-
-      return {
-        success: true,
-        message: 'Process deleted successfully',
-      };
-    } catch (error) {
-      console.error('Error in deleteProcess:', error);
-      return {
-        success: false,
-        message: 'Failed to delete process',
-      };
-    }
-  }
-
-  /**
-   * Reset process stage with stage transition logic
-   */
-  async resetProcessStage(
-    processId: string,
-    targetStep: ProcessStep,
-    resetBy: string
-  ): Promise<{
-    success: boolean;
-    process?: any;
-    message?: string;
-  }> {
-    try {
-      const process = await this.processRepository.findById(processId);
-
-      if (!process) {
-        return {
-          success: false,
-          message: 'Process not found',
-        };
-      }
-
-      // Validate target step
-      if (!Object.values(ProcessStep).includes(targetStep)) {
-        return {
-          success: false,
-          message: 'Invalid target stage',
-        };
-      }
-
-      // Determine appropriate status based on target step
-      let newStatus: ProcessStatus;
-      switch (targetStep) {
-        case ProcessStep.UPLOAD:
-          newStatus = ProcessStatus.CREATED;
-          break;
-        case ProcessStep.METADATA_EXTRACTION:
-        case ProcessStep.KEYWORD_ENHANCEMENT:
-          newStatus = ProcessStatus.PROCESSING;
-          break;
-        case ProcessStep.DATABASE_SEARCH:
-        case ProcessStep.MANUAL_SEARCH:
-          newStatus = ProcessStatus.SEARCHING;
-          break;
-        case ProcessStep.VALIDATION:
-          newStatus = ProcessStatus.VALIDATING;
-          break;
-        case ProcessStep.RECOMMENDATIONS:
-        case ProcessStep.SHORTLIST:
-        case ProcessStep.EXPORT:
-          newStatus = ProcessStatus.COMPLETED;
-          break;
-        default:
-          newStatus = ProcessStatus.PROCESSING;
-      }
-
-      // Update the process
-      const updatedProcess = await this.processRepository.update(processId, {
-        currentStep: targetStep,
-        status: newStatus,
-      });
-
-      // Log the activity
-      await this.activityLogRepository.create({
-        userId: resetBy,
-        processId,
-        action: 'ADMIN_STAGE_RESET',
-        details: JSON.stringify({
-          previousStep: process.currentStep,
-          newStep: targetStep,
-          previousStatus: process.status,
-          newStatus,
-          processTitle: process.title,
-          originalUserId: process.userId,
-        }),
-      });
-
-      return {
-        success: true,
-        process: this.formatProcess(updatedProcess),
-        message: `Process stage reset to ${targetStep}`,
-      };
-    } catch (error) {
-      console.error('Error in resetProcessStage:', error);
-      return {
-        success: false,
-        message: 'Failed to reset process stage',
-      };
-    }
-  }
-
-  /**
-   * Update process with validation and versioning
-   */
-  async updateProcess(
-    processId: string,
-    updates: {
-      title?: string;
-      description?: string;
-      status?: ProcessStatus;
-      currentStep?: ProcessStep;
-      metadata?: any;
-    },
-    updatedBy: string
-  ): Promise<{ success: boolean; process?: any; message?: string; version?: number }> {
-    try {
-      const existingProcess = await this.processRepository.findById(processId);
-
-      if (!existingProcess) {
-        return { success: false, message: 'Process not found' };
-      }
-
-      // Validate the process configuration
-      const validationResult = await this.validateProcessConfiguration(updates, existingProcess);
-      if (!validationResult.valid) {
-        return { success: false, message: validationResult.message || 'Validation failed' };
-      }
-
-      // Create a version before updating
-      const version = await this.createProcessVersion(processId, existingProcess, updatedBy);
-
-      // Prepare update data
-      let updateData: any = {};
-
-      if (updates.title) updateData.title = updates.title;
-      if (updates.status) updateData.status = updates.status;
-      if (updates.currentStep) updateData.currentStep = updates.currentStep;
-
-      // Handle metadata updates
-      const existingMetadata = existingProcess.metadata ? JSON.parse(existingProcess.metadata) : {};
-      const newMetadata = {
-        ...existingMetadata,
-        ...(updates.description && { description: updates.description }),
-        ...(updates.metadata && updates.metadata),
-        lastModifiedBy: updatedBy,
-        lastModifiedAt: new Date(),
-        version,
-      };
-
-      updateData.metadata = JSON.stringify(newMetadata);
-
-      // Update the process
-      const updatedProcess = await this.processRepository.update(processId, updateData);
-
-      // Log the activity
-      await this.activityLogRepository.create({
-        userId: updatedBy,
-        processId,
-        action: 'ADMIN_PROCESS_UPDATED',
-        details: JSON.stringify({
-          processTitle: existingProcess.title,
-          originalUserId: existingProcess.userId,
-          changes: updates,
-          version,
-          updatedBy,
-        }),
-      });
-
-      return {
-        success: true,
-        process: this.formatProcess(updatedProcess),
-        message: 'Process updated successfully',
-        version,
-      };
-    } catch (error) {
-      console.error('Error in updateProcess:', error);
-      return { success: false, message: 'Failed to update process' };
-    }
-  }
-
-  /**
-   * Create process from template
-   */
-  async createProcess(
-    data: {
-      userId: string;
-      title: string;
-      templateId?: string;
-      description?: string;
-    },
-    createdBy: string
-  ): Promise<{
-    success: boolean;
-    process?: any;
-    message?: string;
-  }> {
-    try {
-      const { userId, title, templateId, description } = data;
-
-      let processData: any = {
-        userId,
-        title,
-        status: ProcessStatus.CREATED,
-        currentStep: ProcessStep.UPLOAD,
-        metadata: JSON.stringify({
-          description: description || '',
-          createdBy,
-          createdAt: new Date(),
-        }),
-      };
-
-      // If template is specified, apply template defaults
-      if (templateId) {
-        const templates = await this.getProcessTemplates();
-        const template = templates.find(t => t.id === templateId);
-
-        if (!template) {
-          return {
-            success: false,
-            message: 'Template not found',
-          };
-        }
-
-        processData.status = template.defaultStatus;
-        processData.currentStep = template.defaultStep;
-        processData.metadata = JSON.stringify({
-          ...template.defaultMetadata,
-          description: description || template.description,
-          createdBy,
-          createdAt: new Date(),
-          templateId,
-          templateName: template.name,
-        });
-      }
-
-      const process = await this.processRepository.create(processData);
-
-      // Log the activity
-      await this.activityLogRepository.create({
-        userId: createdBy,
-        processId: process.id,
-        action: templateId ? 'ADMIN_PROCESS_CREATED_FROM_TEMPLATE' : 'ADMIN_PROCESS_CREATED',
-        details: JSON.stringify({
-          templateId,
-          title,
-          targetUserId: userId,
-        }),
-      });
-
-      return {
-        success: true,
-        process: this.formatProcess(process),
-        message: templateId ? `Process created from template` : 'Process created successfully',
-      };
-    } catch (error) {
-      console.error('Error in createProcess:', error);
-      return {
-        success: false,
-        message: 'Failed to create process',
-      };
-    }
-  }
-
-  /**
-   * Get process templates
-   */
-  async getProcessTemplates(): Promise<Array<{
-    id: string;
-    name: string;
-    description: string;
-    defaultMetadata: any;
-    defaultStep: ProcessStep;
-    defaultStatus: ProcessStatus;
-  }>> {
-    return [
-      {
-        id: 'standard-review',
-        name: 'Standard Peer Review',
-        description: 'Standard manuscript peer review process with full validation',
-        defaultMetadata: {
-          description: 'Standard peer review process',
-          expectedReviewers: 3,
-          validationRequired: true,
-          conflictCheckEnabled: true,
-        },
-        defaultStep: ProcessStep.UPLOAD,
-        defaultStatus: ProcessStatus.CREATED,
-      },
-      {
-        id: 'fast-track',
-        name: 'Fast Track Review',
-        description: 'Expedited review process with minimal validation',
-        defaultMetadata: {
-          description: 'Fast track review process',
-          expectedReviewers: 2,
-          validationRequired: false,
-          conflictCheckEnabled: false,
-        },
-        defaultStep: ProcessStep.UPLOAD,
-        defaultStatus: ProcessStatus.CREATED,
-      },
-      {
-        id: 'comprehensive',
-        name: 'Comprehensive Review',
-        description: 'Thorough review process with extensive validation and multiple rounds',
-        defaultMetadata: {
-          description: 'Comprehensive review process',
-          expectedReviewers: 5,
-          validationRequired: true,
-          conflictCheckEnabled: true,
-          multipleRounds: true,
-        },
-        defaultStep: ProcessStep.UPLOAD,
-        defaultStatus: ProcessStatus.CREATED,
-      },
-      {
-        id: 'editorial',
-        name: 'Editorial Review',
-        description: 'Editorial review process for journal submissions',
-        defaultMetadata: {
-          description: 'Editorial review process',
-          expectedReviewers: 2,
-          validationRequired: true,
-          conflictCheckEnabled: true,
-          editorialReview: true,
-        },
-        defaultStep: ProcessStep.UPLOAD,
-        defaultStatus: ProcessStatus.CREATED,
-      },
-    ];
-  }
-
-  /**
-   * Validate process configuration for workflow integrity
-   */
-  private async validateProcessConfiguration(
-    updates: any,
-    existingProcess: any
-  ): Promise<{ valid: boolean; message?: string }> {
-    // Validate status transitions
-    if (updates.status && updates.currentStep) {
-      const validTransitions = this.getValidStatusStepCombinations();
-      const combination = `${updates.status}-${updates.currentStep}`;
-
-      if (!validTransitions.includes(combination)) {
-        return {
-          valid: false,
-          message: `Invalid status-step combination: ${updates.status} with ${updates.currentStep}`
-        };
-      }
-    }
-
-    // Validate step progression (prevent skipping steps)
-    if (updates.currentStep) {
-      const stageOrder = [
-        ProcessStep.UPLOAD,
-        ProcessStep.METADATA_EXTRACTION,
-        ProcessStep.KEYWORD_ENHANCEMENT,
-        ProcessStep.DATABASE_SEARCH,
-        ProcessStep.MANUAL_SEARCH,
-        ProcessStep.VALIDATION,
-        ProcessStep.RECOMMENDATIONS,
-        ProcessStep.SHORTLIST,
-        ProcessStep.EXPORT
-      ];
-
-      const currentIndex = stageOrder.indexOf(existingProcess.currentStep);
-      const newIndex = stageOrder.indexOf(updates.currentStep);
-
-      // Allow moving backwards or staying in same step, but warn about skipping forward
-      if (newIndex > currentIndex + 1) {
-        return {
-          valid: false,
-          message: `Cannot skip stages. Current: ${existingProcess.currentStep}, Target: ${updates.currentStep}`
-        };
-      }
-    }
-
-    // Validate metadata structure
-    if (updates.metadata) {
-      try {
-        JSON.stringify(updates.metadata);
-      } catch (error) {
-        return {
-          valid: false,
-          message: 'Invalid metadata format'
-        };
-      }
-    }
-
-    return { valid: true };
-  }
-
-  /**
-   * Get valid status-step combinations
-   */
-  private getValidStatusStepCombinations(): string[] {
-    return [
-      `${ProcessStatus.CREATED}-${ProcessStep.UPLOAD}`,
-      `${ProcessStatus.UPLOADING}-${ProcessStep.UPLOAD}`,
-      `${ProcessStatus.PROCESSING}-${ProcessStep.METADATA_EXTRACTION}`,
-      `${ProcessStatus.PROCESSING}-${ProcessStep.KEYWORD_ENHANCEMENT}`,
-      `${ProcessStatus.SEARCHING}-${ProcessStep.DATABASE_SEARCH}`,
-      `${ProcessStatus.SEARCHING}-${ProcessStep.MANUAL_SEARCH}`,
-      `${ProcessStatus.VALIDATING}-${ProcessStep.VALIDATION}`,
-      `${ProcessStatus.COMPLETED}-${ProcessStep.RECOMMENDATIONS}`,
-      `${ProcessStatus.COMPLETED}-${ProcessStep.SHORTLIST}`,
-      `${ProcessStatus.COMPLETED}-${ProcessStep.EXPORT}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.UPLOAD}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.METADATA_EXTRACTION}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.KEYWORD_ENHANCEMENT}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.DATABASE_SEARCH}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.MANUAL_SEARCH}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.VALIDATION}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.RECOMMENDATIONS}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.SHORTLIST}`,
-      `${ProcessStatus.ERROR}-${ProcessStep.EXPORT}`,
-    ];
-  }
-
-  /**
-   * Create a version snapshot of the process
-   */
-  private async createProcessVersion(
-    processId: string,
-    process: any,
-    versionedBy: string
-  ): Promise<number> {
-    const existingMetadata = process.metadata ? JSON.parse(process.metadata) : {};
-    const currentVersion = existingMetadata.version || 0;
-    const newVersion = currentVersion + 1;
-
-    // Log the version creation
-    await this.activityLogRepository.create({
-      userId: versionedBy,
-      processId,
-      action: 'PROCESS_VERSION_CREATED',
-      details: JSON.stringify({
-        version: newVersion,
-        previousVersion: currentVersion,
-        snapshot: {
-          title: process.title,
-          status: process.status,
-          currentStep: process.currentStep,
-          metadata: existingMetadata,
-        },
-        versionedBy,
-      }),
-    });
-
-    return newVersion;
-  }
-
-  /**
-   * Format process for API response
-   */
-  private formatProcess(process: any): any {
-    const metadata = process.metadata ? JSON.parse(process.metadata) : null;
-    const description = metadata?.description || undefined;
-
-    return {
-      id: process.id,
-      userId: process.userId,
-      title: process.title,
-      description,
-      status: process.status,
-      currentStep: process.currentStep,
-      metadata,
-      createdAt: process.createdAt,
-      updatedAt: process.updatedAt,
-    };
-  }
 
   // Activity Log Management Methods
 

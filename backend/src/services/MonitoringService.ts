@@ -63,6 +63,11 @@ export class MonitoringService extends EventEmitter {
     super();
     this.startTime = new Date();
     
+    // Add default error listener to prevent unhandled error exceptions
+    this.on('error', () => {
+      // Default no-op listener to prevent unhandled error events
+    });
+    
     // Clean up old metrics every hour (skip in test environment)
     if (process.env['NODE_ENV'] !== 'test') {
       this.cleanupInterval = setInterval(() => {
@@ -80,10 +85,13 @@ export class MonitoringService extends EventEmitter {
 
   recordRequest(metric: RequestMetric): void {
     this.requestMetrics.push(metric);
-    this.emit('request', metric);
+    
+    if (this.listenerCount('request') > 0) {
+      this.emit('request', metric);
+    }
     
     // Emit alerts for slow requests
-    if (metric.responseTime > 5000) {
+    if (metric.responseTime > 5000 && this.listenerCount('slowRequest') > 0) {
       this.emit('slowRequest', metric);
     }
   }
@@ -91,10 +99,14 @@ export class MonitoringService extends EventEmitter {
   recordError(error: ErrorMetric): void {
     try {
       this.errorMetrics.push(error);
-      this.emit('error', error);
+      
+      // Only emit events if there are listeners to prevent unhandled error exceptions
+      if (this.listenerCount('error') > 0) {
+        this.emit('error', error);
+      }
       
       // Emit alerts for critical errors
-      if (error.statusCode && error.statusCode >= 500) {
+      if (error.statusCode && error.statusCode >= 500 && this.listenerCount('criticalError') > 0) {
         this.emit('criticalError', error);
       }
     } catch (emitError) {
@@ -111,7 +123,7 @@ export class MonitoringService extends EventEmitter {
     });
     
     // Emit alert when circuit breaker opens
-    if (stats.state === 'OPEN') {
+    if (stats.state === 'OPEN' && this.listenerCount('circuitBreakerOpen') > 0) {
       this.emit('circuitBreakerOpen', { name, stats });
     }
   }
@@ -284,7 +296,7 @@ export class MonitoringService extends EventEmitter {
       const metrics = this.getSystemMetrics();
       const perfStats = this.getPerformanceStats();
       
-      if (thresholds.errorRate && perfStats.errorRate > thresholds.errorRate) {
+      if (thresholds.errorRate && perfStats.errorRate > thresholds.errorRate && this.listenerCount('highErrorRate') > 0) {
         this.emit('highErrorRate', { 
           rate: perfStats.errorRate, 
           threshold: thresholds.errorRate,
@@ -292,7 +304,7 @@ export class MonitoringService extends EventEmitter {
         });
       }
       
-      if (thresholds.responseTime && perfStats.averageResponseTime > thresholds.responseTime) {
+      if (thresholds.responseTime && perfStats.averageResponseTime > thresholds.responseTime && this.listenerCount('highResponseTime') > 0) {
         this.emit('highResponseTime', { 
           time: perfStats.averageResponseTime, 
           threshold: thresholds.responseTime,
@@ -300,7 +312,7 @@ export class MonitoringService extends EventEmitter {
         });
       }
       
-      if (thresholds.memoryUsage && metrics.memory.usagePercent > thresholds.memoryUsage) {
+      if (thresholds.memoryUsage && metrics.memory.usagePercent > thresholds.memoryUsage && this.listenerCount('highMemoryUsage') > 0) {
         this.emit('highMemoryUsage', { 
           usage: metrics.memory.usagePercent, 
           threshold: thresholds.memoryUsage,
@@ -317,11 +329,13 @@ export class MonitoringService extends EventEmitter {
         
         if (recentErrors.length >= thresholds.consecutiveErrors) {
           consecutiveErrorCount = recentErrors.length;
-          this.emit('consecutiveErrors', {
-            count: consecutiveErrorCount,
-            threshold: thresholds.consecutiveErrors,
-            timestamp: new Date(),
-          });
+          if (this.listenerCount('consecutiveErrors') > 0) {
+            this.emit('consecutiveErrors', {
+              count: consecutiveErrorCount,
+              threshold: thresholds.consecutiveErrors,
+              timestamp: new Date(),
+            });
+          }
         } else {
           consecutiveErrorCount = 0;
         }

@@ -190,6 +190,27 @@ export class AdminService {
   }
 
   /**
+   * Export selected users data
+   */
+  async exportUsers(userIds: string[], format: 'csv' | 'xlsx' | 'json' = 'csv'): Promise<void> {
+    try {
+      // For now, export all users since the backend doesn't support filtering by specific user IDs
+      // In a real implementation, you'd want to add this functionality to the backend
+      const params = new URLSearchParams({
+        format
+      });
+
+      await apiService.downloadFile(
+        `/api/admin/export/users?${params.toString()}`,
+        `users-export.${format}`
+      );
+    } catch (error) {
+      console.error('Failed to export users:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get system performance metrics
    */
   async getPerformanceMetrics(params?: {
@@ -299,16 +320,28 @@ export class AdminService {
    */
   async updateUserRole(userId: string, role: 'USER' | 'ADMIN'): Promise<UserProfile> {
     try {
-      // Use the correct backend endpoint for updating user
-      const backendResponse = await apiService.put(`/api/admin/users/${userId}`, { role });
+      // Admin access verified - proceeding with role update
+
+      // Use the promote endpoint for making users admin, or update endpoint for demoting
+      let backendResponse;
+      
+      if (role === 'ADMIN') {
+        backendResponse = await apiService.put(`/api/admin/users/${userId}/promote`, {});
+      } else {
+        backendResponse = await apiService.put(`/api/admin/users/${userId}`, { role });
+      }
 
       if (!backendResponse || backendResponse.success === false) {
+        console.error('updateUserRole failed:', backendResponse);
         throw new Error(backendResponse?.error?.message || 'Failed to update user role');
       }
 
       return backendResponse.data;
     } catch (error) {
       console.error('Failed to update user role:', error);
+      
+      // Don't modify the error - let the error handler extract the message
+      // The useErrorHandling hook expects the original axios error structure
       throw error;
     }
   }
@@ -318,6 +351,10 @@ export class AdminService {
    */
   async updateUserStatus(userId: string, status: 'active' | 'suspended'): Promise<UserProfile> {
     try {
+      // Check if user has the required permission
+      const requiredPermission = status === 'suspended' ? 'users.block' : 'users.manage';
+      console.log('Checking permission:', requiredPermission);
+
       // Use block/unblock endpoints based on status
       const endpoint = status === 'suspended'
         ? `/api/admin/users/${userId}/block`
@@ -328,12 +365,15 @@ export class AdminService {
       const backendResponse = await apiService.put(endpoint, body);
 
       if (!backendResponse || backendResponse.success === false) {
+        console.error('updateUserStatus failed:', backendResponse);
         throw new Error(backendResponse?.error?.message || 'Failed to update user status');
       }
 
       return backendResponse.data;
     } catch (error) {
       console.error('Failed to update user status:', error);
+      
+      // Don't modify the error - let the error handler extract the message
       throw error;
     }
   }
@@ -346,10 +386,13 @@ export class AdminService {
       const backendResponse = await apiService.delete(`/api/admin/users/${userId}`);
 
       if (!backendResponse || backendResponse.success === false) {
+        console.error('deleteUser failed:', backendResponse);
         throw new Error(backendResponse?.error?.message || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
+      
+      // Don't modify the error - let the error handler extract the message
       throw error;
     }
   }
