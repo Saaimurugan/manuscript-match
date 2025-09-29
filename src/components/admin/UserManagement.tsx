@@ -38,9 +38,12 @@ import {
   useInviteUser
 } from "@/hooks/useAdmin";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { toast as sonnerToast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { AdminUserDetails } from "@/services/adminService";
 import { adminService } from "@/services/adminService";
+import { apiService } from "@/services/apiService";
 import type { PaginatedResponse } from "@/types/api";
 
 interface UserManagementProps {
@@ -67,6 +70,7 @@ interface UserDetailsModalData extends AdminUserDetails {
 
 export const UserManagement: React.FC<UserManagementProps> = ({ className }) => {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -226,7 +230,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
       userId: userId,
       role: newRole as "USER" | "ADMIN"
     };
-    updateRoleMutation.mutate(roleData);
+
+    updateRoleMutation.mutate(roleData, {
+      onSuccess: () => {
+        refetchUsers();
+      }
+    });
   };
 
   const handleBlockUser = async (userId: string, block: boolean) => {
@@ -234,13 +243,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
       userId: userId,
       status: block ? 'suspended' : 'active'
     };
-    updateStatusMutation.mutate(statusData);
+    updateStatusMutation.mutate(statusData, {
+      onSuccess: () => {
+        refetchUsers();
+      }
+    });
   };
 
   const handleDeleteUser = async (userId: string) => {
-    deleteUserMutation.mutate(userId);
-    setShowDeleteConfirm(false);
-    setUserToDelete(null);
+    deleteUserMutation.mutate(userId, {
+      onSuccess: () => {
+        refetchUsers();
+        setShowDeleteConfirm(false);
+        setUserToDelete(null);
+      },
+      onError: () => {
+        setShowDeleteConfirm(false);
+        setUserToDelete(null);
+      }
+    });
   };
 
   const handleEditUser = (user: AdminUserDetails) => {
@@ -267,7 +288,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
       return;
     }
 
-    // Let the hook handle success/error with its built-in error handling
     inviteUserMutation.mutate({
       email: inviteData.email,
       role: inviteData.role as 'USER' | 'ADMIN'
@@ -298,23 +318,56 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
         userId: editingUser.id,
         role: editData.role as "USER" | "ADMIN"
       };
-      updateRoleMutation.mutate(roleData);
+      updateRoleMutation.mutate(roleData, {
+        onSuccess: () => {
+          refetchUsers();
+          // Reset form and close modal
+          setEditingUser(null);
+          setEditData({ email: "", role: "USER", status: "ACTIVE" });
+          setEditErrors({});
+          setShowEditModal(false);
+        }
+      });
+    } else {
+      // No changes made, just close modal
+      setEditingUser(null);
+      setEditData({ email: "", role: "USER", status: "ACTIVE" });
+      setEditErrors({});
+      setShowEditModal(false);
     }
-
-    // Reset form and close modal
-    setEditingUser(null);
-    setEditData({ email: "", role: "USER", status: "ACTIVE" });
-    setEditErrors({});
-    setShowEditModal(false);
   };
 
   const handleBulkAction = async (action: string) => {
     if (selectedUsers.length === 0) return;
 
+    // Check for mixed selection
+    const selectedUserDetails = selectedUsers.map(userId => 
+      filteredUsers.find(u => u.id === userId)
+    ).filter(Boolean);
+    
+    const hasAdminUsers = selectedUserDetails.some(user => user.role === 'ADMIN');
+    const hasNonAdminUsers = selectedUserDetails.some(user => user.role !== 'ADMIN');
+    const hasMixedSelection = hasAdminUsers && hasNonAdminUsers;
+
+    if (hasMixedSelection && (action === 'promote' || action === 'block' || action === 'delete')) {
+      sonnerToast.warning("Please select either all admin or all non-admin users for bulk actions");
+      return;
+    }
+
     switch (action) {
       case 'promote':
-        // Bulk promote users to admin
-        for (const userId of selectedUsers) {
+        // Bulk promote users to admin (only non-admin users)
+        const usersToPromote = selectedUsers.filter(userId => {
+          const user = filteredUsers.find(u => u.id === userId);
+          return user && user.role !== 'ADMIN';
+        });
+        
+        if (usersToPromote.length === 0) {
+          sonnerToast.warning("No users to promote - selected users are already admins");
+          return;
+        }
+        
+        for (const userId of usersToPromote) {
           const roleData: { userId: string; role: "USER" | "ADMIN" } = {
             userId: userId,
             role: 'ADMIN'
@@ -322,10 +375,21 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
           updateRoleMutation.mutate(roleData);
         }
         setSelectedUsers([]);
+        refetchUsers();
         break;
       case 'block':
-        // Bulk block users
-        for (const userId of selectedUsers) {
+        // Bulk block users (exclude current user and admin users)
+        const usersToBlock = selectedUsers.filter(userId => {
+          const user = filteredUsers.find(u => u.id === userId);
+          return user && user.id !== currentUser?.id && user.role !== 'ADMIN';
+        });
+        
+        if (usersToBlock.length === 0) {
+          sonnerToast.warning("No users to block - cannot block yourself or admin users");
+          return;
+        }
+        
+        for (const userId of usersToBlock) {
           const statusData: { userId: string; status: 'active' | 'suspended' } = {
             userId: userId,
             status: 'suspended'
@@ -333,30 +397,35 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
           updateStatusMutation.mutate(statusData);
         }
         setSelectedUsers([]);
+        refetchUsers();
         break;
       case 'delete':
-        if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users? This action cannot be undone.`)) {
-          for (const userId of selectedUsers) {
+        // Bulk delete users (exclude current user and admin users)
+        const usersToDelete = selectedUsers.filter(userId => {
+          const user = filteredUsers.find(u => u.id === userId);
+          return user && user.id !== currentUser?.id && user.role !== 'ADMIN';
+        });
+        
+        if (usersToDelete.length === 0) {
+          sonnerToast.warning("No users to delete - cannot delete yourself or admin users");
+          return;
+        }
+        
+        if (window.confirm(`Are you sure you want to delete ${usersToDelete.length} users? This action cannot be undone.`)) {
+          for (const userId of usersToDelete) {
             deleteUserMutation.mutate(userId);
           }
           setSelectedUsers([]);
+          refetchUsers();
         }
         break;
       case 'export':
         // Export selected users
         try {
           await adminService.exportUsers(selectedUsers, 'csv');
-          toast({
-            title: "Success",
-            description: `Exported ${selectedUsers.length} users`,
-            variant: "default",
-          });
+          sonnerToast.success(`Exported ${selectedUsers.length} users`);
         } catch (error) {
-          toast({
-            title: "Error",
-            description: "Failed to export users",
-            variant: "destructive",
-          });
+          sonnerToast.error("Failed to export users");
         }
         break;
     }
@@ -428,6 +497,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                 <UserPlus className="h-4 w-4 mr-2" />
                 Invite User
               </Button>
+
             </div>
           </div>
         </CardHeader>
@@ -476,33 +546,117 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
           </div>
 
           {/* Bulk Actions */}
-          {selectedUsers.length > 0 && (
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-900">
-                  {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
-                </span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('promote')}>
-                    <Shield className="h-4 w-4 mr-1" />
-                    Promote
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('block')}>
-                    <UserX className="h-4 w-4 mr-1" />
-                    Block
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('delete')}>
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkAction('export')}>
-                    <Download className="h-4 w-4 mr-1" />
-                    Export
-                  </Button>
+          {selectedUsers.length > 0 && (() => {
+            // Get selected user details
+            const selectedUserDetails = selectedUsers.map(userId => 
+              filteredUsers.find(u => u.id === userId)
+            ).filter(Boolean);
+            
+            // Check if selection contains both admin and non-admin users
+            const hasAdminUsers = selectedUserDetails.some(user => user.role === 'ADMIN');
+            const hasNonAdminUsers = selectedUserDetails.some(user => user.role !== 'ADMIN');
+            const hasMixedSelection = hasAdminUsers && hasNonAdminUsers;
+            
+            // Check if current user is selected
+            const hasCurrentUser = selectedUsers.includes(currentUser?.id || '');
+            
+            // Calculate eligible users for each action
+            const usersToPromote = selectedUsers.filter(userId => {
+              const user = filteredUsers.find(u => u.id === userId);
+              return user && user.role !== 'ADMIN';
+            });
+            
+            const usersToBlock = selectedUsers.filter(userId => {
+              const user = filteredUsers.find(u => u.id === userId);
+              return user && user.id !== currentUser?.id && user.role !== 'ADMIN';
+            });
+            
+            const usersToDelete = selectedUsers.filter(userId => {
+              const user = filteredUsers.find(u => u.id === userId);
+              return user && user.id !== currentUser?.id && user.role !== 'ADMIN';
+            });
+
+            // Determine if actions should be disabled due to mixed selection
+            const promoteDisabled = hasMixedSelection || usersToPromote.length === 0;
+            const blockDisabled = hasMixedSelection || usersToBlock.length === 0;
+            const deleteDisabled = hasMixedSelection || usersToDelete.length === 0;
+
+            return (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-blue-900">
+                      {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
+                    </span>
+                    {hasMixedSelection && (
+                      <span className="text-xs text-amber-700 mt-1">
+                        ⚠️ Mixed selection: Please select either all admin or all non-admin users for bulk actions
+                      </span>
+                    )}
+                    {!hasMixedSelection && (hasCurrentUser || hasAdminUsers) && (
+                      <span className="text-xs text-blue-700 mt-1">
+                        Note: Admin users and yourself are protected from certain actions
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleBulkAction('promote')}
+                      disabled={promoteDisabled}
+                      title={
+                        hasMixedSelection 
+                          ? "Cannot promote mixed selection of admin and non-admin users" 
+                          : usersToPromote.length === 0 
+                            ? "No users to promote" 
+                            : `Promote ${usersToPromote.length} user(s) to admin`
+                      }
+                    >
+                      <Shield className="h-4 w-4 mr-1" />
+                      Promote
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleBulkAction('block')}
+                      disabled={blockDisabled}
+                      title={
+                        hasMixedSelection 
+                          ? "Cannot block mixed selection of admin and non-admin users" 
+                          : usersToBlock.length === 0 
+                            ? "No users to block" 
+                            : `Block ${usersToBlock.length} user(s)`
+                      }
+                    >
+                      <UserX className="h-4 w-4 mr-1" />
+                      Block
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleBulkAction('delete')}
+                      disabled={deleteDisabled}
+                      title={
+                        hasMixedSelection 
+                          ? "Cannot delete mixed selection of admin and non-admin users" 
+                          : usersToDelete.length === 0 
+                            ? "No users to delete" 
+                            : `Delete ${usersToDelete.length} user(s)`
+                      }
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleBulkAction('export')}>
+                      <Download className="h-4 w-4 mr-1" />
+                      Export
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
 
@@ -557,7 +711,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                             <Mail className="h-4 w-4 text-gray-600" />
                           </div>
                           <div>
-                            <div className="font-medium">{user.email}</div>
+                            <div className="font-medium flex items-center gap-2">
+                              {user.email}
+                              {user.id === currentUser?.id && (
+                                <Badge variant="secondary" className="text-xs">
+                                  You
+                                </Badge>
+                              )}
+                            </div>
                             <div className="text-sm text-gray-500">ID: {user.id.slice(0, 8)}...</div>
                           </div>
                         </div>
@@ -611,30 +772,103 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit User
                               </Button>
-                              <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => handlePromoteUser(user.id, user.role === 'ADMIN' ? 'USER' : 'ADMIN')}
-                              >
-                                <Shield className="h-4 w-4 mr-2" />
-                                {user.role === 'ADMIN' ? 'Remove Admin' : 'Make Admin'}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                                onClick={() => handleBlockUser(user.id, true)}
-                              >
-                                <UserX className="h-4 w-4 mr-2" />
-                                Block User
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                className="w-full justify-start"
-                                onClick={() => handleConfirmDelete(user)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete User
-                              </Button>
+
+                              {/* Role Management - Show appropriate action based on current role */}
+                              {user.id === currentUser?.id ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start opacity-50"
+                                  disabled={true}
+                                  title="Cannot change your own role"
+                                >
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  Cannot Change Own Role
+                                </Button>
+                              ) : user.role === 'ADMIN' ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start"
+                                  onClick={() => handlePromoteUser(user.id, 'USER')}
+                                  disabled={updateRoleMutation.isPending}
+                                >
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  {updateRoleMutation.isPending ? 'Removing...' : 'Remove Admin Role'}
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start"
+                                  onClick={() => handlePromoteUser(user.id, 'ADMIN')}
+                                  disabled={updateRoleMutation.isPending}
+                                >
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  {updateRoleMutation.isPending ? 'Promoting...' : 'Promote to Admin'}
+                                </Button>
+                              )}
+
+                              {user.id === currentUser?.id ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start opacity-50"
+                                  disabled={true}
+                                  title="Cannot block yourself"
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  Cannot Block Yourself
+                                </Button>
+                              ) : user.role === 'ADMIN' ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start opacity-50"
+                                  disabled={true}
+                                  title="Cannot block admin users"
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  Cannot Block Admin
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start"
+                                  onClick={() => handleBlockUser(user.id, true)}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  {updateStatusMutation.isPending ? 'Blocking...' : 'Block User'}
+                                </Button>
+                              )}
+
+                              {user.id === currentUser?.id ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start opacity-50 text-gray-500"
+                                  disabled={true}
+                                  title="Cannot delete yourself"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Cannot Delete Yourself
+                                </Button>
+                              ) : user.role === 'ADMIN' ? (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start opacity-50 text-gray-500"
+                                  disabled={true}
+                                  title="Cannot delete admin users"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Cannot Delete Admin
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="destructive"
+                                  className="w-full justify-start"
+                                  onClick={() => handleConfirmDelete(user)}
+                                  disabled={deleteUserMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
+                                </Button>
+                              )}
                             </div>
                           </DialogContent>
                         </Dialog>

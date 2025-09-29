@@ -244,12 +244,16 @@ export const useUpdateUserRole = () => {
     mutationFn: ({ userId, role }: { userId: string; role: 'USER' | 'ADMIN' }) =>
       adminService.updateUserRole(userId, role),
     onSuccess: (data, variables) => {
+      console.log('🟢 useUpdateUserRole onSuccess called');
       handleSuccess(`User role updated to ${variables.role}`);
       // Invalidate related queries
       queryClient.invalidateQueries(['admin', 'users']);
       queryClient.invalidateQueries(['admin', 'user', variables.userId]);
     },
-    onError: handleError,
+    onError: (error) => {
+      console.log('🔴 useUpdateUserRole onError called with:', error);
+      handleError(error);
+    },
   });
 };
 
