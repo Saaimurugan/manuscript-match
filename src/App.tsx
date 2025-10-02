@@ -16,6 +16,7 @@ import {
 } from "./components/error";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 // Initialize global error handlers
 initializeGlobalErrorHandlers();
@@ -43,6 +44,7 @@ const App = () => (
                     <Index />
                   </ProtectedRoute>
                 } />
+                <Route path="/accept-invitation" element={<AcceptInvitation />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

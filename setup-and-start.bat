@@ -36,11 +36,24 @@ echo ✅ Backend dependencies installed
 
 echo.
 echo [4/9] Generating Prisma client...
+echo Checking for running processes that might lock files...
+taskkill /f /im node.exe 2>nul
+timeout /t 2 /nobreak > nul
+
 call npx prisma generate
 if %errorlevel% neq 0 (
-    echo ❌ Failed to generate Prisma client
-    pause
-    exit /b 1
+    echo ⚠️ Prisma generate failed - trying alternative approach...
+    echo Cleaning Prisma cache...
+    rmdir /s /q node_modules\.prisma 2>nul
+    rmdir /s /q node_modules\@prisma 2>nul
+    echo Retrying Prisma generate...
+    call npx prisma generate
+    if %errorlevel% neq 0 (
+        echo ❌ Failed to generate Prisma client after retry
+        echo 💡 Try running this manually: cd backend && npx prisma generate
+        pause
+        exit /b 1
+    )
 )
 echo ✅ Prisma client generated
 

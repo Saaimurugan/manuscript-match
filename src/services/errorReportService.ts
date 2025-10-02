@@ -577,9 +577,16 @@ ${reportData.userDescription || '[No description provided]'}
     }
 
     if (element.className) {
-      const classes = element.className.split(' ').filter(c => c.trim());
-      if (classes.length > 0) {
-        return `.${classes.join('.')}`;
+      // Handle both string className and SVGAnimatedString (for SVG elements)
+      const classNameStr = typeof element.className === 'string' 
+        ? element.className 
+        : element.className.baseVal || element.className.toString();
+      
+      if (classNameStr && typeof classNameStr === 'string') {
+        const classes = classNameStr.split(' ').filter(c => c.trim());
+        if (classes.length > 0) {
+          return `.${classes.join('.')}`;
+        }
       }
     }
 

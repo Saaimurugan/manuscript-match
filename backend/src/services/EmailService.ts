@@ -1,4 +1,5 @@
 import { UserRole } from '@/types';
+import nodemailer from 'nodemailer';
 
 export interface InvitationEmailData {
   email: string;
@@ -17,9 +18,62 @@ export interface EmailSendResult {
 
 export class EmailService {
   private baseUrl: string;
+  private transporter: nodemailer.Transporter | null = null;
+  private emailConfig: {
+    service: string;
+    host?: string;
+    port?: number;
+    secure?: boolean;
+    user?: string;
+    pass?: string;
+    from?: string;
+    fromName?: string;
+  };
 
-  constructor(baseUrl: string = 'http://localhost:3001') {
+  constructor(baseUrl: string = process.env['FRONTEND_URL'] || 'http://localhost:8080') {
     this.baseUrl = baseUrl;
+    this.emailConfig = {
+      service: process.env['EMAIL_SERVICE'] || 'mock',
+      ...(process.env['SMTP_HOST'] && { host: process.env['SMTP_HOST'] }),
+      port: process.env['SMTP_PORT'] ? parseInt(process.env['SMTP_PORT']) : 587,
+      secure: process.env['SMTP_SECURE'] === 'true',
+      ...(process.env['SMTP_USER'] && { user: process.env['SMTP_USER'] }),
+      ...(process.env['SMTP_PASS'] && { pass: process.env['SMTP_PASS'] }),
+      ...(process.env['EMAIL_FROM'] && { from: process.env['EMAIL_FROM'] }),
+      fromName: process.env['EMAIL_FROM_NAME'] || 'ScholarFinder',
+    };
+
+    this.initializeTransporter();
+  }
+
+  private initializeTransporter(): void {
+    if (this.emailConfig.service === 'mock') {
+      console.log('📧 Email service running in MOCK mode - emails will be logged to console');
+      return;
+    }
+
+    if (!this.emailConfig.host || !this.emailConfig.user || !this.emailConfig.pass) {
+      console.warn('⚠️  Email configuration incomplete - falling back to mock mode');
+      this.emailConfig.service = 'mock';
+      return;
+    }
+
+    try {
+      this.transporter = nodemailer.createTransport({
+        host: this.emailConfig.host,
+        port: this.emailConfig.port,
+        secure: this.emailConfig.secure,
+        auth: {
+          user: this.emailConfig.user,
+          pass: this.emailConfig.pass,
+        },
+      });
+
+      console.log('📧 Email service initialized with SMTP configuration');
+    } catch (error) {
+      console.error('❌ Failed to initialize email transporter:', error);
+      this.emailConfig.service = 'mock';
+    }
   }
 
   /**
@@ -27,33 +81,43 @@ export class EmailService {
    */
   async sendInvitationEmail(data: InvitationEmailData): Promise<EmailSendResult> {
     try {
-      // For now, we'll just log the email content
-      // In a real implementation, this would integrate with an email service like SendGrid, AWS SES, etc.
       const invitationUrl = `${this.baseUrl}/accept-invitation?token=${data.invitationToken}`;
-      
       const emailContent = this.generateInvitationEmailContent(data, invitationUrl);
-      
-      // Log the email content for development/testing
-      console.log('=== INVITATION EMAIL ===');
-      console.log(`To: ${data.email}`);
-      console.log(`Subject: ${emailContent.subject}`);
-      console.log(`Body:\n${emailContent.body}`);
-      console.log('========================');
 
-      // In a real implementation, you would send the email here
-      // Example with a hypothetical email service:
-      // const result = await this.emailProvider.send({
-      //   to: data.email,
-      //   subject: emailContent.subject,
-      //   html: emailContent.body,
-      // });
+      // If in mock mode, just log the email
+      if (this.emailConfig.service === 'mock' || !this.transporter) {
+        console.log('=== INVITATION EMAIL (MOCK MODE) ===');
+        console.log(`To: ${data.email}`);
+        console.log(`Subject: ${emailContent.subject}`);
+        console.log(`Body:\n${emailContent.body}`);
+        console.log('=====================================');
+        console.log('💡 To send real emails, configure SMTP settings in .env file');
+
+        return {
+          success: true,
+          messageId: `mock-${Date.now()}`,
+        };
+      }
+
+      // Send actual email
+      const mailOptions = {
+        from: `"${this.emailConfig.fromName}" <${this.emailConfig.from}>`,
+        to: data.email,
+        subject: emailContent.subject,
+        html: emailContent.body,
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+
+      console.log(`✅ Invitation email sent successfully to ${data.email}`);
+      console.log(`📧 Message ID: ${result.messageId}`);
 
       return {
         success: true,
-        messageId: `mock-${Date.now()}`, // Mock message ID
+        messageId: result.messageId,
       };
     } catch (error) {
-      console.error('Failed to send invitation email:', error);
+      console.error('❌ Failed to send invitation email:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
