@@ -106,6 +106,16 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
   const [editingRole, setEditingRole] = useState<UserRole | null>(null);
   const [pendingPermissions, setPendingPermissions] = useState<string[]>([]);
   const [conflictingPermissions, setConflictingPermissions] = useState<string[]>([]);
+  const [viewingUser, setViewingUser] = useState<string | null>(null);
+  const [showUserPermissionPreview, setShowUserPermissionPreview] = useState(false);
+  
+  // Role permissions state
+  const [rolePermissions, setRolePermissions] = useState<Record<UserRole, string[]>>({
+    USER: ["processes.view"],
+    QC: ["processes.view", "activity.view"],
+    MANAGER: ["processes.view", "processes.manage", "activity.view", "users.view"],
+    ADMIN: ["users.view", "users.manage", "processes.view", "processes.manage", "permissions.assign", "permissions.revoke", "system.monitor", "activity.view"]
+  });
 
   // Mock data - in real implementation, these would come from API hooks
   const mockPermissions: Permission[] = [
@@ -175,12 +185,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
     }
   ];
 
-  const mockRolePermissions: Record<UserRole, string[]> = {
-    USER: ["processes.view"],
-    QC: ["processes.view", "activity.view"],
-    MANAGER: ["processes.view", "processes.manage", "activity.view", "users.view"],
-    ADMIN: ["users.view", "users.manage", "processes.view", "processes.manage", "permissions.assign", "permissions.revoke", "system.monitor", "activity.view"]
-  };
+
 
   const mockUsers = [
     { id: "1", email: "user1@example.com", role: "USER" as UserRole },
@@ -240,7 +245,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
   };
 
   const hasPermission = (role: UserRole, permissionName: string): boolean => {
-    return mockRolePermissions[role]?.includes(permissionName) || false;
+    return rolePermissions[role]?.includes(permissionName) || false;
   };
 
   const hasCustomPermission = (userId: string, permissionName: string): boolean => {
@@ -248,13 +253,32 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
   };
 
   const getEffectivePermissions = (userId: string, userRole: UserRole): string[] => {
-    const rolePerms = mockRolePermissions[userRole] || [];
+    const rolePerms = rolePermissions[userRole] || [];
     const customPerms = mockUserPermissions[userId] || [];
     return [...new Set([...rolePerms, ...customPerms])];
   };
 
   const handleRolePermissionToggle = (role: UserRole, permissionName: string) => {
-    // In real implementation, this would call an API
+    setRolePermissions(prev => {
+      const currentPermissions = prev[role] || [];
+      const hasPermission = currentPermissions.includes(permissionName);
+      
+      if (hasPermission) {
+        // Remove permission
+        return {
+          ...prev,
+          [role]: currentPermissions.filter(p => p !== permissionName)
+        };
+      } else {
+        // Add permission
+        return {
+          ...prev,
+          [role]: [...currentPermissions, permissionName]
+        };
+      }
+    });
+    
+    // In real implementation, this would also call an API
     console.log(`Toggle permission ${permissionName} for role ${role}`);
   };
 
@@ -278,7 +302,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
     const user = mockUsers.find(u => u.id === selectedUser);
     if (!user) return;
     
-    const existingRolePermissions = mockRolePermissions[user.role] || [];
+    const existingRolePermissions = rolePermissions[user.role] || [];
     const conflicts = pendingPermissions.filter(p => existingRolePermissions.includes(p));
     
     if (conflicts.length > 0) {
@@ -476,7 +500,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {(['USER', 'QC', 'MANAGER', 'ADMIN'] as UserRole[]).map((role) => {
               const Icon = getRoleIcon(role);
-              const permissions = mockRolePermissions[role] || [];
+              const permissions = rolePermissions[role] || [];
               
               return (
                 <Card key={role}>
@@ -589,7 +613,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
                   </TableHeader>
                   <TableBody>
                     {mockUsers.map((user) => {
-                      const rolePermissions = mockRolePermissions[user.role] || [];
+                      const userRolePermissions = rolePermissions[user.role] || [];
                       const customPermissions = mockUserPermissions[user.id] || [];
                       const effectivePermissions = getEffectivePermissions(user.id, user.role);
                       
@@ -608,7 +632,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              {rolePermissions.length} permission{rolePermissions.length !== 1 ? 's' : ''}
+                              {userRolePermissions.length} permission{userRolePermissions.length !== 1 ? 's' : ''}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -641,10 +665,27 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setViewingUser(user.id);
+                                  setShowUserPermissionPreview(true);
+                                }}
+                                title="View user permissions"
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // Edit user permissions
+                                  setSelectedUser(user.id);
+                                  setShowCustomPermissionModal(true);
+                                }}
+                                title="Edit user permissions"
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </div>
@@ -696,10 +737,10 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
                 <Label>Available Permissions</Label>
                 <ScrollArea className="h-64 border rounded-md p-4">
                   <div className="space-y-2">
-                    {mockPermissions.map((permission) => {
+                    {filteredPermissions.map((permission) => {
                       const user = mockUsers.find(u => u.id === selectedUser);
                       const hasRolePermission = user && hasPermission(user.role, permission.name);
-                      const hasCustomPermission = hasCustomPermission(selectedUser, permission.name);
+                      const userHasCustomPermission = hasCustomPermission(selectedUser, permission.name);
                       const isPending = pendingPermissions.includes(permission.name);
                       
                       return (
@@ -707,7 +748,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
                           <Checkbox
                             id={permission.id}
                             checked={isPending}
-                            disabled={hasRolePermission || hasCustomPermission}
+                            disabled={hasRolePermission || userHasCustomPermission}
                             onCheckedChange={(checked) => {
                               if (checked) {
                                 setPendingPermissions(prev => [...prev, permission.name]);
@@ -726,7 +767,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
                                 Role Permission
                               </Badge>
                             )}
-                            {hasCustomPermission && (
+                            {userHasCustomPermission && (
                               <Badge variant="secondary" className="text-xs mt-1">
                                 Already Assigned
                               </Badge>
@@ -781,7 +822,7 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
           <div className="space-y-4">
             <ScrollArea className="h-96 border rounded-md p-4">
               <div className="space-y-2">
-                {mockPermissions.map((permission) => {
+                {filteredPermissions.map((permission) => {
                   const hasRolePermission = editingRole && hasPermission(editingRole, permission.name);
                   
                   return (
@@ -896,6 +937,148 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Permission Preview Modal */}
+      <Dialog open={showUserPermissionPreview} onOpenChange={setShowUserPermissionPreview}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              User Permission Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete overview of permissions for the selected user
+            </DialogDescription>
+          </DialogHeader>
+          {viewingUser && (() => {
+            const user = mockUsers.find(u => u.id === viewingUser);
+            if (!user) return null;
+            
+            const userRolePermissions = rolePermissions[user.role] || [];
+            const customPermissions = mockUserPermissions[user.id] || [];
+            const effectivePermissions = getEffectivePermissions(user.id, user.role);
+            const Icon = getRoleIcon(user.role);
+            
+            return (
+              <div className="space-y-6">
+                {/* User Info */}
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                  <Icon className="h-8 w-8 text-blue-600" />
+                  <div>
+                    <div className="font-medium text-lg">{user.email}</div>
+                    <Badge variant={getRoleBadgeVariant(user.role)} className="mt-1">
+                      {user.role}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Permission Summary */}
+                <div className="grid grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{userRolePermissions.length}</div>
+                        <div className="text-sm text-gray-600">Role Permissions</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{customPermissions.length}</div>
+                        <div className="text-sm text-gray-600">Custom Permissions</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{effectivePermissions.length}</div>
+                        <div className="text-sm text-gray-600">Total Effective</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Detailed Permissions */}
+                <div className="space-y-4">
+                  {/* Role Permissions */}
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Role Permissions ({userRolePermissions.length})
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {userRolePermissions.map((permName) => {
+                        const permission = mockPermissions.find(p => p.name === permName);
+                        return (
+                          <div key={permName} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                            <div>
+                              <div className="font-medium text-sm">{permName}</div>
+                              <div className="text-xs text-gray-600">{permission?.description}</div>
+                            </div>
+                            <Badge variant="outline">{permission?.resource}</Badge>
+                          </div>
+                        );
+                      })}
+                      {userRolePermissions.length === 0 && (
+                        <div className="text-sm text-gray-500 italic">No role permissions</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Custom Permissions */}
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Custom Permissions ({customPermissions.length})
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {customPermissions.map((permName) => {
+                        const permission = mockPermissions.find(p => p.name === permName);
+                        return (
+                          <div key={permName} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                            <div>
+                              <div className="font-medium text-sm">{permName}</div>
+                              <div className="text-xs text-gray-600">{permission?.description}</div>
+                            </div>
+                            <Badge variant="secondary">{permission?.resource}</Badge>
+                          </div>
+                        );
+                      })}
+                      {customPermissions.length === 0 && (
+                        <div className="text-sm text-gray-500 italic">No custom permissions</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowUserPermissionPreview(false);
+                      setViewingUser(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowUserPermissionPreview(false);
+                      setSelectedUser(user.id);
+                      setShowCustomPermissionModal(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Permissions
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

@@ -572,21 +572,38 @@ ${reportData.userDescription || '[No description provided]'}
    * Get CSS selector for element
    */
   private getElementSelector(element: Element): string {
+    // Safety check
+    if (!element || typeof element !== 'object') {
+      return 'unknown-element';
+    }
+
     if (element.id) {
       return `#${element.id}`;
     }
 
     if (element.className) {
-      // Handle both string className and SVGAnimatedString (for SVG elements)
-      const classNameStr = typeof element.className === 'string' 
-        ? element.className 
-        : element.className.baseVal || element.className.toString();
-      
-      if (classNameStr && typeof classNameStr === 'string') {
-        const classes = classNameStr.split(' ').filter(c => c.trim());
-        if (classes.length > 0) {
-          return `.${classes.join('.')}`;
+      try {
+        // Handle both string className and SVGAnimatedString (for SVG elements)
+        let classNameStr: string;
+        
+        if (typeof element.className === 'string') {
+          classNameStr = element.className;
+        } else if (element.className && typeof element.className === 'object') {
+          // Handle SVGAnimatedString
+          classNameStr = element.className.baseVal || element.className.animVal || '';
+        } else {
+          classNameStr = String(element.className || '');
         }
+        
+        if (classNameStr && typeof classNameStr === 'string') {
+          const classes = classNameStr.split(' ').filter(c => c.trim());
+          if (classes.length > 0) {
+            return `.${classes.join('.')}`;
+          }
+        }
+      } catch (error) {
+        // Fallback if className handling fails
+        console.warn('Error processing className:', error, element);
       }
     }
 
