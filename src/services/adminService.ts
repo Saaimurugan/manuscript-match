@@ -329,7 +329,8 @@ export class AdminService {
     resolvedAt?: string;
   }>> {
     try {
-      const response = await apiService.get('/api/admin/alerts', params);
+      // Use public health endpoint instead of admin endpoint
+      const response = await apiService.get('/admin/alerts', params);
       return response.data;
     } catch (error) {
       console.error('Failed to get system alerts, using mock data:', error);
