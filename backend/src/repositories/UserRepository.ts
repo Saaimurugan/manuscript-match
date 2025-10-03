@@ -99,4 +99,42 @@ export class UserRepository extends BaseRepository<User, CreateUserInput, Update
   async count(where?: any): Promise<number> {
     return this.prisma.user.count({ where });
   }
+
+  /**
+   * Update user profile information
+   */
+  async updateProfile(id: string, profileData: {
+    name?: string;
+    phone?: string;
+    department?: string;
+    bio?: string;
+  }): Promise<User> {
+    this.validateId(id);
+    return this.prisma.user.update({
+      where: { id },
+      data: profileData,
+    });
+  }
+
+  /**
+   * Update user password
+   */
+  async updatePassword(id: string, passwordHash: string): Promise<User> {
+    this.validateId(id);
+    return this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    });
+  }
+
+  /**
+   * Update user profile image
+   */
+  async updateProfileImage(id: string, profileImage: string): Promise<User> {
+    this.validateId(id);
+    return this.prisma.user.update({
+      where: { id },
+      data: { profileImage },
+    });
+  }
 }

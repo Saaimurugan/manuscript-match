@@ -16,6 +16,11 @@ model User {
   passwordHash String @map("password_hash")
   role      String   @default("USER") // UserRole as string
   status    String   @default("ACTIVE") // UserStatus as string
+  name      String?
+  phone     String?
+  department String?
+  bio       String?
+  profileImage String? @map("profile_image")
   blockedAt DateTime? @map("blocked_at")
   blockedBy String?  @map("blocked_by")
   invitedBy String?  @map("invited_by")

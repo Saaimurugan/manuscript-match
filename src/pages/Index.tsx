@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProfileButton } from "@/components/profile/ProfileButton";
 import logo from "@/assets/logo.png";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,6 +63,7 @@ const Index = () => {
             
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">Welcome, {user?.email}</span>
+              <ProfileButton variant="minimal" showLabel={false} />
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
