@@ -49,7 +49,7 @@ export class AdminService {
       return backendResponse.data;
     } catch (error) {
       console.error('Failed to get admin stats, using mock data:', error);
-      
+
       // Return mock admin stats when API fails
       return {
         totalUsers: 24,
@@ -297,7 +297,7 @@ export class AdminService {
       return response.data;
     } catch (error) {
       console.error('Failed to get system health, using mock data:', error);
-      
+
       // Return mock system health data when API fails
       return {
         status: 'healthy',
@@ -334,7 +334,7 @@ export class AdminService {
       return response.data;
     } catch (error) {
       console.error('Failed to get system alerts, using mock data:', error);
-      
+
       // Return mock system alerts when API fails
       const mockAlerts = [
         {
@@ -367,15 +367,15 @@ export class AdminService {
 
       // Apply filters if provided
       let filteredAlerts = mockAlerts;
-      
+
       if (params?.severity) {
         filteredAlerts = filteredAlerts.filter(alert => alert.severity === params.severity);
       }
-      
+
       if (params?.resolved !== undefined) {
         filteredAlerts = filteredAlerts.filter(alert => alert.resolved === params.resolved);
       }
-      
+
       if (params?.limit) {
         filteredAlerts = filteredAlerts.slice(0, params.limit);
       }
@@ -393,7 +393,7 @@ export class AdminService {
 
       // Use the promote endpoint for making users admin, or update endpoint for demoting
       let backendResponse;
-      
+
       if (role === 'ADMIN') {
         backendResponse = await apiService.put(`/api/admin/users/${userId}/promote`, {});
       } else {
@@ -408,7 +408,7 @@ export class AdminService {
       return backendResponse.data;
     } catch (error) {
       console.error('Failed to update user role:', error);
-      
+
       // Don't modify the error - let the error handler extract the message
       // The useErrorHandling hook expects the original axios error structure
       throw error;
@@ -441,7 +441,7 @@ export class AdminService {
       return backendResponse.data;
     } catch (error) {
       console.error('Failed to update user status:', error);
-      
+
       // Don't modify the error - let the error handler extract the message
       throw error;
     }
@@ -460,7 +460,7 @@ export class AdminService {
       }
     } catch (error) {
       console.error('Failed to delete user:', error);
-      
+
       // Don't modify the error - let the error handler extract the message
       throw error;
     }

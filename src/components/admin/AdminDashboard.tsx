@@ -43,7 +43,7 @@ import { UserManagement } from "./UserManagement";
 import { PermissionManagement } from "./PermissionManagement";
 import { ActivityLogViewer } from "./ActivityLogViewer";
 
-import { AdminDebug } from "../debug/AdminDebug";
+
 
 interface AdminDashboardProps {
   currentUser?: any;
@@ -119,13 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       description: "Monitor system status",
       requiredPermissions: ["system.monitor"]
     },
-    {
-      id: "debug",
-      label: "Debug",
-      icon: Settings,
-      description: "Debug information",
-      requiredPermissions: []
-    }
+
   ];
 
   // Filter navigation based on permissions
@@ -508,9 +502,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             )}
 
-            {activeTab === "debug" && (
-              <AdminDebug />
-            )}
+
 
             {activeTab === "users" && (
               <UserManagement />
