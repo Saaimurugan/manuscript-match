@@ -1101,4 +1101,106 @@ export class AdminController {
       next(error);
     }
   };
+
+  /**
+   * Get system health status
+   * GET /api/admin/health
+   */
+  getSystemHealth = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Mock system health data
+      const systemHealth = {
+        status: 'healthy' as const,
+        services: {
+          database: 'up' as const,
+          externalApis: 'degraded' as const,
+          fileStorage: 'up' as const
+        },
+        uptime: Math.floor(process.uptime()),
+        version: '1.0.0'
+      };
+
+      const response: ApiResponse<typeof systemHealth> = {
+        success: true,
+        data: systemHealth,
+        message: 'System health retrieved successfully'
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get system alerts
+   * GET /api/admin/alerts
+   */
+  getSystemAlerts = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { severity, limit = 10, resolved } = req.query;
+
+      // Mock system alerts data
+      let mockAlerts = [
+        {
+          id: '1',
+          severity: 'medium' as const,
+          message: 'External API response time increased by 15%',
+          details: { service: 'PubMed API', responseTime: '2.3s' },
+          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+          resolved: false
+        },
+        {
+          id: '2',
+          severity: 'low' as const,
+          message: 'Scheduled maintenance completed successfully',
+          details: { duration: '45 minutes', affectedServices: ['database'] },
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+          resolved: true,
+          resolvedAt: new Date(Date.now() - 1000 * 60 * 60 * 1.5).toISOString()
+        },
+        {
+          id: '3',
+          severity: 'high' as const,
+          message: 'High memory usage detected on server',
+          details: { usage: '87%', threshold: '85%' },
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+          resolved: true,
+          resolvedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString()
+        }
+      ];
+
+      // Apply filters
+      if (severity) {
+        mockAlerts = mockAlerts.filter(alert => alert.severity === severity);
+      }
+
+      if (resolved !== undefined) {
+        const isResolved = resolved === 'true';
+        mockAlerts = mockAlerts.filter(alert => alert.resolved === isResolved);
+      }
+
+      if (limit) {
+        mockAlerts = mockAlerts.slice(0, parseInt(limit as string));
+      }
+
+      const response: ApiResponse<typeof mockAlerts> = {
+        success: true,
+        data: mockAlerts,
+        message: 'System alerts retrieved successfully'
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

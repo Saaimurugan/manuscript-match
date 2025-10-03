@@ -292,7 +292,8 @@ export class AdminService {
     version: string;
   }> {
     try {
-      const response = await apiService.get('/api/admin/health');
+      // Use public health endpoint instead of admin endpoint
+      const response = await apiService.get('/admin/health');
       return response.data;
     } catch (error) {
       console.error('Failed to get system health, using mock data:', error);

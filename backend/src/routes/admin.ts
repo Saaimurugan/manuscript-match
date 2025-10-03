@@ -59,6 +59,8 @@ router.get('/stats',
   adminController.getAdminStats
 );
 
+
+
 /**
  * @route   GET /api/admin/users/:userId
  * @desc    Get detailed user information with processes and activity
