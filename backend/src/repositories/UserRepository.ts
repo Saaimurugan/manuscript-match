@@ -121,10 +121,16 @@ export class UserRepository extends BaseRepository<User, CreateUserInput, Update
    */
   async updatePassword(id: string, passwordHash: string): Promise<User> {
     this.validateId(id);
-    return this.prisma.user.update({
+    console.log('UserRepository: Updating password for user ID:', id);
+    console.log('UserRepository: New password hash length:', passwordHash.length);
+    
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: { passwordHash },
     });
+    
+    console.log('UserRepository: Password updated successfully for user:', updatedUser.id);
+    return updatedUser;
   }
 
   /**

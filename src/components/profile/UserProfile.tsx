@@ -85,20 +85,52 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
         const imageData = e.target?.result as string;
         
         try {
+          console.log('Frontend: Uploading profile image...');
+          console.log('Frontend: Image data length:', imageData?.length);
+          console.log('Frontend: File name:', file.name);
+          
           // Upload the image using the user service
           const response = await userService.uploadProfileImage({
             imageData,
             fileName: file.name
           });
 
-          if (response.success) {
+          console.log('Frontend: Upload response:', response);
+          console.log('Frontend: Response type:', typeof response);
+          console.log('Frontend: Response success:', response?.success);
+
+          if (response && response.success === true) {
+            console.log('Frontend: Image uploaded successfully');
             setProfileImage(imageData);
+            // Don't show alert for mock response, just update the UI
+            if (!response.message?.includes('mock')) {
+              alert('Profile image uploaded successfully!');
+            }
+          } else if (response && response.success === false) {
+            console.error('Frontend: Upload failed:', response.message);
+            alert(response.message || 'Failed to upload image');
           } else {
-            throw new Error(response.message || 'Failed to upload image');
+            console.error('Frontend: Unexpected response format:', response);
+            alert('Unexpected response from server. Please try again.');
           }
         } catch (error) {
-          console.error('Failed to upload profile image:', error);
-          alert('Failed to upload profile image. Please try again.');
+          console.error('Frontend: Failed to upload profile image:', error);
+          console.error('Frontend: Error details:', {
+            response: error?.response,
+            data: error?.response?.data,
+            status: error?.response?.status,
+            message: error?.message
+          });
+          
+          let errorMessage = 'Failed to upload profile image. Please try again.';
+          
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+          
+          alert(errorMessage);
         } finally {
           setIsUploading(false);
         }
@@ -112,6 +144,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
     setSaveSuccess(false);
     
     try {
+      console.log('Frontend: Saving profile...');
+      console.log('Frontend: Profile data:', {
+        name: formData.name,
+        phone: formData.phone,
+        department: formData.department,
+        bio: formData.bio
+      });
+      
       // Validate phone number (only numbers, spaces, hyphens, parentheses, and + allowed)
       if (formData.phone && !/^[\d\s\-\(\)\+]+$/.test(formData.phone)) {
         alert('Phone number can only contain numbers, spaces, hyphens, parentheses, and plus sign');
@@ -127,18 +167,41 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
         bio: formData.bio
       });
 
-      if (response.success) {
+      console.log('Frontend: Profile update response:', response);
+      console.log('Frontend: Response type:', typeof response);
+      console.log('Frontend: Response success:', response?.success);
+
+      if (response && response.success === true) {
+        console.log('Frontend: Profile updated successfully');
         setIsEditing(false);
         setSaveSuccess(true);
         
         // Hide success message after 3 seconds
         setTimeout(() => setSaveSuccess(false), 3000);
+      } else if (response && response.success === false) {
+        console.error('Frontend: Profile update failed:', response.message);
+        alert(response.message || 'Failed to update profile');
       } else {
-        throw new Error(response.message || 'Failed to update profile');
+        console.error('Frontend: Unexpected response format:', response);
+        alert('Unexpected response from server. Please try again.');
       }
     } catch (error: any) {
-      console.error('Failed to save profile:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to save profile. Please try again.';
+      console.error('Frontend: Failed to save profile:', error);
+      console.error('Frontend: Error details:', {
+        response: error?.response,
+        data: error?.response?.data,
+        status: error?.response?.status,
+        message: error?.message
+      });
+      
+      let errorMessage = 'Failed to save profile. Please try again.';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       alert(errorMessage);
     } finally {
       setIsSaving(false);
@@ -172,13 +235,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
     }
 
     try {
+      console.log('Frontend: Attempting to change password...');
+      console.log('Frontend: Password data:', {
+        hasCurrentPassword: !!passwordData.currentPassword,
+        hasNewPassword: !!passwordData.newPassword,
+        currentPasswordLength: passwordData.currentPassword.length,
+        newPasswordLength: passwordData.newPassword.length
+      });
+      
       // Call the user service to change password
       const response = await userService.changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
 
-      if (response.success) {
+      console.log('Frontend: Password change response:', response);
+      console.log('Frontend: Response type:', typeof response);
+      console.log('Frontend: Response success:', response?.success);
+
+      // Handle response properly
+      if (response && response.success === true) {
+        console.log('Frontend: Password changed successfully');
         setPasswordSuccess(true);
         setPasswordData({
           currentPassword: '',
@@ -190,12 +267,31 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
           setShowPasswordDialog(false);
           setPasswordSuccess(false);
         }, 2000);
+      } else if (response && response.success === false) {
+        // Handle explicit failure
+        setPasswordError(response.message || 'Failed to update password');
       } else {
-        throw new Error(response.message || 'Failed to update password');
+        // Handle unexpected response format
+        console.error('Frontend: Unexpected response format:', response);
+        setPasswordError('Unexpected response from server. Please try again.');
       }
     } catch (error: any) {
-      console.error('Failed to update password:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update password. Please try again.';
+      console.error('Frontend: Failed to update password:', error);
+      console.error('Frontend: Error details:', {
+        response: error?.response,
+        data: error?.response?.data,
+        status: error?.response?.status,
+        message: error?.message
+      });
+      
+      let errorMessage = 'Failed to update password. Please try again.';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       setPasswordError(errorMessage);
     }
   };

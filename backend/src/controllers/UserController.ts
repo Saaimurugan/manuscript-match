@@ -126,6 +126,8 @@ export class UserController {
     try {
       const userId = req.user?.id;
       console.log('Change password request - User ID:', userId);
+      console.log('Request user object:', req.user);
+      console.log('Request body:', req.body);
       
       if (!userId) {
         throw new CustomError(ErrorType.AUTHENTICATION_ERROR, 'User not authenticated', 401);
@@ -134,7 +136,9 @@ export class UserController {
       const { currentPassword, newPassword } = req.body;
       console.log('Password change data received:', { 
         hasCurrentPassword: !!currentPassword, 
-        hasNewPassword: !!newPassword 
+        hasNewPassword: !!newPassword,
+        currentPasswordLength: currentPassword?.length,
+        newPasswordLength: newPassword?.length
       });
 
       if (!currentPassword || !newPassword) {
@@ -184,7 +188,10 @@ export class UserController {
       }
 
       // Verify current password
+      console.log('Comparing passwords...');
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      console.log('Password comparison result:', isCurrentPasswordValid);
+      
       if (!isCurrentPasswordValid) {
         throw new CustomError(
           ErrorType.VALIDATION_ERROR, 
@@ -196,15 +203,19 @@ export class UserController {
       // Hash new password
       const saltRounds = 12;
       const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+      console.log('New password hashed successfully');
 
       // Update password
-      await this.userService.updateUserPassword(userId, hashedNewPassword);
+      console.log('Updating password in database...');
+      const updatedUser = await this.userService.updateUserPassword(userId, hashedNewPassword);
+      console.log('Password updated successfully for user:', updatedUser.id);
 
       const response: ApiResponse<void> = {
         success: true,
         message: 'Password updated successfully'
       };
 
+      console.log('UserController: Sending response:', response);
       res.status(200).json(response);
     } catch (error) {
       next(error);
@@ -222,11 +233,19 @@ export class UserController {
   ): Promise<void> => {
     try {
       const userId = req.user?.id;
+      console.log('Upload profile image request - User ID:', userId);
+      console.log('Request body keys:', Object.keys(req.body));
+      
       if (!userId) {
         throw new CustomError(ErrorType.AUTHENTICATION_ERROR, 'User not authenticated', 401);
       }
 
       const { imageData, fileName } = req.body;
+      console.log('Upload data received:', {
+        hasImageData: !!imageData,
+        imageDataLength: imageData?.length,
+        fileName: fileName
+      });
 
       if (!imageData || !fileName) {
         throw new CustomError(
@@ -245,6 +264,8 @@ export class UserController {
         );
       }
 
+      console.log('Updating user profile image in database...');
+      
       // In a real implementation, you would:
       // 1. Validate the image
       // 2. Resize/optimize the image
@@ -253,6 +274,7 @@ export class UserController {
       
       // For now, we'll just save the base64 data (not recommended for production)
       const updatedUser = await this.userService.updateUserProfileImage(userId, imageData);
+      console.log('Profile image updated successfully for user:', updatedUser.id);
 
       const response: ApiResponse<{ imageUrl: string }> = {
         success: true,
@@ -262,8 +284,10 @@ export class UserController {
         message: 'Profile image uploaded successfully'
       };
 
+      console.log('UserController: Sending upload response:', response);
       res.status(200).json(response);
     } catch (error) {
+      console.error('UserController: Upload profile image error:', error);
       next(error);
     }
   };

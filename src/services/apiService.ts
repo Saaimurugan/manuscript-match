@@ -512,11 +512,14 @@ export class ApiService {
   }
 
   async put<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-    return this.request<T>({
+    console.log('ApiService PUT request:', { url, data });
+    const result = await this.request<T>({
       method: 'PUT',
       url,
       data
     });
+    console.log('ApiService PUT response:', result);
+    return result;
   }
 
   async patch<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
