@@ -188,15 +188,15 @@ export const PermissionManagement: React.FC<PermissionManagementProps> = ({ clas
 
 
   const mockUsers = [
-    { id: "1", email: "user1@example.com", role: "USER" as UserRole },
-    { id: "2", email: "qc1@example.com", role: "QC" as UserRole },
-    { id: "3", email: "manager1@example.com", role: "MANAGER" as UserRole },
+    { id: "5ad7e131-4a5f-455b-a7cc-18d4a3bbc99a", email: "user@test.com", role: "USER" as UserRole },
+    { id: "38d51725-082b-4b52-b397-bb6da737b490", email: "user2@test.com", role: "USER" as UserRole },
+    { id: "1aa37a5f-479f-4c00-b1a6-4a3db7449868", email: "admin@test.com", role: "ADMIN" as UserRole },
     { id: "4", email: "admin1@example.com", role: "ADMIN" as UserRole }
   ];
 
   const mockUserPermissions: Record<string, string[]> = {
-    "1": ["processes.manage"], // User with custom permission
-    "2": ["users.view"] // QC with additional permission
+    "5ad7e131-4a5f-455b-a7cc-18d4a3bbc99a": ["processes.manage"], // User with custom permission
+    "38d51725-082b-4b52-b397-bb6da737b490": ["users.view"] // User2 with additional permission
   };
 
   // Filtered permissions based on search and resource filter

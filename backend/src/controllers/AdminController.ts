@@ -26,14 +26,14 @@ import {
 } from '@/validation/schemas';
 import { AdminExportFilters } from '@/services/AdminService';
 import { AdminLogFilters } from '@/services/AdminService';
-import { AdminProcessFilters } from '@/services/AdminService';
+
 
 
 export class AdminController {
   private adminService: AdminService;
   private userService: UserService;
   private invitationService: InvitationService;
-
+  private userRepository: UserRepository;
   private permissionService: PermissionService;
 
   constructor() {
@@ -42,6 +42,9 @@ export class AdminController {
     const userRepository = new UserRepository(prisma);
     const userInvitationRepository = new UserInvitationRepository(prisma);
     const permissionRepository = new PermissionRepository(prisma);
+
+    // Store repository as class property
+    this.userRepository = userRepository;
 
     // Initialize services with their dependencies
     this.permissionService = new PermissionService(
@@ -57,11 +60,7 @@ export class AdminController {
       userRepository
     );
 
-    this.userService = new UserService(
-      userRepository,
-      activityLogRepository,
-      this.permissionService
-    );
+    this.userService = new UserService();
 
     this.invitationService = new InvitationService({
       userInvitationRepository,
@@ -555,96 +554,60 @@ export class AdminController {
         sortOrder = 'desc'
       } = req.query;
 
-      const filters = {
-        role: role as UserRole,
-        status: status as UserStatus,
-        search: search as string,
-        sortBy: sortBy as string,
-        sortOrder: sortOrder as 'asc' | 'desc'
+
+
+      // Build database query options
+      const queryOptions: any = {
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { [sortBy as string]: sortOrder }
       };
 
-      // Mock users data for now
-      const mockUsers = [
-        {
-          id: "1",
-          email: "user@test.com",
-          role: "USER",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-          lastLoginAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          processCount: 5,
-          activityCount: 23
-        },
-        {
-          id: "2", 
-          email: "admin@test.com",
-          role: "ADMIN",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          lastLoginAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          processCount: 12,
-          activityCount: 156
-        },
-        {
-          id: "3",
-          email: "qc@test.com", 
-          role: "QC",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-          lastLoginAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-          processCount: 8,
-          activityCount: 45
-        },
-        {
-          id: "4",
-          email: "manager@test.com",
-          role: "MANAGER", 
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-          lastLoginAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-          processCount: 15,
-          activityCount: 89
-        },
-        {
-          id: "5",
-          email: "newuser@test.com",
-          role: "USER",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          lastLoginAt: undefined,
-          processCount: 0,
-          activityCount: 1
-        }
-      ];
-
-      // Apply search filter
-      let filteredUsers = mockUsers;
-      if (search) {
-        const searchLower = (search as string).toLowerCase();
-        filteredUsers = filteredUsers.filter(user => 
-          user.email.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Apply role filter
+      // Build where clause for filtering
+      const whereClause: any = {};
+      
       if (role && role !== 'all') {
-        filteredUsers = filteredUsers.filter(user => user.role === role);
+        whereClause.role = role;
+      }
+      
+      if (search) {
+        whereClause.email = {
+          contains: search,
+          mode: 'insensitive'
+        };
+      }
+      
+      if (Object.keys(whereClause).length > 0) {
+        queryOptions.where = whereClause;
       }
 
-      // Apply pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+      // Get users from database
+      const users = await this.userRepository.findMany(queryOptions);
+      
+      // Get total count for pagination
+      const totalUsers = await this.userRepository.count(queryOptions.where);
+
+      // Transform users to include additional fields needed for admin view
+      const transformedUsers = users.map(user => ({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status || 'ACTIVE',
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+        processCount: 0, // TODO: Calculate actual process count
+        activityCount: 0 // TODO: Calculate actual activity count
+      }));
 
       const response: PaginatedResponse<any> = {
         success: true,
-        data: paginatedUsers,
+        data: transformedUsers,
         pagination: {
           page,
           limit,
-          total: filteredUsers.length,
-          totalPages: Math.ceil(filteredUsers.length / limit),
-          hasNext: page * limit < filteredUsers.length,
+          total: totalUsers,
+          totalPages: Math.ceil(totalUsers / limit),
+          hasNext: page * limit < totalUsers,
           hasPrev: page > 1
         }
       };

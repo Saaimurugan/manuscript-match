@@ -17,6 +17,7 @@ import {
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import { ScholarFinderApp } from "./features/scholarfinder";
 
 // Initialize global error handlers
 initializeGlobalErrorHandlers();
@@ -45,6 +46,11 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 <Route path="/accept-invitation" element={<AcceptInvitation />} />
+                <Route path="/scholarfinder/*" element={
+                  <ProtectedRoute>
+                    <ScholarFinderApp />
+                  </ProtectedRoute>
+                } />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

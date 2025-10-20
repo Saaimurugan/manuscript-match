@@ -146,9 +146,9 @@ export const ActivityLogViewer: React.FC<ActivityLogViewerProps> = ({ className 
     // Mock data for demonstration when no real data is available
     const mockLogs: ActivityLog[] = [
         {
-            id: "1",
-            userId: "user1",
-            processId: "proc1",
+            id: "log-1",
+            userId: "5ad7e131-4a5f-455b-a7cc-18d4a3bbc99a",
+            processId: "24f76d2d-01c5-4e79-b745-e6b7ff2400a0",
             action: "USER_LOGIN",
             details: { ipAddress: "192.168.1.100", userAgent: "Chrome/91.0" },
             timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() // 5 minutes ago

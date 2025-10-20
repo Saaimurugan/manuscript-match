@@ -1,0 +1,422 @@
+/* Accessibility Styles for ScholarFinder */
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 90%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 0%;
+  --accent: 0 0% 90%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 0%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 0%;
+}
+
+.high-contrast * {
+  border-color: hsl(var(--border)) !important;
+}
+
+.high-contrast button,
+.high-contrast [role="button"] {
+  border: 2px solid hsl(var(--border)) !important;
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.high-contrast button:hover,
+.high-contrast [role="button"]:hover {
+  background: hsl(var(--muted)) !important;
+}
+
+.high-contrast button:focus,
+.high-contrast [role="button"]:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  border: 2px solid hsl(var(--border)) !important;
+  background: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.high-contrast a {
+  color: hsl(var(--primary)) !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast a:hover {
+  text-decoration: none !important;
+}
+
+/* Large Text Mode */
+.large-text {
+  font-size: 18px;
+}
+
+.large-text .text-xs {
+  font-size: 0.875rem;
+}
+
+.large-text .text-sm {
+  font-size: 1rem;
+}
+
+.large-text .text-base {
+  font-size: 1.125rem;
+}
+
+.large-text .text-lg {
+  font-size: 1.25rem;
+}
+
+.large-text .text-xl {
+  font-size: 1.5rem;
+}
+
+.large-text .text-2xl {
+  font-size: 1.875rem;
+}
+
+.large-text .text-3xl {
+  font-size: 2.25rem;
+}
+
+.large-text button,
+.large-text [role="button"] {
+  padding: 0.75rem 1.5rem;
+  min-height: 44px;
+}
+
+.large-text input,
+.large-text textarea,
+.large-text select {
+  padding: 0.75rem;
+  min-height: 44px;
+}
+
+/* Reduced Motion */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Focus Styles */
+*:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.high-contrast *:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+/* Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Focus Trap */
+.focus-trap {
+  position: relative;
+}
+
+.focus-trap::before,
+.focus-trap::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keyboard Navigation Indicators */
+.keyboard-navigation button:focus,
+.keyboard-navigation [role="button"]:focus,
+.keyboard-navigation a:focus,
+.keyboard-navigation input:focus,
+.keyboard-navigation textarea:focus,
+.keyboard-navigation select:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px hsla(var(--ring) / 0.2);
+}
+
+/* High Contrast Focus Indicators */
+.high-contrast.keyboard-navigation *:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 6px hsla(var(--ring) / 0.3) !important;
+}
+
+/* Accessible Color Combinations */
+.text-success {
+  color: #0f5132;
+}
+
+.high-contrast .text-success {
+  color: #000000 !important;
+  background-color: #d1e7dd !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem !important;
+}
+
+.text-warning {
+  color: #664d03;
+}
+
+.high-contrast .text-warning {
+  color: #000000 !important;
+  background-color: #fff3cd !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem !important;
+}
+
+.text-error {
+  color: #842029;
+}
+
+.high-contrast .text-error {
+  color: #000000 !important;
+  background-color: #f8d7da !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem !important;
+}
+
+/* Accessible Tables */
+.accessible-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.accessible-table th,
+.accessible-table td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.accessible-table th {
+  background-color: hsl(var(--muted));
+  font-weight: 600;
+}
+
+.high-contrast .accessible-table th,
+.high-contrast .accessible-table td {
+  border: 2px solid hsl(var(--border)) !important;
+}
+
+.accessible-table tbody tr:nth-child(even) {
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.high-contrast .accessible-table tbody tr:nth-child(even) {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* Accessible Forms */
+.form-field {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.form-input:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-color: hsl(var(--ring));
+}
+
+.form-error {
+  color: hsl(var(--destructive));
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.form-description {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.high-contrast .form-input {
+  border: 2px solid hsl(var(--border)) !important;
+}
+
+.high-contrast .form-input:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+/* Accessible Progress Indicators */
+.progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: hsl(var(--muted));
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: hsl(var(--primary));
+  transition: width 0.3s ease;
+}
+
+.reduce-motion .progress-fill {
+  transition: none !important;
+}
+
+.high-contrast .progress-bar {
+  border: 2px solid hsl(var(--border)) !important;
+}
+
+.high-contrast .progress-fill {
+  background-color: hsl(var(--foreground)) !important;
+}
+
+/* Accessible Buttons */
+.btn-accessible {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-accessible:hover {
+  background-color: hsl(var(--muted));
+}
+
+.btn-accessible:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.btn-accessible:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.high-contrast .btn-accessible {
+  border: 2px solid hsl(var(--border)) !important;
+}
+
+.high-contrast .btn-accessible:focus {
+  outline: 3px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+.reduce-motion .btn-accessible {
+  transition: none !important;
+}
+
+/* Responsive Text Scaling */
+@media (max-width: 768px) {
+  .large-text {
+    font-size: 16px;
+  }
+  
+  .large-text .text-xs {
+    font-size: 0.75rem;
+  }
+  
+  .large-text .text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .large-text .text-base {
+    font-size: 1rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .high-contrast {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+  }
+  
+  * {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .skip-link,
+  .accessibility-toolbar {
+    display: none !important;
+  }
+}

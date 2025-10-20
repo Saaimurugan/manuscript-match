@@ -134,10 +134,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
   const deleteUserMutation = useDeleteUser();
   const inviteUserMutation = useInviteUser();
 
-  // Mock users data when API fails
+  // Mock users data when API fails - using actual UUIDs from database
   const mockUsers: AdminUserDetails[] = [
     {
-      id: "1",
+      id: "5ad7e131-4a5f-455b-a7cc-18d4a3bbc99a", // user@test.com
       email: "user@test.com",
       role: "USER",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days ago
@@ -147,7 +147,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
       activityCount: 23
     },
     {
-      id: "2", 
+      id: "1aa37a5f-479f-4c00-b1a6-4a3db7449868", // admin@test.com
       email: "admin@test.com",
       role: "ADMIN",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), // 30 days ago
@@ -157,34 +157,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({ className }) => 
       activityCount: 156
     },
     {
-      id: "3",
-      email: "qc@test.com", 
-      role: "QC",
+      id: "38d51725-082b-4b52-b397-bb6da737b490", // user2@test.com
+      email: "user2@test.com", 
+      role: "USER",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(), // 14 days ago
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(), // 6 hours ago
       lastLoginAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
       processCount: 8,
       activityCount: 45
-    },
-    {
-      id: "4",
-      email: "manager@test.com",
-      role: "MANAGER", 
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(), // 21 days ago
-      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), // 12 hours ago
-      lastLoginAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
-      processCount: 15,
-      activityCount: 89
-    },
-    {
-      id: "5",
-      email: "newuser@test.com",
-      role: "USER",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-      lastLoginAt: undefined, // Never logged in
-      processCount: 0,
-      activityCount: 1
     }
   ];
 
