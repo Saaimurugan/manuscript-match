@@ -9,31 +9,31 @@ import { StepComponentProps } from '../../types/workflow';
 
 // Lazy load all step components
 export const LazyUploadStep = lazy(() => 
-  import('./UploadStep').then(module => ({ default: module.UploadStep || module.default }))
+  import('./UploadStep')
 );
 
 export const LazyMetadataStep = lazy(() => 
-  import('./MetadataStep').then(module => ({ default: module.MetadataStep || module.default }))
+  import('./MetadataStep')
 );
 
 export const LazyKeywordStep = lazy(() => 
-  import('./KeywordStep').then(module => ({ default: module.KeywordStep || module.default }))
+  import('./KeywordStep')
 );
 
 export const LazySearchStep = lazy(() => 
-  import('./SearchStep').then(module => ({ default: module.SearchStep || module.default }))
+  import('./SearchStep')
 );
 
 export const LazyManualStep = lazy(() => 
-  import('./ManualStep').then(module => ({ default: module.ManualStep || module.default }))
+  import('./ManualStep')
 );
 
 export const LazyValidationStep = lazy(() => 
-  import('./ValidationStep').then(module => ({ default: module.ValidationStep || module.default }))
+  import('./ValidationStep')
 );
 
 export const LazyShortlistStep = lazy(() => 
-  import('./ShortlistStep').then(module => ({ default: module.ShortlistStep || module.default }))
+  import('./ShortlistStep')
 );
 
 export const LazyExportStep = lazy(() => 
