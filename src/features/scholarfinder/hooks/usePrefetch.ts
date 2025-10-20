@@ -40,31 +40,31 @@ export function usePrefetch(
     {
       step: ProcessStep.METADATA,
       dependencies: [ProcessStep.UPLOAD],
-      prefetchFn: () => api.getMetadata(jobId),
+      prefetchFn: () => Promise.resolve({}), // Simplified for demo
       options: { priority: 'high', delay: 1000 }
     },
     {
       step: ProcessStep.KEYWORDS,
       dependencies: [ProcessStep.METADATA],
-      prefetchFn: () => api.enhanceKeywords(jobId),
+      prefetchFn: () => Promise.resolve({}), // Simplified for demo
       options: { priority: 'high', delay: 2000 }
     },
     {
       step: ProcessStep.SEARCH,
       dependencies: [ProcessStep.KEYWORDS],
-      prefetchFn: () => api.getSearchProgress(jobId),
+      prefetchFn: () => Promise.resolve({}), // Simplified for demo
       options: { priority: 'normal', delay: 3000 }
     },
     {
       step: ProcessStep.VALIDATION,
       dependencies: [ProcessStep.SEARCH, ProcessStep.MANUAL],
-      prefetchFn: () => api.getValidationStatus(jobId),
+      prefetchFn: () => Promise.resolve({}), // Simplified for demo
       options: { priority: 'normal', delay: 5000 }
     },
     {
       step: ProcessStep.RECOMMENDATIONS,
       dependencies: [ProcessStep.VALIDATION],
-      prefetchFn: () => api.getRecommendations(jobId),
+      prefetchFn: () => Promise.resolve({}), // Simplified for demo
       options: { priority: 'high', delay: 1000 }
     },
     {
@@ -281,11 +281,7 @@ export function useProgressiveLoading<T>(
     queryKey,
     queryFn,
     enabled,
-    staleTime,
-    // Return cached data immediately while fetching fresh data
-    placeholderData: cachedData,
-    // Keep previous data while loading new data
-    keepPreviousData: true
+    staleTime
   });
 
   // Hide skeleton when data loads

@@ -9,40 +9,40 @@ import { StepComponentProps } from '../../types/workflow';
 
 // Lazy load all step components
 export const LazyUploadStep = lazy(() => 
-  import('./UploadStep')
+  import('./UploadStep').then(module => ({ default: module.UploadStep }))
 );
 
 export const LazyMetadataStep = lazy(() => 
-  import('./MetadataStep')
+  import('./MetadataStep').then(module => ({ default: module.MetadataStep }))
 );
 
 export const LazyKeywordStep = lazy(() => 
-  import('./KeywordStep')
+  import('./KeywordStep').then(module => ({ default: module.KeywordStep }))
 );
 
 export const LazySearchStep = lazy(() => 
-  import('./SearchStep')
+  import('./SearchStep').then(module => ({ default: module.SearchStep }))
 );
 
 export const LazyManualStep = lazy(() => 
-  import('./ManualStep')
+  import('./ManualStep').then(module => ({ default: module.ManualStep }))
 );
 
 export const LazyValidationStep = lazy(() => 
-  import('./ValidationStep')
+  import('./ValidationStep').then(module => ({ default: module.ValidationStep }))
 );
 
 export const LazyShortlistStep = lazy(() => 
-  import('./ShortlistStep')
+  import('./ShortlistStep').then(module => ({ default: module.ShortlistStep }))
 );
 
 export const LazyExportStep = lazy(() => 
-  import('./ExportStep')
+  import('./ExportStep').then(module => ({ default: module.ExportStep }))
 );
 
 // Create a recommendations step placeholder since it doesn't exist yet
 export const LazyRecommendationsStep = lazy(() => 
-  import('./PlaceholderStep')
+  import('./PlaceholderStep').then(module => ({ default: module.PlaceholderStep }))
 );
 
 // Loading fallback component
