@@ -27,6 +27,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "tsx src/test/run-all-tests.ts",
+    "test:comprehensive": "tsx src/test/run-comprehensive-tests.ts",
+    "test:accessibility": "vitest --run src/features/scholarfinder/__tests__/accessibility",
+    "test:api-integration": "vitest --run src/features/scholarfinder/__tests__/integration",
     "test:ci": "npm run test && npm run test:integration && npm run test:e2e"
   },
   "dependencies": {

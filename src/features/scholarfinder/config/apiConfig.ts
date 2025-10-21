@@ -54,7 +54,7 @@ const getApiConfig = (): ApiEnvironmentConfig => {
   switch (environment) {
     case 'development':
       return {
-        baseURL: process.env.VITE_SCHOLARFINDER_API_URL || 'http://localhost:3003', // Different port for external API
+        baseURL: import.meta.env.VITE_SCHOLARFINDER_API_URL || 'http://localhost:3003', // Different port for external API
         timeout: 120000, // 2 minutes for development
         retries: 2,
         retryDelay: 1000,
@@ -63,7 +63,7 @@ const getApiConfig = (): ApiEnvironmentConfig => {
     
     case 'staging':
       return {
-        baseURL: process.env.VITE_SCHOLARFINDER_API_URL || 'https://api-staging.scholarfinder.com',
+        baseURL: import.meta.env.VITE_SCHOLARFINDER_API_URL || 'https://api-staging.scholarfinder.com',
         timeout: 180000, // 3 minutes for staging
         retries: 3,
         retryDelay: 2000,
@@ -72,7 +72,7 @@ const getApiConfig = (): ApiEnvironmentConfig => {
     
     case 'production':
       return {
-        baseURL: process.env.VITE_SCHOLARFINDER_API_URL || 'https://api.scholarfinder.com',
+        baseURL: import.meta.env.VITE_SCHOLARFINDER_API_URL || 'https://api.scholarfinder.com',
         timeout: 300000, // 5 minutes for production (large files)
         retries: 3,
         retryDelay: 3000,

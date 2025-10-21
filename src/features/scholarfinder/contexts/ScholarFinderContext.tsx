@@ -6,6 +6,8 @@ import { Process, ProcessStep } from '../types/process';
 import { Reviewer } from '../types/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useProcessList } from '../hooks/useProcessManagement';
+import { analyticsService } from '../services/AnalyticsService';
+import { abTestingService } from '../services/ABTestingService';
 
 interface ScholarFinderContextType {
   // Process management
@@ -179,6 +181,14 @@ export const ScholarFinderProvider: React.FC<ScholarFinderProviderProps> = ({
   // Integration with authentication context
   const { user, isAuthenticated } = useAuth();
   
+  // Initialize monitoring services with user context
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      analyticsService.setUser(user.id);
+      abTestingService.setUser(user.id);
+    }
+  }, [isAuthenticated, user?.id]);
+  
   // Fetch user processes when authenticated
   const { 
     data: userProcesses, 
@@ -212,26 +222,77 @@ export const ScholarFinderProvider: React.FC<ScholarFinderProviderProps> = ({
     }
   }, [isAuthenticated]);
 
-  // Action creators
+  // Action creators with monitoring
   const setCurrentProcess = useCallback((process: Process) => {
+    const previousProcess = state.currentProcess;
     dispatch({ type: 'SET_CURRENT_PROCESS', payload: process });
-  }, []);
+    
+    // Track process switching
+    if (previousProcess && previousProcess.id !== process.id) {
+      analyticsService.trackFeatureUsage('process_switch', {
+        fromProcessId: previousProcess.id,
+        toProcessId: process.id,
+        userId: user?.id,
+      });
+    } else if (!previousProcess) {
+      analyticsService.startProcess(process.id);
+    }
+  }, [state.currentProcess, user?.id]);
 
   const setCurrentStep = useCallback((step: ProcessStep) => {
+    const previousStep = state.currentStep;
     dispatch({ type: 'SET_CURRENT_STEP', payload: step });
-  }, []);
+    
+    // Track step transitions
+    if (previousStep !== step) {
+      analyticsService.trackStepStart(step, state.currentProcess?.id);
+      
+      // Track step completion for previous step
+      if (previousStep) {
+        analyticsService.trackStepComplete(previousStep, state.currentProcess?.id);
+      }
+    }
+  }, [state.currentStep, state.currentProcess?.id]);
 
   const addToShortlist = useCallback((reviewer: Reviewer) => {
     dispatch({ type: 'ADD_TO_SHORTLIST', payload: reviewer });
-  }, []);
+    
+    // Track shortlist additions
+    analyticsService.trackFeatureUsage('shortlist_add', {
+      reviewerCountry: reviewer.country,
+      reviewerAffiliation: reviewer.aff,
+      totalPublications: reviewer.Total_Publications,
+      conditionsMet: reviewer.conditions_met,
+      processId: state.currentProcess?.id,
+      userId: user?.id,
+    });
+  }, [state.currentProcess?.id, user?.id]);
 
   const removeFromShortlist = useCallback((reviewerId: string) => {
+    const reviewer = state.shortlist.find(r => r.email === reviewerId);
     dispatch({ type: 'REMOVE_FROM_SHORTLIST', payload: reviewerId });
-  }, []);
+    
+    // Track shortlist removals
+    if (reviewer) {
+      analyticsService.trackFeatureUsage('shortlist_remove', {
+        reviewerCountry: reviewer.country,
+        processId: state.currentProcess?.id,
+        userId: user?.id,
+      });
+    }
+  }, [state.shortlist, state.currentProcess?.id, user?.id]);
 
   const clearShortlist = useCallback(() => {
+    const previousCount = state.shortlist.length;
     dispatch({ type: 'CLEAR_SHORTLIST' });
-  }, []);
+    
+    // Track shortlist clearing
+    analyticsService.trackFeatureUsage('shortlist_clear', {
+      previousCount,
+      processId: state.currentProcess?.id,
+      userId: user?.id,
+    });
+  }, [state.shortlist.length, state.currentProcess?.id, user?.id]);
 
   const setIsLoading = useCallback((loading: boolean) => {
     dispatch({ type: 'SET_LOADING', payload: loading });

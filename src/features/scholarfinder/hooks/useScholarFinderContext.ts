@@ -4,16 +4,19 @@
  */
 
 import { useContext } from 'react';
-import { useScholarFinderContext } from '../contexts/ScholarFinderContext';
+import { useScholarFinderContext as useScholarFinderContextFromProvider } from '../contexts/ScholarFinderContext';
 import { ProcessStep } from '../types/process';
 import type { Reviewer } from '../types/api';
+
+// Re-export the context hook for external use
+export { useScholarFinderContext } from '../contexts/ScholarFinderContext';
 
 /**
  * Hook for accessing the full ScholarFinder context
  * Throws error if used outside of ScholarFinderProvider
  */
 export const useScholarFinder = () => {
-  const context = useScholarFinderContext();
+  const context = useScholarFinderContextFromProvider();
   if (!context) {
     throw new Error('useScholarFinder must be used within a ScholarFinderProvider');
   }

@@ -239,7 +239,7 @@ export function useRenderTracker(componentName: string, props?: Record<string, a
   useEffect(() => {
     renderCount.current++;
     
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       console.debug(`${componentName} rendered ${renderCount.current} times`);
       
       if (props && prevProps.current) {

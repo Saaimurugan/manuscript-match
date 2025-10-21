@@ -538,3 +538,40 @@ export const usePrefetchProcess = () => {
     },
   };
 };
+
+/**
+ * Main process management hook that combines common functionality
+ * This is the primary hook for process management operations
+ */
+export const useProcessManagement = () => {
+  const createProcess = useCreateProcess();
+  const updateProcess = useUpdateProcess();
+  const updateProcessStep = useUpdateProcessStep();
+  const deleteProcess = useDeleteProcess();
+  const duplicateProcess = useDuplicateProcess();
+  const statusOperations = useProcessStatusOperations();
+  const invalidateQueries = useInvalidateProcessQueries();
+  const prefetch = usePrefetchProcess();
+  
+  return {
+    // Process CRUD operations
+    createProcess,
+    updateProcess,
+    updateProcessStep,
+    deleteProcess,
+    duplicateProcess,
+    
+    // Status operations
+    ...statusOperations,
+    
+    // Cache management
+    ...invalidateQueries,
+    ...prefetch,
+    
+    // Loading states
+    isCreating: createProcess.isPending,
+    isUpdating: updateProcess.isPending,
+    isDeleting: deleteProcess.isPending,
+    isDuplicating: duplicateProcess.isPending,
+  };
+};

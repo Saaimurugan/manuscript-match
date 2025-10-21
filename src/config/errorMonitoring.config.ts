@@ -153,9 +153,9 @@ const stagingConfig: ErrorMonitoringConfig = {
     },
     customWebhook: {
       enabled: true,
-      url: process.env.REACT_APP_ERROR_WEBHOOK_URL,
+      url: getEnvVar('REACT_APP_ERROR_WEBHOOK_URL'),
       headers: {
-        'Authorization': `Bearer ${process.env.REACT_APP_WEBHOOK_TOKEN}`,
+        'Authorization': `Bearer ${getEnvVar('REACT_APP_WEBHOOK_TOKEN')}`,
         'Content-Type': 'application/json',
       },
     },
@@ -191,8 +191,8 @@ const productionConfig: ErrorMonitoringConfig = {
     criticalErrorThreshold: 2,
     timeWindowMinutes: 15,
     alertChannels: ['webhook', 'email'],
-    webhookUrl: process.env.REACT_APP_ERROR_WEBHOOK_URL,
-    emailRecipients: process.env.REACT_APP_ERROR_EMAIL_RECIPIENTS?.split(','),
+    webhookUrl: getEnvVar('REACT_APP_ERROR_WEBHOOK_URL'),
+    emailRecipients: getEnvVar('REACT_APP_ERROR_EMAIL_RECIPIENTS')?.split(','),
   },
   
   performanceMonitoring: {
@@ -204,22 +204,22 @@ const productionConfig: ErrorMonitoringConfig = {
   integrations: {
     sentry: {
       enabled: true,
-      dsn: process.env.REACT_APP_SENTRY_DSN,
+      dsn: getEnvVar('REACT_APP_SENTRY_DSN'),
       environment: 'production',
-      release: process.env.REACT_APP_VERSION,
+      release: getEnvVar('REACT_APP_VERSION'),
     },
     logRocket: {
       enabled: true,
-      appId: process.env.REACT_APP_LOGROCKET_APP_ID,
+      appId: getEnvVar('REACT_APP_LOGROCKET_APP_ID'),
     },
     bugsnag: {
       enabled: false,
     },
     customWebhook: {
       enabled: true,
-      url: process.env.REACT_APP_ERROR_WEBHOOK_URL,
+      url: getEnvVar('REACT_APP_ERROR_WEBHOOK_URL'),
       headers: {
-        'Authorization': `Bearer ${process.env.REACT_APP_WEBHOOK_TOKEN}`,
+        'Authorization': `Bearer ${getEnvVar('REACT_APP_WEBHOOK_TOKEN')}`,
         'Content-Type': 'application/json',
       },
     },

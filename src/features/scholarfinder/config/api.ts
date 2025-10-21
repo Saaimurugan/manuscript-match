@@ -22,7 +22,7 @@ export interface ApiEndpoints {
 
 // Default configuration
 export const defaultApiConfig: ScholarFinderApiConfig = {
-  baseUrl: process.env.VITE_SCHOLARFINDER_API_URL || 'https://api.scholarfinder.aws.lambda',
+  baseUrl: import.meta.env.VITE_SCHOLARFINDER_API_URL || 'https://api.scholarfinder.aws.lambda',
   timeout: 30000, // 30 seconds
   retryAttempts: 3,
   retryDelay: 1000, // 1 second
@@ -42,22 +42,22 @@ export const defaultApiConfig: ScholarFinderApiConfig = {
 export const apiConfigs = {
   development: {
     ...defaultApiConfig,
-    baseUrl: process.env.VITE_SCHOLARFINDER_API_URL_DEV || 'https://dev-api.scholarfinder.aws.lambda',
+    baseUrl: import.meta.env.VITE_SCHOLARFINDER_API_URL_DEV || 'https://dev-api.scholarfinder.aws.lambda',
     timeout: 60000, // Longer timeout for development
   },
   staging: {
     ...defaultApiConfig,
-    baseUrl: process.env.VITE_SCHOLARFINDER_API_URL_STAGING || 'https://staging-api.scholarfinder.aws.lambda',
+    baseUrl: import.meta.env.VITE_SCHOLARFINDER_API_URL_STAGING || 'https://staging-api.scholarfinder.aws.lambda',
   },
   production: {
     ...defaultApiConfig,
-    baseUrl: process.env.VITE_SCHOLARFINDER_API_URL_PROD || 'https://api.scholarfinder.aws.lambda',
+    baseUrl: import.meta.env.VITE_SCHOLARFINDER_API_URL_PROD || 'https://api.scholarfinder.aws.lambda',
     retryAttempts: 5, // More retries in production
   }
 };
 
 // Get configuration based on environment
 export const getApiConfig = (): ScholarFinderApiConfig => {
-  const env = process.env.NODE_ENV || 'development';
+  const env = import.meta.env.MODE || 'development';
   return apiConfigs[env as keyof typeof apiConfigs] || defaultApiConfig;
 };
