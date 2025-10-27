@@ -264,6 +264,14 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
   const endIndex = startIndex + itemsPerPage;
   const paginatedProcesses = filteredAndSortedProcesses.slice(startIndex, endIndex);
 
+  // Auto-adjust page if current page is now empty (e.g., after deleting last item on page)
+  useEffect(() => {
+    if (filteredAndSortedProcesses.length > 0 && paginatedProcesses.length === 0 && currentPage > 1) {
+      // Current page is empty but there are processes, go to previous page
+      setCurrentPage(currentPage - 1);
+    }
+  }, [filteredAndSortedProcesses.length, paginatedProcesses.length, currentPage]);
+
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
