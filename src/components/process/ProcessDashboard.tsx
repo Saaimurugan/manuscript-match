@@ -84,80 +84,7 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
     }
   };
 
-  const getStatusColor = (status: Process['status']) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'PROCESSING':
-      case 'SEARCHING':
-      case 'VALIDATING':
-      case 'UPLOADING':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'ERROR':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'CREATED':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStepProgress = (currentStep: string) => {
-    const stepOrder = getStepOrder(currentStep);
-    return Math.min((stepOrder / 9) * 100, 100); // 9 total steps
-  };
-
-  const getStepOrder = (stepId: string) => {
-    const stepMap: Record<string, number> = {
-      'UPLOAD': 1,
-      'METADATA_EXTRACTION': 2,
-      'KEYWORD_ENHANCEMENT': 3,
-      'DATABASE_SEARCH': 4,
-      'MANUAL_SEARCH': 5,
-      'VALIDATION': 6,
-      'RECOMMENDATIONS': 7,
-      'SHORTLIST': 8,
-      'EXPORT': 9,
-    };
-    return stepMap[stepId] || 1;
-  };
-
-  const getStageLabel = (stepId: string) => {
-    const stageLabels: Record<string, string> = {
-      'UPLOAD': 'Upload & Extract',
-      'METADATA_EXTRACTION': 'Metadata Extraction',
-      'KEYWORD_ENHANCEMENT': 'Keyword Enhancement',
-      'DATABASE_SEARCH': 'Database Search',
-      'MANUAL_SEARCH': 'Manual Search',
-      'VALIDATION': 'Validation',
-      'RECOMMENDATIONS': 'Recommendations',
-      'SHORTLIST': 'Shortlist',
-      'EXPORT': 'Export',
-    };
-    return stageLabels[stepId] || stepId;
-  };
-
-  if (isLoading) {
-    return <ProcessDashboardSkeleton />;
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center text-muted-foreground">
-            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Failed to load processes. Please try again.</p>
-            <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Filter and sort processes
+  // Filter and sort processes - MUST be before early returns (Rules of Hooks)
   const filteredAndSortedProcesses = useMemo(() => {
     let filtered = safeProcesses;
 
@@ -287,6 +214,81 @@ export const ProcessDashboard: React.FC<ProcessDashboardProps> = ({ onSelectProc
       setCurrentPage(currentPage - 1);
     }
   };
+
+  // Helper functions (non-hooks, can be anywhere)
+  const getStepOrder = (stepId: string) => {
+    const stepMap: Record<string, number> = {
+      'UPLOAD': 1,
+      'METADATA_EXTRACTION': 2,
+      'KEYWORD_ENHANCEMENT': 3,
+      'DATABASE_SEARCH': 4,
+      'MANUAL_SEARCH': 5,
+      'VALIDATION': 6,
+      'RECOMMENDATIONS': 7,
+      'SHORTLIST': 8,
+      'EXPORT': 9,
+    };
+    return stepMap[stepId] || 1;
+  };
+
+  const getStepProgress = (currentStep: string) => {
+    const stepOrder = getStepOrder(currentStep);
+    return Math.min((stepOrder / 9) * 100, 100); // 9 total steps
+  };
+
+  const getStageLabel = (stepId: string) => {
+    const stageLabels: Record<string, string> = {
+      'UPLOAD': 'Upload & Extract',
+      'METADATA_EXTRACTION': 'Metadata Extraction',
+      'KEYWORD_ENHANCEMENT': 'Keyword Enhancement',
+      'DATABASE_SEARCH': 'Database Search',
+      'MANUAL_SEARCH': 'Manual Search',
+      'VALIDATION': 'Validation',
+      'RECOMMENDATIONS': 'Recommendations',
+      'SHORTLIST': 'Shortlist',
+      'EXPORT': 'Export',
+    };
+    return stageLabels[stepId] || stepId;
+  };
+
+  const getStatusColor = (status: Process['status']) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'PROCESSING':
+      case 'SEARCHING':
+      case 'VALIDATING':
+      case 'UPLOADING':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'ERROR':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'CREATED':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // Early returns AFTER all hooks
+  if (isLoading) {
+    return <ProcessDashboardSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">
+            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>Failed to load processes. Please try again.</p>
+            <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
