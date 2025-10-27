@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileButton } from "@/components/profile/ProfileButton";
 import logo from "@/assets/logo.png";
+import Reports from "./Reports";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -77,8 +78,9 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Content with Process Management */}
         <Tabs defaultValue="processes" className="space-y-4">
-          <TabsList className={`grid w-full ${user?.role === "ADMIN" ? "grid-cols-2" : "grid-cols-1"} max-w-md`}>
+          <TabsList className={`grid w-full ${user?.role === "ADMIN" ? "grid-cols-3" : "grid-cols-2"} max-w-2xl`}>
             <TabsTrigger value="processes">Processes</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
             {user?.role === "ADMIN" && (
               <TabsTrigger value="admin">Admin</TabsTrigger>
             )}
@@ -97,7 +99,9 @@ const Index = () => {
             )}
           </TabsContent>
           
-
+          <TabsContent value="reports">
+            <Reports />
+          </TabsContent>
 
           {user?.role === "ADMIN" && (
             <TabsContent value="admin">

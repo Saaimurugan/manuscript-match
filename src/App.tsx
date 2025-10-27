@@ -17,6 +17,7 @@ import {
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import Reports from "./pages/Reports";
 import { ScholarFinderApp } from "./features/scholarfinder";
 
 // Initialize global error handlers
@@ -43,6 +44,11 @@ const App = () => (
                 <Route path="/" element={
                   <ProtectedRoute>
                     <Index />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <Reports />
                   </ProtectedRoute>
                 } />
                 <Route path="/accept-invitation" element={<AcceptInvitation />} />

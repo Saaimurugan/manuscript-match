@@ -126,6 +126,7 @@ import healthRoutes from '@/routes/health';
 import performanceRoutes from '@/routes/performance';
 import invitationRoutes from '@/routes/invitations';
 import userRoutes from '@/routes/user';
+import productRoutes from '@/routes/products';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/processes', processRoutes);
@@ -133,6 +134,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/products', productRoutes);
 app.use('/', healthRoutes);
 
 // 404 handler
