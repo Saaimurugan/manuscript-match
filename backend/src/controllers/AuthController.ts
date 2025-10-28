@@ -269,6 +269,13 @@ export class AuthController {
         id: user.id,
         email: user.email,
         role: user.role as any,
+        name: user.name,
+        phone: user.phone,
+        department: user.department,
+        bio: user.bio,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
       };
 
       const response: ApiResponse<AuthUser> = {

@@ -34,6 +34,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
           className={cn("p-2", className)}
         >
           <Avatar className="w-6 h-6">
+            <AvatarImage src={user?.profileImage || undefined} />
             <AvatarFallback className="text-xs">
               {user?.email ? getInitials(user.email) : 'U'}
             </AvatarFallback>
@@ -55,6 +56,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
           )}
         >
           <Avatar className="w-8 h-8">
+            <AvatarImage src={user?.profileImage || undefined} />
             <AvatarFallback className="bg-blue-100 text-blue-600">
               {user?.email ? getInitials(user.email) : 'U'}
             </AvatarFallback>
@@ -81,6 +83,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
         className={cn("flex items-center gap-2", className)}
       >
         <Avatar className="w-6 h-6">
+          <AvatarImage src={user?.profileImage || undefined} />
           <AvatarFallback>
             {user?.email ? getInitials(user.email) : 'U'}
           </AvatarFallback>

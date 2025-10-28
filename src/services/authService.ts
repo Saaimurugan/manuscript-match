@@ -43,9 +43,9 @@ export class AuthService {
       if (authResponse) {
         // Response is wrapped in ApiResponse structure
         finalAuthResponse = authResponse;
-      } else if (response.data.token) {
+      } else if ((response.data as any).token) {
         // Response data directly contains the auth response
-        finalAuthResponse = response.data as AuthResponse;
+        finalAuthResponse = response.data as any as AuthResponse;
       } else {
         throw new Error('Invalid response structure: no token found');
       }
@@ -61,8 +61,12 @@ export class AuthService {
       }
 
       return finalAuthResponse;
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (error: any) {
+      console.error('AuthService: Login failed:', error);
+      console.error('AuthService: Error message:', error?.message);
+      console.error('AuthService: Error type:', error?.type);
+      
+      // Error is already a proper Error object from apiService
       throw error;
     }
   }
@@ -127,12 +131,12 @@ export class AuthService {
       // Handle different possible response structures
       let userProfile: UserProfile;
       
-      if (response.data.data) {
+      if (response.data && response.data.data) {
         // Response is wrapped in ApiResponse structure
         userProfile = response.data.data;
-      } else if (response.data.id) {
+      } else if (response.data && (response.data as any).id) {
         // Response data directly contains the user profile
-        userProfile = response.data as UserProfile;
+        userProfile = response.data as any as UserProfile;
       } else {
         throw new Error('Invalid response structure: no user profile found');
       }
@@ -150,8 +154,16 @@ export class AuthService {
    */
   async updateProfile(profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      const response = await apiService.put<{ success: boolean; data: UserProfile }>('/api/auth/profile', profileData);
-      return response.data.data;
+      const response = await apiService.put<{ success: boolean; data: any }>('/api/user/profile', profileData);
+      
+      // Handle different response structures
+      if (response.data && response.data.data) {
+        return response.data.data as UserProfile;
+      } else if (response.data && (response.data as any).id) {
+        return response.data as any as UserProfile;
+      }
+      
+      throw new Error('Invalid response structure from profile update');
     } catch (error) {
       console.error('Failed to update user profile:', error);
       throw error;

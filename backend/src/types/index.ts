@@ -136,6 +136,13 @@ export interface AuthUser {
   id: string;
   email: string;
   role?: UserRole;
+  name?: string | null;
+  phone?: string | null;
+  department?: string | null;
+  bio?: string | null;
+  profileImage?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export enum UserRole {

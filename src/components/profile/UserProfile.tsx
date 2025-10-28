@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { userService } from "@/services/userService";
 import { cn } from "@/lib/utils";
 
@@ -32,10 +32,10 @@ interface UserProfileProps {
 }
 
 export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,9 +43,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '',
-    department: '',
-    bio: ''
+    phone: user?.phone || '',
+    department: user?.department || '',
+    bio: user?.bio || ''
   });
 
   // Password form states
@@ -65,6 +65,31 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Sync profile image from user object
+  useEffect(() => {
+    if (user) {
+      console.log('UserProfile: Syncing profile image from user object:', {
+        hasProfileImage: !!user.profileImage,
+        profileImageLength: user.profileImage?.length,
+        userId: user.id
+      });
+      setProfileImage(user.profileImage || null);
+    }
+  }, [user]);
+
+  // Sync form data from user object
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        department: user.department || '',
+        bio: user.bio || ''
+      });
+    }
+  }, [user]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -101,7 +126,21 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
 
           if (response && response.success === true) {
             console.log('Frontend: Image uploaded successfully');
-            setProfileImage(imageData);
+            
+            // The backend has saved the image, now we need to refresh the user profile
+            // to get the updated profileImage from the server
+            const imageUrl = response.data?.imageUrl || imageData;
+            setProfileImage(imageUrl);
+            
+            // Update the AuthContext user object with the new profile image
+            // This ensures the image persists across page refreshes
+            try {
+              await updateProfile({ profileImage: imageUrl });
+              console.log('Frontend: Auth context updated with new profile image');
+            } catch (updateError) {
+              console.warn('Failed to update auth profile with new image:', updateError);
+            }
+            
             // Don't show alert for mock response, just update the UI
             if (!response.message?.includes('mock')) {
               alert('Profile image uploaded successfully!');
@@ -159,32 +198,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className }) => {
         return;
       }
 
-      // Call the user service to update profile
-      const response = await userService.updateProfile({
+      // Call the AuthContext updateProfile to update profile
+      await updateProfile({
         name: formData.name,
         phone: formData.phone,
         department: formData.department,
         bio: formData.bio
       });
 
-      console.log('Frontend: Profile update response:', response);
-      console.log('Frontend: Response type:', typeof response);
-      console.log('Frontend: Response success:', response?.success);
-
-      if (response && response.success === true) {
-        console.log('Frontend: Profile updated successfully');
-        setIsEditing(false);
-        setSaveSuccess(true);
-        
-        // Hide success message after 3 seconds
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } else if (response && response.success === false) {
-        console.error('Frontend: Profile update failed:', response.message);
-        alert(response.message || 'Failed to update profile');
-      } else {
-        console.error('Frontend: Unexpected response format:', response);
-        alert('Unexpected response from server. Please try again.');
-      }
+      console.log('Frontend: Profile updated successfully');
+      setIsEditing(false);
+      setSaveSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
       console.error('Frontend: Failed to save profile:', error);
       console.error('Frontend: Error details:', {

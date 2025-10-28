@@ -107,9 +107,12 @@ export class ErrorHandler {
 
     // Authentication errors
     if (status === 401) {
+      // Use the error message from the backend if available
+      const errorMessage = data?.error?.message || data?.message || 'Your session has expired. Please log in again.';
+      
       return {
         type: 'AUTHENTICATION_ERROR',
-        message: 'Your session has expired. Please log in again.',
+        message: errorMessage,
         action: 'REDIRECT_TO_LOGIN'
       };
     }
@@ -127,15 +130,13 @@ export class ErrorHandler {
 
     // Validation errors
     if (status === 400 || status === 409) {
-      console.log('Validation error - status:', status);
-      console.log('Validation error - data:', data);
-      console.log('Validation error - data.message:', data?.message);
-      console.log('Validation error - data.error:', data?.error);
+      // Use the error message from the backend if available
+      const errorMessage = data?.error?.message || data?.message || 'Invalid request data. Please check your input and try again.';
       
       return {
         type: 'VALIDATION_ERROR',
-        message: data?.message || data?.error || 'Invalid request data. Please check your input and try again.',
-        details: data?.details
+        message: errorMessage,
+        details: data?.error?.details || data?.details
       };
     }
 
@@ -150,10 +151,13 @@ export class ErrorHandler {
 
     // Other client errors
     if (status >= 400) {
+      // Use the error message from the backend if available
+      const errorMessage = data?.error?.message || data?.message || 'An unexpected error occurred. Please try again.';
+      
       return {
         type: 'UNKNOWN_ERROR',
-        message: data?.message || 'An unexpected error occurred. Please try again.',
-        details: data
+        message: errorMessage,
+        details: data?.error?.details || data
       };
     }
 
@@ -356,7 +360,12 @@ export class ApiService {
         const originalRequest = error.config as any;
 
         // Handle authentication errors with token refresh
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // BUT: Don't try to refresh token for login/register endpoints
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                               originalRequest.url?.includes('/auth/register') ||
+                               originalRequest.url?.includes('/auth/refresh');
+        
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           originalRequest._retry = true;
 
           try {
@@ -444,7 +453,17 @@ export class ApiService {
 
     // All retries failed, throw the last error
     const userError = ErrorHandler.handle(lastError);
-    throw userError;
+    
+    // Create a proper Error object with the user-friendly message
+    const error = new Error(userError.message);
+    // Attach the full userError object for additional context
+    (error as any).userError = userError;
+    (error as any).type = userError.type;
+    (error as any).details = userError.details;
+    (error as any).action = userError.action;
+    (error as any).retryAfter = userError.retryAfter;
+    
+    throw error;
   }
 
   /**
@@ -571,7 +590,10 @@ export class ApiService {
       return response.data;
     } catch (error) {
       const userError = ErrorHandler.handle(error);
-      throw userError;
+      const err = new Error(userError.message);
+      (err as any).userError = userError;
+      (err as any).type = userError.type;
+      throw err;
     }
   }
 
@@ -596,7 +618,10 @@ export class ApiService {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       const userError = ErrorHandler.handle(error);
-      throw userError;
+      const err = new Error(userError.message);
+      (err as any).userError = userError;
+      (err as any).type = userError.type;
+      throw err;
     }
   }
 }

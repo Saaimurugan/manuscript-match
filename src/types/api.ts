@@ -66,6 +66,11 @@ export interface ResetPasswordRequest {
 export interface UserProfile {
   id: string;
   email: string;
+  name?: string;
+  phone?: string;
+  department?: string;
+  bio?: string;
+  profileImage?: string | null;
   role: 'USER' | 'QC' | 'MANAGER' | 'ADMIN';
   createdAt: string;
   updatedAt: string;

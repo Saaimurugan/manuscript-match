@@ -3,9 +3,9 @@
  * Redirects to login if user is not authenticated
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LoginForm } from './LoginForm';
 
 export type UserRole = 'USER' | 'QC' | 'MANAGER' | 'ADMIN';
 
@@ -53,7 +53,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallback,
   showAccessDenied = true
 }) => {
+  const navigate = useNavigate();
   const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -67,9 +75,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect to login if not authenticated
+  // Return null while redirecting to login
   if (!isAuthenticated) {
-    return fallback || <LoginForm />;
+    return null;
   }
 
   // Check role-based access if required

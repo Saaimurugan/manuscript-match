@@ -8,6 +8,7 @@ import { queryClient } from "./lib/queryClient";
 import { config } from "./lib/config";
 import { AuthProviderWithErrorBoundary } from "./components/auth/AuthProviderWithErrorBoundary";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { LoginForm } from "./components/auth/LoginForm";
 import { 
   ErrorBoundary, 
   NetworkStatusToast, 
@@ -41,6 +42,7 @@ const App = () => (
           <BrowserRouter>
             <ErrorBoundary enableReporting={true}>
               <Routes>
+                <Route path="/login" element={<LoginForm />} />
                 <Route path="/" element={
                   <ProtectedRoute>
                     <Index />

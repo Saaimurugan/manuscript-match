@@ -862,6 +862,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     } catch (error: any) {
       console.error('Login failed:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error keys:', Object.keys(error));
       setError(error.message || 'Login failed');
 
       // Clear any partial state on login failure
