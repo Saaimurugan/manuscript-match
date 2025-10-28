@@ -203,10 +203,9 @@ export class ScholarFinderApiService {
   private config: ScholarFinderApiConfig;
 
   constructor(apiConfig?: Partial<ScholarFinderApiConfig>) {
-    // Use external API configuration - these would be different endpoints
-    // For now, using the same base URL but this would typically be different
+    // Use external API configuration pointing to the ScholarFinder Lambda API
     const defaultConfig: ScholarFinderApiConfig = {
-      baseURL: config.apiBaseUrl, // This would be the external API URL
+      baseURL: 'http://192.168.61.60:8000', // External ScholarFinder API URL
       timeout: 120000, // 2 minutes for external API calls
       retries: 3,
       retryDelay: 2000
@@ -407,7 +406,7 @@ export class ScholarFinderApiService {
   /**
    * Step 1: Upload manuscript and extract metadata
    */
-  async uploadManuscript(file: File): Promise<UploadResponse> {
+  async uploadManuscript(file: File, processId?: string): Promise<UploadResponse> {
     if (!file) {
       throw {
         type: ScholarFinderErrorType.FILE_FORMAT_ERROR,
@@ -440,10 +439,21 @@ export class ScholarFinderApiService {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      
+      // Add process_id if provided
+      if (processId) {
+        formData.append('process_id', processId);
+      }
+
+      // Build URL with query parameter if processId is provided
+      let url = '/upload_extract_metadata';
+      if (processId) {
+        url += `?process_id=${encodeURIComponent(processId)}`;
+      }
 
       // Use uploadFile method for proper file upload handling
       const response = await this.apiService.uploadFile<UploadResponse>(
-        '/scholarfinder/upload_extract_metadata',
+        url,
         file
       );
 
@@ -468,7 +478,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<MetadataResponse>(
       'GET',
-      `/scholarfinder/metadata/${jobId}`,
+      `/metadata_extraction?job_id=${jobId}`,
       undefined,
       undefined,
       'metadata retrieval'
@@ -491,7 +501,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<KeywordEnhancementResponse>(
       'POST',
-      '/scholarfinder/keyword_enhancement',
+      '/keyword_enhancement',
       { job_id: jobId },
       undefined,
       'keyword enhancement'
@@ -522,7 +532,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<KeywordStringResponse>(
       'POST',
-      '/scholarfinder/keyword_string_generator',
+      '/keyword_string_generator',
       {
         job_id: jobId,
         ...keywords
@@ -556,7 +566,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<DatabaseSearchResponse>(
       'POST',
-      '/scholarfinder/database_search',
+      '/database_search',
       {
         job_id: jobId,
         ...databases
@@ -590,7 +600,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<ManualAuthorResponse>(
       'POST',
-      '/scholarfinder/manual_authors',
+      '/manual_authors',
       {
         job_id: jobId,
         author_name: authorName.trim()
@@ -616,7 +626,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<ValidationResponse>(
       'POST',
-      '/scholarfinder/validate_authors',
+      '/validate_authors',
       { job_id: jobId },
       undefined,
       'author validation'
@@ -639,7 +649,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<ValidationResponse>(
       'GET',
-      `/scholarfinder/validation_status/${jobId}`,
+      `/validation_status/${jobId}`,
       undefined,
       undefined,
       'validation status check'
@@ -662,7 +672,7 @@ export class ScholarFinderApiService {
 
     const response = await this.makeRequest<RecommendationsResponse>(
       'GET',
-      `/scholarfinder/recommendations/${jobId}`,
+      `/recommendations/${jobId}`,
       undefined,
       undefined,
       'recommendations retrieval'
@@ -686,7 +696,7 @@ export class ScholarFinderApiService {
     try {
       const response = await this.makeRequest<{ exists: boolean; status: string }>(
         'GET',
-        `/scholarfinder/job_status/${jobId}`,
+        `/job_status/${jobId}`,
         undefined,
         undefined,
         'job status check'

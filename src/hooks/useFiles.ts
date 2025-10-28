@@ -1,6 +1,7 @@
 /**
  * File upload and metadata React Query hooks
  * Provides hooks for file upload, metadata extraction, and metadata management
+ * Now integrated with ScholarFinder external API
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,7 +14,7 @@ import type {
 } from '../types/api';
 
 /**
- * Hook for uploading files
+ * Hook for uploading files - uses ScholarFinder external API
  */
 export const useFileUpload = () => {
   const queryClient = useQueryClient();
@@ -107,4 +108,131 @@ export const useOptimisticMetadataUpdate = () => {
     updateMetadataOptimistically,
     revertOptimisticUpdate,
   };
+};
+
+/**
+ * Hook for generating keyword string - uses ScholarFinder API
+ */
+export const useGenerateKeywordString = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ processId, keywords }: {
+      processId: string;
+      keywords: {
+        primary_keywords_input?: string;
+        secondary_keywords_input?: string;
+      };
+    }) => fileService.generateKeywordString(processId, keywords),
+    onSuccess: (_, { processId }) => {
+      queryClient.invalidateQueries({ queryKey: ['keywords', processId] });
+    },
+    onError: (error) => {
+      console.error('Keyword generation failed:', error);
+    },
+  });
+};
+
+/**
+ * Hook for searching databases - uses ScholarFinder API
+ */
+export const useSearchDatabases = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ processId, databases }: {
+      processId: string;
+      databases: {
+        selected_websites: string[];
+      };
+    }) => fileService.searchDatabases(processId, databases),
+    onSuccess: (_, { processId }) => {
+      queryClient.invalidateQueries({ queryKey: ['search', processId] });
+    },
+    onError: (error) => {
+      console.error('Database search failed:', error);
+    },
+  });
+};
+
+/**
+ * Hook for adding manual author - uses ScholarFinder API
+ */
+export const useAddManualAuthor = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ processId, authorName }: {
+      processId: string;
+      authorName: string;
+    }) => fileService.addManualAuthor(processId, authorName),
+    onSuccess: (_, { processId }) => {
+      queryClient.invalidateQueries({ queryKey: ['authors', processId] });
+    },
+    onError: (error) => {
+      console.error('Add manual author failed:', error);
+    },
+  });
+};
+
+/**
+ * Hook for validating authors - uses ScholarFinder API
+ */
+export const useValidateAuthors = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ processId }: { processId: string }) => 
+      fileService.validateAuthors(processId),
+    onSuccess: (_, { processId }) => {
+      queryClient.invalidateQueries({ queryKey: ['validation', processId] });
+      queryClient.invalidateQueries({ queryKey: ['recommendations', processId] });
+    },
+    onError: (error) => {
+      console.error('Author validation failed:', error);
+    },
+  });
+};
+
+/**
+ * Hook for getting validation status - uses ScholarFinder API
+ */
+export const useValidationStatus = (processId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['validation', processId],
+    queryFn: () => fileService.getValidationStatus(processId),
+    enabled: enabled && !!processId,
+    refetchInterval: (query) => {
+      // Poll every 5 seconds if validation is in progress
+      const data = query.state.data;
+      if (data && typeof data === 'object' && 'validation_status' in data && data.validation_status === 'in_progress') {
+        return 5000;
+      }
+      return false;
+    },
+  });
+};
+
+/**
+ * Hook for getting recommended reviewers - uses ScholarFinder API
+ */
+export const useRecommendations = (processId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['recommendations', processId],
+    queryFn: () => fileService.getRecommendations(processId),
+    enabled: enabled && !!processId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+/**
+ * Hook for fetching all authors - uses ScholarFinder API
+ */
+export const useFetchAllAuthors = (processId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['authors', 'all', processId],
+    queryFn: () => fileService.fetchAllAuthors(processId),
+    enabled: enabled && !!processId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 };
